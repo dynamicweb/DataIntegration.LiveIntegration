@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Description>Dynamicweb Live Integration Examples</Description>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageProjectUrl>https://doc.dynamicweb.com/</PackageProjectUrl>
+    <PackageTags>Dynamicweb</PackageTags>
+    <Product>Dynamicweb CMS</Product>
+    <Company>Dynamicweb Software A/S</Company>
+    <Authors>Dynamicweb Software A/S</Authors>
+    <Copyright>Copyright © 2020 Dynamicweb Software A/S</Copyright>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dynamicweb" Version="9.14.14" />
+    <PackageReference Include="Dynamicweb.Data" Version="3.0.3" />
+    <PackageReference Include="Dynamicweb.Ecommerce" Version="1.14.44" />
+    <PackageReference Include="Dynamicweb.Environment" Version="4.0.9" />
+    <PackageReference Include="Dynamicweb.Extensibility" Version="5.0.3" />
+    <PackageReference Include="Dynamicweb.Security" Version="12.5.12" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.csproj" />
+  </ItemGroup>
+</Project>
