@@ -8,6 +8,7 @@ using Dynamicweb.SystemTools;
 using System;
 using System.Collections;
 using System.Linq;
+using static Dynamicweb.Ecommerce.Notifications.Ecommerce.Order;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
 {
@@ -115,7 +116,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 };
                 if (!string.IsNullOrEmpty(ShopId))
                 {
-                    filter.ShopIds = new string[]{ ShopId };
+                    filter.ShopIds = new string[] { ShopId };
                 }
                 if (!string.IsNullOrEmpty(OrderStates))
                 {
@@ -132,10 +133,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
 
                 var ordersToSync = Services.Orders.GetOrdersBySearch(filter);
 
-                if (ordersToSync != null && ordersToSync.ResultOrders != null && ordersToSync.ResultOrders.Any())
+                if (ordersToSync != null && ordersToSync.GetResultOrders() != null && ordersToSync.GetResultOrders().Any())
                 {
                     Settings shopSettings = SettingsManager.GetSettingsByShop(ShopId);
-                    foreach (var order in ordersToSync.ResultOrders)
+                    foreach (var order in ordersToSync.GetResultOrders())
                     {
                         Settings settings = shopSettings;
                         if (settings == null)
@@ -143,7 +144,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                             settings = SettingsManager.GetSettingsByShop(order.ShopId);
                         }
                         if (settings != null)
-                        {                            
+                        {
                             OrderHandler.UpdateOrder(settings, order, SubmitType.ScheduledTask);
                         }
                     }
@@ -166,7 +167,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 else
                 {
                     // Send mail with success
-                    SendMail(Translator.Translate("Scheduled task completed successfully"));
+                    SendMail("Scheduled task completed successfully");
                 }
             }
 
@@ -196,8 +197,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     break;
 
                 case "Order States":
-                    foreach (OrderState state in OrderState.GetAllOrderStates())
+                    foreach (OrderState state in Services.OrderStates.GetStatesByOrderType(OrderType.Order))
                     {
+                        if (state.IsDeleted)
+                            continue;
                         options.Add(state.Id, state.Name);
                     }
 

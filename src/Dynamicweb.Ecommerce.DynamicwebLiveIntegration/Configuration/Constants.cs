@@ -15,23 +15,18 @@
         /// <summary>
         /// Min timer ping interval
         /// </summary>
-        internal const int MinPingInterval = 30;
-        internal const int DefaultPingInterval = 60;
+        internal static readonly int MinPingInterval = 30;
+        internal static readonly int DefaultPingInterval = 60;
 
         /// <summary>
         /// Nested class with cache configuration constants.
         /// </summary>
         internal static class CacheConfiguration
-        {
-            /// <summary>
-            /// Defines the cache key used for storing fetched products. 
-            /// </summary>
-            public const string FetchProductInfoResult = "FetchProductInfoResult";
-
+        {        
             /// <summary>
             ///  Defines the cache key used for storing order info. 
             /// </summary>
-            public const string OrderCommunicationHash = "OrderCommunicationHash";
+            public static readonly string OrderCommunicationHash = "OrderCommunicationHash";
         }
 
         /// <summary>

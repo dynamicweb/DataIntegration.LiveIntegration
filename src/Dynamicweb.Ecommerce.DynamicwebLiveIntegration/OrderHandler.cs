@@ -151,7 +151,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 if (createOrder)
                 {
-                    OrderDebuggingInfo.Save(order, DateTime.Now, $"ERP communication failed with null response returned.", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with null response returned.", OrderErpCallFailed, DebuggingInfoType.Undefined);
                 }
 
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
@@ -319,7 +319,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                     if (createOrder && error != null)
                     {
-                        OrderDebuggingInfo.Save(order, DateTime.Now, $"ERP communication failed with error: {error}", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                        Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {error}", OrderErpCallFailed, DebuggingInfoType.Undefined);
                     }
 
                     NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));
@@ -336,7 +336,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
                 else
                 {
-                    OrderDebuggingInfo.Save(order, DateTime.Now, "Order not sent to ERP because a subscriber cancelled sending it", OrderErpCallCancelled, DebuggingInfoType.Undefined);
+                    Services.OrderDebuggingInfos.Save(order, "Order not sent to ERP because a subscriber cancelled sending it", OrderErpCallCancelled, DebuggingInfoType.Undefined);
                 }
             }
 
@@ -625,7 +625,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 OrderLineFieldCollection allOrderLineFields = null;
                 if (settings.AddOrderLineFieldsToRequest)
                 {
-                    allOrderLineFields = OrderLineField.GetOrderLineFields();
+                    allOrderLineFields = Services.OrderLineFields.GetOrderLineFields();
                 }
                 bool processDiscounts = (settings.ErpControlsDiscount || !order.Complete);
                 Dictionary<string, OrderLine> responseIdOrderLineDictionary = new Dictionary<string, OrderLine>();
@@ -912,7 +912,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 if (createOrder)
                 {
-                    OrderDebuggingInfo.Save(order, DateTime.Now, $"ERP communication failed with error: {ex}", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {ex}", OrderErpCallFailed, DebuggingInfoType.Undefined);
                 }
 
                 return false;
@@ -920,7 +920,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             if (createOrder)
             {
-                OrderDebuggingInfo.Save(order, DateTime.Now, $"Order saved in ERP successfully.", OrderErpCallSucceed, DebuggingInfoType.Undefined);
+                Services.OrderDebuggingInfos.Save(order, $"Order saved in ERP successfully.", OrderErpCallSucceed, DebuggingInfoType.Undefined);
             }
             return true;
         }

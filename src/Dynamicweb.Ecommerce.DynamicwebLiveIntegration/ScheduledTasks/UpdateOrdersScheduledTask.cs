@@ -220,7 +220,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 Logger.Log($"Error processing Update Orders job {ex.Message}\n {ex}");
             }
             finally
-            {                
+            {
                 // handled errors during process.
                 if (_processErrorForEmail != "")
                 {
@@ -231,7 +231,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 else
                 {
                     // Send mail with success 
-                    SendMailWithFrequency(Translator.Translate("Scheduled task completed successfully"), settings);
+                    SendMailWithFrequency("Scheduled task completed successfully", settings);
                 }
                 SetSuccessfulRun();
             }
@@ -242,24 +242,33 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
 
         private List<Order> ReadOrders()
         {
-            var sbSql = new System.Text.StringBuilder();            
-            var fieldTypeId = Common.Application.OrderFields.FirstOrDefault(of => of?.SystemName == FieldA)?.TypeId;
-            var valueToCompare = string.IsNullOrEmpty(ValueToCompare) ? FieldB : GetCustomFieldSqlValue(fieldTypeId, ValueToCompare);
-
-            sbSql.AppendFormat(
-          @"SELECT top {0} * 
-          FROM EcomOrders 
-          WHERE OrderComplete = 1 AND OrderDeleted = 0 
-	          and OrderCompletedDate < DATEADD(MINUTE, -{1}, GETDATE())
-	          and IsNull ({2}, {4}) != {3}"
-                , MaxOrdersToProcess, MinutesCompleted, FieldA, valueToCompare, DefaultForNull);
-
+            OrderSearchFilter filter = new OrderSearchFilter
+            {
+                PageSize = MaxOrdersToProcess,
+                ToDate = DateTime.Now.AddMinutes(-1 * MinutesCompleted),
+                ShowUntransferred = true,
+                ShowNotExported = true,
+                Completed = OrderSearchFilter.CompletedStates.Completed                
+            };
             if (!string.IsNullOrEmpty(FilterState))
             {
-                sbSql.AppendFormat("\n	AND OrderStateID in ('{0}')", FilterState.Replace(",", "','"));
-            }
+                filter.OrderStateIds = FilterState.Split(',', StringSplitOptions.RemoveEmptyEntries);                
+            }            
 
-            return Order.GetOrders(sbSql.ToString(), true).ToList();
+            //Todo: implement Custom Fields in OrderSearch
+          //  var sbSql = new System.Text.StringBuilder();
+          //  var fieldTypeId = Services.OrderFields.GetOrderFields().FirstOrDefault(of => of?.SystemName == FieldA)?.TypeId;
+          //  var valueToCompare = string.IsNullOrEmpty(ValueToCompare) ? FieldB : GetCustomFieldSqlValue(fieldTypeId, ValueToCompare);
+
+          //  sbSql.AppendFormat(
+          //@"SELECT top {0} * 
+          //FROM EcomOrders 
+          //WHERE OrderComplete = 1 AND OrderDeleted = 0 
+	         // and OrderCompletedDate < DATEADD(MINUTE, -{1}, GETDATE())
+	         // and IsNull ({2}, {4}) != {3}"
+          //      , MaxOrdersToProcess, MinutesCompleted, FieldA, valueToCompare, DefaultForNull);
+           
+            return new OrderService().GetOrdersBySearch(filter)?.GetResultOrders()?.ToList();
         }
 
         private void ProcessOrders(List<Order> ordersToSync)
@@ -326,7 +335,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
         {
             try
             {
-                var settings = GetSettings(order.ShopId);                
+                var settings = GetSettings(order.ShopId);
                 // save capture changes and try to update ERP
                 if (settings != null && settings.IsLiveIntegrationEnabled && Connector.IsWebServiceConnectionAvailable(settings))
                 {
@@ -390,8 +399,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
             switch (name)
             {
                 case "Field A":
-                case "Field B":                    
-                    foreach (var field in Common.Application.OrderFields.Where(of => of != null))
+                case "Field B":
+                    foreach (var field in Services.OrderFields.GetOrderFields().Where(of => of != null))
                     {
                         if (!options.ContainsKey(field.SystemName))
                             options.Add(field.SystemName, field.Name);
@@ -401,8 +410,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     options.Add("", "Leave unchanged");
                     goto case "State Filter";
                 case "State Filter":
-                    foreach (var state in OrderState.GetAllOrderStates())
+                    foreach (var state in Services.OrderStates.GetStatesByOrderType(OrderType.Order))
                     {
+                        if (state.IsDeleted)
+                            continue;
                         if (!options.ContainsKey(state.Id))
                         {
                             options.Add(state.Id, Helpers.GetStateLabel(state));
@@ -414,7 +425,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
         }
 
         private string GetCustomFieldSqlValue(int? fieldTypeId, string value)
-        {            
+        {
             int type = fieldTypeId != null ? fieldTypeId.Value : 0;
             string result = value;
             switch (type)

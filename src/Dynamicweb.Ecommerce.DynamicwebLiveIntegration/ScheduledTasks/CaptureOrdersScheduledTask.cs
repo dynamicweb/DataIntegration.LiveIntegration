@@ -6,7 +6,6 @@ using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Orders.Gateways;
 using Dynamicweb.Extensibility.AddIns;
 using Dynamicweb.Extensibility.Editors;
-using Dynamicweb.SystemTools;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -183,7 +182,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 var ordersToSync = ReadOrders();
 
                 if (ordersToSync != null && ordersToSync.Count() > 0)
-                {                    
+                {
                     if (CommunicateBackToErp && !Connector.IsWebServiceConnectionAvailable(settings))
                     {
                         var msg = "The ERP connection is currently unavailable, but 'Update order to ERP after capture' is enabled. Wait to retry when the ERP is back online.";
@@ -206,7 +205,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 Logger.Log($"Error processing Capture job {ex.Message}\n {ex}");
             }
             finally
-            {                
+            {
                 //handled errors during process.
                 if (_processError != "")
                 {
@@ -217,7 +216,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 else
                 {
                     //Send mail with success 
-                    SendMailWithFrequency(Translator.Translate("Scheduled task completed successfully"), settings);
+                    SendMailWithFrequency("Scheduled task completed successfully", settings);
                 }
                 SetSuccessfulRun();
             }
@@ -232,8 +231,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
         }
 
         private void CheckOrderCustomFields()
-        {                        
-            if (FilterByDoCapturePaymentFlag && !Common.Application.OrderFields.Any(of => of.SystemName == "DoCapturePayment"))
+        {
+            if (FilterByDoCapturePaymentFlag && !Services.OrderFields.GetOrderFields().Any(of => of.SystemName == "DoCapturePayment"))
             {
                 var doCapturePayment = new OrderField
                 {
@@ -244,10 +243,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     TypeName = "checkbox"
                 };
 
-                doCapturePayment.Save("Order_DoCapturePayment");                
+                Services.OrderFields.Save(doCapturePayment);
             }
 
-            if (!Common.Application.OrderFields.Any(of => of.SystemName == "PaymentCaptured"))
+            if (!Services.OrderFields.GetOrderFields().Any(of => of.SystemName == "PaymentCaptured"))
             {
                 var paymentCaptured = new OrderField
                 {
@@ -258,85 +257,86 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     TypeName = "checkbox"
                 };
 
-                paymentCaptured.Save("Order_PaymentCaptured");                
+                Services.OrderFields.Save(paymentCaptured);
             }
         }
 
         private List<Order> ReadOrders()
         {
-            //build header sql to get order
-            string sql = $@"SELECT top {MaxOrdersToProcess} * 
-              FROM EcomOrders 
-              WHERE OrderComplete = 1 AND OrderDeleted = 0 
-              And IsNull (PaymentCaptured, 0) = 0
-              AND OrderCompletedDate < DATEADD(MINUTE, -{MinutesCompleted}, GETDATE())";
+            OrderSearchFilter filter = new OrderSearchFilter
+            {
+                PageSize = MaxOrdersToProcess,
+                ToDate = DateTime.Now.AddMinutes(-1 * MinutesCompleted),
+                ShowUntransferred = true,
+                ShowNotExported = true,
+                Completed = OrderSearchFilter.CompletedStates.Completed
+            };
+            if (!string.IsNullOrEmpty(ShopId))
+            {
+                filter.ShopIds = new string[] { ShopId };
+            }
 
             //for each optional filter add is condition to the sql
-            sql += ReadOrderFromCustomFields();
-            sql += ReadOrderFromStatus();
-            sql += ReadOrderFromOrderId();
-            sql += ReadOrderFromShopId();
-            sql += ReadOrderFromDoCapturePaymentFlag();
-            sql += ReadOrderInvoiceType();
+            ReadOrderFromCustomFields(filter);
+            ReadOrderFromStatus(filter);
+            ReadOrderFromOrderId(filter);
+            ReadOrderFromShopId(filter);
+            ReadOrderFromDoCapturePaymentFlag(filter);
+            ReadOrderInvoiceType(filter);
 
-            if (IncludeSqlQueryInLogging)
-            {
-                Logger.Log($"SQL Query: {sql}");
-            }
-            return Order.GetOrders(sql, true).ToList();
+            return new OrderService().GetOrdersBySearch(filter)?.GetResultOrders()?.ToList();
         }
 
-        private string ReadOrderFromCustomFields()
+        private void ReadOrderFromCustomFields(OrderSearchFilter filter)
         {
             if (FilterByFieldAndValue && !string.IsNullOrEmpty(FieldToSearch))
             {
-                return $"	AND {FieldToSearch} = '{ValueToSearch.Replace("'", "''")}'\n";
-            }
-            return "";
+                filter.SearchInCustomOrderFields = true;
+                filter.TextSearch = ValueToSearch;
+                //return $"	AND {FieldToSearch} = '{ValueToSearch.Replace("'", "''")}'\n";
+            }            
         }
 
-        private string ReadOrderFromStatus()
+        private void ReadOrderFromStatus(OrderSearchFilter filter)
         {
             if (FilterByStatus && !string.IsNullOrEmpty(StatusToSearch))
             {
-                return $"	AND OrderStateID in ('{StatusToSearch.Replace(",", "','")}')\n";
-            }
-            return "";
+                filter.OrderStateIds = StatusToSearch.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            }           
         }
 
-        private string ReadOrderFromOrderId()
+        private void ReadOrderFromOrderId(OrderSearchFilter filter)
         {
             if (FilterBySingleOrder && !string.IsNullOrEmpty(OrderId))
             {
-                return $"	AND OrderID = '{OrderId}'\n";
-            }
-            return "";
+                filter.OrderIds = new string[] { OrderId };
+            }            
         }
 
-        private string ReadOrderFromShopId()
+        private void ReadOrderFromShopId(OrderSearchFilter filter)
         {
             if (FilterByShop && !string.IsNullOrEmpty(ShopId))
             {
-                return $"	AND OrderShopID = '{ShopId}'\n";
-            }
-            return "";
+                filter.SelectedShopId = ShopId;
+            }         
         }
 
-        private string ReadOrderFromDoCapturePaymentFlag()
+        private void ReadOrderFromDoCapturePaymentFlag(OrderSearchFilter filter)
         {
-            return FilterByDoCapturePaymentFlag ? "	 And IsNull (DoCapturePayment, 0) = 1\n" : "";
+            //todo
+            //return FilterByDoCapturePaymentFlag ? "	 And IsNull (DoCapturePayment, 0) = 1\n" : "";
         }
 
-        private string ReadOrderInvoiceType()
+        private void ReadOrderInvoiceType(OrderSearchFilter filter)
         {
             switch (_orderInvoiceTypeValue)
             {
                 case OrderInvoiceType.Invoice:
-                    return "\t And OrderIsLedgerEntry = 1 And Len (IsNull (OrderIntegrationOrderID, '')) > 0 \n";
+                    filter.IsLedgerEntries = true;                    
+                    break;
                 case OrderInvoiceType.Order:
-                    return "\t And OrderIsLedgerEntry = 0 \n";
-                default:
-                    return "";
+                    filter.IsLedgerEntries = false;
+                    break;                
             }
         }
 
@@ -353,7 +353,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     orderSettings = SettingsManager.GetSettingsByShop(order.ShopId);
                 }
                 if (orderSettings != null && orderSettings.IsLiveIntegrationEnabled)
-                {                    
+                {
                     ProcessOrder(orderSettings, order);
                     Logger.Log($"Order Id = {order.Id}, has been processed!");
                 }
@@ -551,8 +551,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
             var options = new Hashtable();
             switch (name)
             {
-                case "Field":                    
-                    foreach (var field in Common.Application.OrderFields)
+                case "Field":
+                    foreach (var field in Services.OrderFields.GetOrderFields())
                     {
                         options.Add(field.SystemName, field.Name);
                     }
@@ -562,8 +562,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     options.Add("", _leaveUnchangedValue);
                     goto case "Order States";
                 case "Order States":
-                    foreach (OrderState state in OrderState.GetAllOrderStates())
+                    foreach (OrderState state in Services.OrderStates.GetStatesByOrderType(OrderType.Order))
                     {
+                        if (state.IsDeleted)
+                            continue;
                         options.Add(state.Id, Helpers.GetStateLabel(state));
                     }
                     break;
@@ -584,5 +586,5 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
             }
             return options;
         }
-    }    
+    }
 }

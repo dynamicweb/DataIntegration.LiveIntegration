@@ -292,7 +292,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(itemNode, "OrderLineBomItemId", orderline.BomItemId);
             AddChildXmlNode(itemNode, "OrderLineGiftCardCode", orderline.GiftCardCode);
             AddChildXmlNode(itemNode, "OrderLineIsGiftCardDiscount", (!string.IsNullOrEmpty(orderline.GiftCardCode)).ToString(), isCustomField: true);
-            AddChildXmlNode(itemNode, "OrderLineFieldValues", orderline.OrderLineFieldValues.ToXml().InnerXml);
+            AddChildXmlNode(itemNode, "OrderLineFieldValues", OrderLineFieldValuesToXml(orderline.OrderLineFieldValues).InnerXml);
             if (!settings.ErpControlsDiscount && orderline.IsDiscount())
             {
                 AddChildXmlNode(itemNode, "OrderLineDiscountId", orderline.DiscountId);
@@ -317,6 +317,25 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             {
                 NotificationManager.Notify(Notifications.OrderLine.OnAfterGenerateOrderLineXml, new Notifications.OrderLine.OnAfterGenerateOrderLineXmlArgs(orderline, itemNode, currentSettings, logger));
             }
+        }
+
+        private XmlDocument OrderLineFieldValuesToXml(OrderLineFieldValueCollection ofv)
+        {
+            var xml = new XmlDocument();
+            var root = xml.CreateElement("OrderLineFieldValueCollection");
+            xml.AppendChild(root);
+            foreach (OrderLineFieldValue fieldValue in ofv)
+            {
+                var fieldValueNode = xml.CreateElement("OrderLineFieldValue");
+                root.AppendChild(fieldValueNode);
+                var systemNameNode = xml.CreateElement("OrderLineFieldSystemName");
+                var valueNode = xml.CreateElement("Value");
+                fieldValueNode.AppendChild(systemNameNode);
+                fieldValueNode.AppendChild(valueNode);
+                systemNameNode.AppendChild(xml.CreateTextNode(fieldValue.OrderLineFieldSystemName));
+                valueNode.AppendChild(xml.CreateTextNode(fieldValue.Value));
+            }
+            return xml;
         }
     }
 }
