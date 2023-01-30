@@ -1,5 +1,5 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
-using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Discounts;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Extensibility.Notifications;
 using System;
 
@@ -19,12 +19,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
         /// <param name="args">The args.</param>
         public override void OnNotify(string notification, NotificationArgs args)
         {
-            if (Context.Current != null && Context.Current.Session != null)
+            if (Context.Current != null)
             {
+                bool isWebServiceConnectionAvailable = false;
+                bool isLazyLoadingForProductInfoEnabled = false;
+
                 var settings = SettingsManager.GetSettingsByShop(Global.CurrentShopId);
                 if (settings != null && Global.IsIntegrationActive(settings))
                 {
-                    if (Convert.ToBoolean(Context.Current.Session["DynamicwebLiveIntegration.OrderExportFailed"]))
+                    isWebServiceConnectionAvailable = Connector.IsWebServiceConnectionAvailable(settings);
+                    isLazyLoadingForProductInfoEnabled = TemplatesHelper.IsLazyLoadingForProductInfoEnabled;
+
+                    if (Context.Current.Session != null && Convert.ToBoolean(Context.Current.Session["DynamicwebLiveIntegration.OrderExportFailed"]))
                     {
                         Dynamicweb.Notifications.Standard.Page.LoadedArgs loadedArgs = args as Dynamicweb.Notifications.Standard.Page.LoadedArgs;
                         if (loadedArgs?.PageViewInstance?.Template != null)
@@ -32,8 +38,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                             loadedArgs.PageViewInstance.Template.SetTag("LiveIntegration.OrderExportFailed", true);
                             loadedArgs.PageViewInstance.Template.SetTag("LiveIntegration.FailedOrderID", Convert.ToString(Context.Current.Session["DynamicwebLiveIntegration.FailedOrderId"]));
                         }
-                    }                    
+                    }
                 }
+
+                Context.Current.Items["IsWebServiceConnectionAvailable"] = isWebServiceConnectionAvailable;
+                Context.Current.Items["IsLazyLoadingForProductInfoEnabled"] = isLazyLoadingForProductInfoEnabled;
             }
         }
     }
