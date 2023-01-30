@@ -39,7 +39,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <returns>System.String.</returns>
         public virtual string GetProductIdentifier(Settings settings, Product product, string unitId)
         {
-            string unit = string.Empty;            
+            string unit = string.Empty;
             if (!string.IsNullOrEmpty(unitId) && settings != null && settings.UseUnitPrices)
             {
                 unit = $".{unitId}";
@@ -88,8 +88,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             return result;
         }
 
-        [Obsolete("Use GetPriceInfo(LiveContext context, ProductInfo product, double quantity) instead")]
-        public virtual PriceInfo GetPriceInfo(Integration.ProductInfo product, double quantity, LiveContext context)
+        /// <summary>
+        /// Gets the price.
+        /// </summary>
+        /// <param name="product">The product.</param>
+        /// <param name="quantity">The quantity.</param>
+        /// <returns>PriceInfo</returns>
+        /// <exception cref="ArgumentNullException">product</exception>
+        /// <example>
+        /// <code description="Overriding example" source="..\..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples\CustomProductProvider.cs" lang="CS"></code>
+        /// </example>
+        public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo product, double quantity)
         {
             if (product == null)
             {
@@ -142,40 +151,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 }
             }
 
-            return result;            
-        }
-
-        /// <summary>
-        /// Gets the price.
-        /// </summary>
-        /// <param name="product">The product.</param>
-        /// <param name="quantity">The quantity.</param>
-        /// <returns>PriceInfo</returns>
-        /// <exception cref="ArgumentNullException">product</exception>
-        /// <example>
-        /// <code description="Overriding example" source="..\..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples\CustomProductProvider.cs" lang="CS"></code>
-        /// </example>
-        public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo product, double quantity)
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            // We need to call the old method for backwards compatibility with custom providers.
-            return GetPriceInfo(ProductManager.ConvertToProductInfo(product), quantity, context);
-#pragma warning restore CS0618 // Type or member is obsolete
-        }
-
-        [Obsolete("Use FillProductValues(ProductInfo productInfo, Product product, Settings settings, double quantity, LiveContext context) instead")]
-        public virtual void FillProductValues(Settings settings, Integration.ProductInfo productInfo, Product product, double quantity, LiveContext context)
-        {
-            var price = GetPriceInfo(productInfo, quantity, context);
-            PriceInfo productPrice = product.GetPrice(context.PriceContext ?? new PriceContext(context.Currency, context.Country));
-            productPrice.PriceWithoutVAT = price.PriceWithoutVAT;
-            productPrice.PriceWithVAT = price.PriceWithVAT;
-
-            // Update Product Custom Fields
-            if (settings.AddProductFieldsToRequest && product.ProductFieldValues.Count > 0)
-            {
-                FillProductFieldValues(product, ProductManager.ConvertToProductInfo(productInfo));
-            }            
+            return result;
         }
 
         /// <summary>
@@ -186,14 +162,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="quantity">The quantity.</param>
         public virtual void FillProductValues(ProductInfo productInfo, Product product, Settings settings, double quantity, LiveContext context)
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            // We need to call the old method for backwards compatibility with custom providers.
-            FillProductValues(settings, ProductManager.ConvertToProductInfo(productInfo), product, quantity, context);
-#pragma warning restore CS0618 // Type or member is obsolete
+            var price = GetPriceInfo(context, productInfo, quantity);
+            PriceInfo productPrice = product.GetPrice(context.PriceContext ?? new PriceContext(context.Currency, context.Country));
+            productPrice.PriceWithoutVAT = price.PriceWithoutVAT;
+            productPrice.PriceWithVAT = price.PriceWithVAT;
+
+            // Update Product Custom Fields
+            if (settings.AddProductFieldsToRequest && product.ProductFieldValues.Count > 0)
+            {
+                FillProductFieldValues(product, productInfo);
+            }
         }
 
-        [Obsolete("Use GetPrices(ProductInfo productInfo) instead")]
-        public virtual List<Price> GetProductPrices(Integration.ProductInfo productInfo)
+        /// <summary>
+        /// Gets the product prices list.
+        /// </summary>        
+        /// <param name="productInfo">The product information.</param>
+        public virtual List<Price> GetPrices(ProductInfo productInfo)
         {
             var result = new List<Price>();
             var prices = (IList<ProductPrice>)productInfo["Prices"];
@@ -214,19 +199,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     UnitId = price.UnitId
                 });
             }
-            return result;            
-        }
-
-        /// <summary>
-        /// Gets the product prices list.
-        /// </summary>        
-        /// <param name="productInfo">The product information.</param>
-        public virtual List<Price> GetPrices(ProductInfo productInfo)
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            // We need to call the old method for backwards compatibility with custom providers.
-            return GetProductPrices(ProductManager.ConvertToProductInfo(productInfo));
-#pragma warning restore CS0618 // Type or member is obsolete            
+            return result;
         }
 
         /// <summary>

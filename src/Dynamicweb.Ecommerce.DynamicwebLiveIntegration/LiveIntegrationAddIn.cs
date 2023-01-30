@@ -616,8 +616,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 case "Order state after export succeeded":
                 case "Order state after export failed":
                     options.Add(string.Empty, "Leave unchanged");
-                    foreach (var state in OrderState.GetAllOrderStates())
+                    foreach (var state in Services.OrderStates.GetStatesByOrderType(OrderType.Order))
                     {
+                        if (state.IsDeleted)
+                            continue;
+
                         options.Add(state.Id, state.Name);
                     }
                     break;

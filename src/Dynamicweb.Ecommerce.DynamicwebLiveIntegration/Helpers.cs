@@ -281,7 +281,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
         internal static string GetStateLabel(OrderState state)
         {
-            var orderFlow = OrderFlow.GetAllFlows().FirstOrDefault(of => of.ID.Equals(state.OrderFlowId));
+            var orderFlow = Services.OrderFlows.GetAllFlows().FirstOrDefault(of => of.ID.Equals(state.OrderFlowId));
             if (orderFlow == null)
             {
                 return state.Name;

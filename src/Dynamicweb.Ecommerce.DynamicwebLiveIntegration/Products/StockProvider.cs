@@ -9,7 +9,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 {
     public class StockProvider : StockLevelProvider
     {
-        public override double? FindStockLevel(Product product)
+        public override double? FindStockLevel(Product product, string unitId, StockLocation stockLocation)
         {
             var user = Helpers.GetCurrentExtranetUser();
             var settings = SettingsManager.GetSettingsByShop(Global.CurrentShopId);

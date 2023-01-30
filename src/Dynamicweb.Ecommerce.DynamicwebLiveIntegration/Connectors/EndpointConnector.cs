@@ -66,7 +66,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             if (endpoint?.Endpoint != null)
             {
                 EndpointService endpointService = new EndpointService();                
-                response = endpointService.Execute(endpoint.Endpoint.Id, endpointService.GetDynamicwebServiceSoapBody(request), responseTimeout);
+                response = endpointService.Execute(endpoint.Endpoint.Id, endpointService.GetDynamicwebServiceSoapBody(endpoint.Endpoint, request), responseTimeout);
                 EndpointMonitoringService.Success(endpoint);
             }
             return response;
