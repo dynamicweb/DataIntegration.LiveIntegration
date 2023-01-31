@@ -2,6 +2,7 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Products;
+using System;
 using System.Collections.Generic;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
@@ -14,6 +15,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <summary>
         /// Indicates if the system is able to connect to the ERP.
         /// </summary>
+        [Obsolete("Use Context.Current.Items[\"IsWebServiceConnectionAvailable\"] instead")]
         public static bool IsWebServiceConnectionAvailable()
         {
             return Connector.IsWebServiceConnectionAvailable(SettingsManager.GetSettingsByShop(Global.CurrentShopId));
@@ -105,6 +107,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <summary>
         /// Determine if the product live information is active and should be loaded in AJAX call.
         /// </summary>
+        [Obsolete("Use Context.Current.Items[\"IsLazyLoadingForProductInfoEnabled\"] instead")]
         public static bool IsLazyLoadingForProductInfoEnabled
         {
             get

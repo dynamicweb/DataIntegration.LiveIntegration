@@ -1,4 +1,6 @@
 ﻿using Dynamicweb.Core;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
+using Dynamicweb.Frontend;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 {
@@ -82,6 +84,28 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                     return result;
                 }
             }
+        }
+
+        public static string GetShopId(PageView pageView)
+        {
+            string result;
+            if (pageView?.Area != null)
+            {
+                result = pageView.Area.EcomShopId;
+            }
+            else
+            {
+                result = CurrentShopId;
+            }
+            return result;
+        }
+
+        public static bool IsLazyLoadingForProductInfoEnabled(Settings settings)
+        {
+            return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings)
+                       && (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null)
+                       && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled)
+                       && settings.LazyLoadProductInfo;
         }
     }
 }
