@@ -34,7 +34,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Initializes a new instance of the <see cref="LiveIntegrationAddIn"/> class.
         /// </summary>
         public LiveIntegrationAddIn()
-        {            
+        {
         }
 
         #region Configuration parameters
@@ -62,7 +62,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if enabled; otherwise, <c>false</c>.</value>
         [AddInParameter("Enable live integration")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(5)]
         public bool IsLiveIntegrationEnabled { get; set; } = true;
@@ -71,7 +71,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Instance Label
         /// </summary>
         [AddInParameter("Label")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(6)]
         public string InstanceLabel { get; set; }
@@ -81,7 +81,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The web service URI.</value>
         [AddInParameter("Web service URL")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;TextArea=True;style=height:60px;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "TextArea=True")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(10)]
         public override string WebServiceURI { get; set; }
@@ -91,7 +91,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The security key.</value>
         [AddInParameter("Security key")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;password=true;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "password=true")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(20)]
         public override string SecurityKey { get; set; }
@@ -101,7 +101,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The Endpoint id.</value>        
         [AddInParameter("Endpoint")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "multiple=true;NewGUI=true;InfoBar=true;Tooltip=Only works with a web service exposed by a plug-in unit from Dynamicweb. This option takes precedence")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "multiple=true;none=true;InfoBar=true;Tooltip=Only works with a web service exposed by a plug-in unit from Dynamicweb. This option takes precedence")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(20)]
         public string Endpoint { get; set; }
@@ -111,7 +111,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The connection timeout.</value>
         [AddInParameter("Connection timeout (seconds)")]
-        [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "NewGUI=true;none=false")]
+        [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "minValue=30;Info=Minimum value is 30")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(30)]
         public int ConnectionTimeout { get; set; } = 30;
@@ -121,8 +121,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The ping interval.</value>
         [AddInParameter("Interval between pings (seconds)")]
-        [AddInDescription("When a error occurs in communication an auto ping will start to check when the ERP is back online.")]        
-        [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "NewGUI=true;none=false;minValue=30;Info=Minimum value is 30")]
+        [AddInDescription("When a error occurs in communication an auto ping will start to check when the ERP is back online.")]
+        [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "minValue=30;Info=Minimum value is 30")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(32)]
         public int AutoPingInterval { get; set; } = Constants.DefaultPingInterval;
@@ -132,7 +132,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The shop identifier.</value>
         [AddInParameter("Shop")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(40)]
         public string ShopId { get; set; }
@@ -142,7 +142,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The number format culture.</value>
         [AddInParameter("Number format culture")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=true")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(50)]
         public string NumberFormatCulture { get; set; }
@@ -152,7 +152,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The name of the web service connection status global tag.</value>
         [AddInParameter("Global tag for connection availability")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(60)]
         public string WebServiceConnectionStatusGlobalTagName { get; set; }
@@ -166,7 +166,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [enable live prices]; otherwise, <c>false</c>.</value>
         [AddInParameter("Enable live prices")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(63)]
         public bool EnableLivePrices { get; set; } = true;
@@ -176,7 +176,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [lazy load product information]; otherwise, <c>false</c>.</value>
         [AddInParameter("Lazy load product info (&getproductinfo=true)")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(65)]
         public bool LazyLoadProductInfo { get; set; }
@@ -186,17 +186,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [add product fields to request]; otherwise, <c>false</c>.</value>
         [AddInParameter("Include product custom fields in request")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;Value=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(70)]
-        public bool AddProductFieldsToRequest { get; set; }
+        public bool AddProductFieldsToRequest { get; set; } = true;
 
         /// <summary>
         /// Gets or sets product cache level
         /// </summary>
         /// <value>The product cache level.</value>
         [AddInParameter("Product information cache level")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false;Value=0")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(80)]
         public string ProductCacheLevel { get; set; }
@@ -206,7 +206,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [calculate price using product number]; otherwise, <c>false</c>.</value>
         [AddInParameter("Use product number in price calculation")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(90)]
         public bool CalculatePriceUsingProductNumber { get; set; } = false;
@@ -216,7 +216,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [use unit prices]; otherwise, <c>false</c>.</value>
         [AddInParameter("Use unit prices")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(95)]
         public bool UseUnitPrices { get; set; } = false;
@@ -225,7 +225,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Defines if the call to the ERP should make retry in the Live Products calls
         /// </summary>
         [AddInParameter("Retry request for the product information")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(100)]
         public bool MakeRetryForLiveProductInformation { get; set; } = false;
@@ -234,7 +234,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Defines if the product request should contain all product variants or only the product being requested
         /// </summary>
         [AddInParameter("Include variants in the product information request")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(110)]
         public bool GetProductInformationForAllVariants { get; set; } = false;
@@ -243,7 +243,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets or sets a value that determines the max number of products on each live request.
         /// </summary>
         [AddInParameter("Max products per request")]
-        [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "NewGUI=true;none=false;minValue=0;")]
+        [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "minValue=0")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(120)]
         public int MaxProductsPerRequest { get; set; } = 0;
@@ -257,7 +257,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The type of the cart communication.</value>
         [AddInParameter("Cart communication type")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(111)]
         public string CartCommunicationType { get; set; }
@@ -267,47 +267,47 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [queue orders to export]; otherwise, <c>false</c>.</value>
         [AddInParameter("Queue orders (and allow payments) if no connection")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;Value=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(112)]
-        public bool QueueOrdersToExport { get; set; }
+        public bool QueueOrdersToExport { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value that determines if custom order fields are appended to the outgoing XML request.
         /// </summary>
         /// <value><c>true</c> if [add order fields to request]; otherwise, <c>false</c>.</value>
         [AddInParameter("Include order custom fields in request")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;Value=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(115)]
-        public bool AddOrderFieldsToRequest { get; set; }
+        public bool AddOrderFieldsToRequest { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value that determines if custom order line fields are appended to the outgoing XML request.
         /// </summary>
         /// <value><c>true</c> if order line fields should be added to request; otherwise, <c>false</c>.</value>
         [AddInParameter("Include order line custom fields in request")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;Value=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(120)]
-        public bool AddOrderLineFieldsToRequest { get; set; }
+        public bool AddOrderLineFieldsToRequest { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value that determines if parts information (BOM) is appended to the outgoing XML request.
         /// </summary>
         /// <value><c>true</c> if order line parts should be added to request; otherwise, <c>false</c>.</value>
         [AddInParameter("Include parts order lines in request")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;Value=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(130)]
-        public bool AddOrderLinePartsToRequest { get; set; }
+        public bool AddOrderLinePartsToRequest { get; set; } = true;
 
         /// <summary>
         /// Gets or sets if save copy of order xml
         /// </summary>
         /// <value><c>true</c> if [save copy of order XML]; otherwise, <c>false</c>.</value>
         [AddInParameter("Save copy of order XML request")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(140)]
         public bool SaveCopyOfOrderXml { get; set; }
@@ -317,7 +317,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [calculate order using product number]; otherwise, <c>false</c>.</value>
         [AddInParameter("Use product number in order calculation")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(145)]
         public bool CalculateOrderUsingProductNumber { get; set; } = false;
@@ -327,7 +327,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The text for product discount orderlines.</value>
         [AddInParameter(Constants.OrderConfiguration.ProductDiscountText)]
-        [AddInParameterEditor(typeof(TextParameterEditor), "NewGUI=true;inputClass=NewUIinput;Horizontal=true;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(150)]
         public string ProductDiscountText { get; set; }
@@ -337,7 +337,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The text for order discount order line.</value>
         [AddInParameter(Constants.OrderConfiguration.OrderDiscountText)]
-        [AddInParameterEditor(typeof(TextParameterEditor), "NewGUI=true;inputClass=NewUIinput;Horizontal=true;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(153)]
         public string OrderDiscountText { get; set; }
@@ -347,7 +347,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [ERP controls discount calculations]; otherwise, <c>false</c>.</value>
         [AddInParameter("ERP controls discount calculations")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(156)]
         public bool ErpControlsDiscount { get; set; }
@@ -357,7 +357,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [ERP controls shipping calculations]; otherwise, <c>false</c>.</value>
         [AddInParameter("ERP controls shipping calculations")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(157)]
         public bool ErpControlsShipping { get; set; }
@@ -367,7 +367,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The key for shipping item.</value>
         [AddInParameter("ERP shipping item type")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false;")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(158)]
         public string ErpShippingItemType { get; set; }
@@ -377,7 +377,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The key for shipping item.</value>
         [AddInParameter("ERP shipping item key")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "NewGUI=true;inputClass=NewUIinput;Horizontal=true;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(159)]
         public string ErpShippingItemKey { get; set; }
@@ -386,7 +386,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets or sets if the orderline should be set to fixed when unitprice is set by the orderhandler
         /// </summary>
         [AddInParameter("Set orderline type to fixed")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(157)]
         public bool SetOrderlineFixed { get; set; }
@@ -396,7 +396,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The order state after export succeeded.</value>
         [AddInParameter("Order state after export succeeded")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false;SortBy=Key;")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false;SortBy=Key")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(160)]
         public string OrderStateAfterExportSucceeded { get; set; }
@@ -406,7 +406,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The order state after export failed.</value>
         [AddInParameter("Order state after export failed")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false;SortBy=Key;")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false;SortBy=Key")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(170)]
         public string OrderStateAfterExportFailed { get; set; }
@@ -416,7 +416,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The order cache level.</value>
         [AddInParameter("Order cache level")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false;")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(180)]
         public string OrderCacheLevel { get; set; }
@@ -426,7 +426,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets or sets if skip ledgers
         /// </summary>
         [AddInParameter("Do not process ledger order")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewGUI=true;none=false;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(190)]
         public bool SkipLedgerOrder { get; set; }
@@ -439,7 +439,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [live product information for anonymous users]; otherwise, <c>false</c>.</value>
         [AddInParameter("Live product info for anonymous users")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Users")]
         [AddInParameterOrder(200)]
         public bool LiveProductInfoForAnonymousUsers { get; set; }
@@ -449,7 +449,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [enable cart communication for anonymous users]; otherwise, <c>false</c>.</value>
         [AddInParameter("Cart and orders for anonymous users")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Users")]
         [AddInParameterOrder(210)]
         public bool EnableCartCommunicationForAnonymousUsers { get; set; }
@@ -459,7 +459,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The anonymous user key.</value>
         [AddInParameter("ERP Anonymous user key")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Users")]
         [AddInParameterOrder(230)]
         public string AnonymousUserKey { get; set; }
@@ -473,7 +473,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The notification email.</value>
         [AddInParameter("Notification recipient e-mail")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(230)]
         public string NotificationEmail { get; set; }
@@ -483,7 +483,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The notification template.</value>
         [AddInParameter("Notification e-mail template")]
-        [AddInParameterEditor(typeof(TemplateParameterEditor), "folder=Templates/DataIntegration/Notifications;FullPath=true;inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TemplateParameterEditor), "folder=Templates/DataIntegration/Notifications")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(240)]
         public string NotificationTemplate { get; set; }
@@ -493,7 +493,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The notification email subject.</value>
         [AddInParameter("Notification e-mail subject")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(250)]
         public string NotificationEmailSubject { get; set; }
@@ -503,7 +503,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The name of the notification email sender.</value>
         [AddInParameter("Notification e-mail sender name")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(260)]
         public string NotificationEmailSenderName { get; set; }
@@ -513,7 +513,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The notification email sender email.</value>
         [AddInParameter("Notification sender e-mail")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(270)]
         public string NotificationEmailSenderEmail { get; set; }
@@ -523,7 +523,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The notification sending frequency.</value>
         [AddInParameter("Notification sending frequency")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "NewGUI=true;none=false;SortBy=Key;")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false;SortBy=Key")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(280)]
         public string NotificationSendingFrequency { get; set; }
@@ -536,7 +536,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The maximum size of the log.</value>
         [AddInParameter("Log file max size (MB)")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "inputClass=NewUIinput;")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "")]
         [AddInParameterGroup("Logs")]
         [AddInParameterOrder(320)]
         public int LogMaxSize { get; set; }
@@ -546,7 +546,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [keep log files]; otherwise, <c>false</c>.</value>
         [AddInParameter("Keep all log files")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Logs")]
         [AddInParameterOrder(330)]
         public bool KeepLogFiles { get; set; }
@@ -556,7 +556,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [log general errors]; otherwise, <c>false</c>.</value>
         [AddInParameter("Log general errors")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Logs")]
         [AddInParameterOrder(340)]
         public bool LogGeneralErrors { get; set; }
@@ -566,7 +566,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [log connection errors]; otherwise, <c>false</c>.</value>
         [AddInParameter("Log connection errors")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Logs")]
         [AddInParameterOrder(350)]
         public bool LogConnectionErrors { get; set; }
@@ -576,7 +576,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [log response errors]; otherwise, <c>false</c>.</value>
         [AddInParameter("Log response errors")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Logs")]
         [AddInParameterOrder(360)]
         public bool LogResponseErrors { get; set; }
@@ -586,7 +586,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [log debug information]; otherwise, <c>false</c>.</value>
         [AddInParameter("Log request and response content")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "NewUIcheckbox=true;")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
         [AddInParameterGroup("Logs")]
         [AddInParameterOrder(370)]
         public bool LogDebugInfo { get; set; }
@@ -688,7 +688,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         }
                     }
                     break;
-                case "ERP shipping item type":                    
+                case "ERP shipping item type":
                     options.Add(Constants.OrderConfiguration.DefaultShippingItemType, "Item Charge");
                     options.Add("Account", "G/L Account");
                     options.Add("Resource", "Resource");
