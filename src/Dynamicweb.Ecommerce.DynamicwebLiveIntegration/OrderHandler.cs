@@ -146,11 +146,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
             else
             {
-                // error occurred
-                CheckIfOrderShouldRevertToCart(settings, order, createOrder);
-
-                if (createOrder)
+                // error occurred                
+                if(createOrder)
                 {
+                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);
                     Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with null response returned.", OrderErpCallFailed, DebuggingInfoType.Undefined);
                 }
 
@@ -226,23 +225,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 order.IntegrationOrderId = integrationIdNode.InnerText;
                 order.IsExported = true;
-            }
-        }
-
-        /// <summary>
-        /// Checks if the order should be reverted to a cart.
-        /// </summary>
-        /// <param name="settings">Settings.</param>
-        /// <param name="order">The order.</param>
-        /// <param name="createOrder">if set to <c>true</c> [create order].</param>
-        private static void CheckIfOrderShouldRevertToCart(Settings settings, Order order, bool createOrder)
-        {
-            if (createOrder && !settings.QueueOrdersToExport)
-            {
-                Services.Orders.DowngradeToCart(order);
-                Common.Context.SetCart(order);
-                order.CartV2StepIndex = --order.CartV2StepIndex;
-                order.Complete = false;
             }
         }
 
@@ -499,7 +481,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="discountOrderLines">The discount order lines.</param>
         /// <param name="orderLineNode">The order line node.</param>
         /// <param name="orderLineType">Type of the order line.</param>
-        private static void ProcessDiscountOrderLine(Settings settings, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger)
+        private static void ProcessDiscountOrderLine(Settings settings, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds)
         {
             string orderLineId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineId']")?.InnerText;
 
@@ -515,7 +497,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     orderLine.DiscountId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineDiscountId']")?.InnerText;
                 }
 
-                string parentLineId = null;
+                OrderLine parentLine = null;
                 bool useUnitPrices = settings.UseUnitPrices;
 
                 if (orderLine.OrderLineType == OrderLineType.ProductDiscount)
@@ -538,20 +520,26 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                                     if ((string.IsNullOrEmpty(unitId) && string.IsNullOrEmpty(productOrderLine.UnitId)) ||
                                         string.Compare(productOrderLine.UnitId, unitId, StringComparison.OrdinalIgnoreCase) == 0)
                                     {
-                                        parentLineId = productOrderLine.Id;
+                                        parentLine = productOrderLine;
                                     }
                                 }
                                 else
                                 {
-                                    parentLineId = productOrderLine.Id;
+                                    parentLine = productOrderLine;
                                 }
                             }
                         }
                     }
                 }
-                if (!string.IsNullOrEmpty(parentLineId))
+                if (parentLine != null && string.IsNullOrEmpty(parentLine.Id))
                 {
-                    orderLine.ParentLineId = parentLineId;
+                    Services.OrderLines.Save(parentLine);
+                    orderLineIds.Add(parentLine.Id);
+                }
+
+                if (!string.IsNullOrEmpty(parentLine?.Id))
+                {
+                    orderLine.ParentLineId = parentLine.Id;
                 }
 
                 orderLine.ProductName = DiscountTranslation.GetDiscountName(settings, orderLineNode, orderLine);
@@ -595,7 +583,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 if (priceVat.HasValue)
                 {
                     orderLine.Price.VAT = orderLine.Price.VAT > 0 ? -orderLine.Price.VAT : orderLine.Price.VAT;
-                }                
+                }
 
                 discountOrderLines.Add(orderLine);
             }
@@ -648,7 +636,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     // 1=order discount, 3=Product Discount                    
                     if (processDiscounts && (orderLineType == "1" || orderLineType == "3"))
                     {
-                        ProcessDiscountOrderLine(settings, order, discountOrderLines, orderLineNode, orderLineType, logger);
+                        ProcessDiscountOrderLine(settings, order, discountOrderLines, orderLineNode, orderLineType, logger, orderLineIds);
+                    }
+
+                    // 4=Product Tax                    
+                    if (orderLineType == "4")
+                    {
+                        ProcessTaxOrderLine(settings, order, orderLineNode, logger, orderLineIds);
                     }
                 }
 
@@ -669,6 +663,102 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     order.OrderLines.Remove(orderLine);
                     Services.OrderLines.Delete(orderLine.Id);
                 }
+                MergeOrderLines(settings, order);
+            }
+        }
+
+        private static void ProcessTaxOrderLine(Settings settings, Order order, XmlNode orderLineNode, Logger logger, List<string> orderLineIds)
+        {
+            string orderLineId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineId']")?.InnerText;
+
+            try
+            {
+                var orderLine = new OrderLine(order)
+                {
+                    OrderLineType = OrderLineType.Tax
+                };
+
+                OrderLine parentLine = null;
+                bool useUnitPrices = settings.UseUnitPrices;
+
+                string parentProductId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineProductNumber']")?.InnerText;
+                if (!string.IsNullOrEmpty(parentProductId))
+                {
+                    string unitId = null;
+                    if (useUnitPrices)
+                    {
+                        unitId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineUnitId']")?.InnerText;
+                    }
+                    foreach (var productOrderLine in order.OrderLines)
+                    {
+                        string id = settings.CalculateOrderUsingProductNumber ? productOrderLine.ProductNumber : productOrderLine.ProductId;
+                        if (string.Compare(id, parentProductId, StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            if (useUnitPrices)
+                            {
+                                if ((string.IsNullOrEmpty(unitId) && string.IsNullOrEmpty(productOrderLine.UnitId)) ||
+                                    string.Compare(productOrderLine.UnitId, unitId, StringComparison.OrdinalIgnoreCase) == 0)
+                                {
+                                    parentLine = productOrderLine;
+                                }
+                            }
+                            else
+                            {
+                                parentLine = productOrderLine;
+                            }
+                        }
+                    }
+                }
+
+                if (parentLine != null && string.IsNullOrEmpty(parentLine.Id))
+                {
+                    Services.OrderLines.Save(parentLine);
+                    orderLineIds.Add(parentLine.Id);
+                }
+
+                if (!string.IsNullOrEmpty(parentLine?.Id))
+                {
+                    orderLine.ParentLineId = parentLine.Id;
+                }
+
+                orderLine.AllowOverridePrices = true;
+
+                double? value = ReadDouble(settings, orderLineNode, "column [@columnName='OrderLineQuantity']", logger);
+                if (value.HasValue)
+                {
+                    orderLine.Quantity = value.Value;
+                }
+                else
+                {
+                    orderLine.Quantity = 1;
+                }
+
+                string productName = orderLineNode?.SelectSingleNode("column [@columnName='OrderLineProductName']")?.InnerText;
+                if (!string.IsNullOrWhiteSpace(productName))
+                {
+                    orderLine.ProductName = productName;
+                }
+
+                double? unitPriceVat = ReadDouble(settings, orderLineNode, "column [@columnName='OrderLineUnitPriceVat']", logger);
+                SetPrice(
+                    orderLine.UnitPrice,
+                    ReadDouble(settings, orderLineNode, "column [@columnName='OrderLineUnitPriceWithVat']", logger),
+                    ReadDouble(settings, orderLineNode, "column [@columnName='OrderLineUnitPriceWithoutVat']", logger),
+                    unitPriceVat);
+
+                double? priceVat = ReadDouble(settings, orderLineNode, "column [@columnName='OrderLinePriceVat']", logger);
+                SetPrice(
+                    orderLine.Price,
+                    ReadDouble(settings, orderLineNode, "column [@columnName='OrderLinePriceWithVat']", logger),
+                    ReadDouble(settings, orderLineNode, "column [@columnName='OrderLinePriceWithoutVat']", logger),
+                    priceVat);
+
+                order.OrderLines.Add(orderLine);
+            }
+            catch (Exception ex)
+            {
+                logger.Log(ErrorLevel.Error, $"Error processing order line. Error: '{ex.Message}' OrderLineId = {orderLineId}.");
+                throw;
             }
         }
 
@@ -831,36 +921,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     shippingFeeSentInRequest = order.ShippingFee;
                 }
 
-                if (Global.EnableCartCommunication(settings, order.Complete))
-                {
-                    // Set Order prices
-                    order.AllowOverridePrices = settings.ErpControlsDiscount;
-                    order.DisableDiscountCalculation = settings.ErpControlsDiscount;
-                    try
-                    {
-                        SetPrices(settings, order, orderNode, logger);
-
-                        SetCustomerNumber(order, orderNode);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Log(ErrorLevel.Error, $"Exception setting prices: {ex.Message} Order = {orderId}");
-                    }
-                }
-
                 SetCustomOrderFields(settings, order, orderNode);
 
                 var discountOrderLines = new OrderLineCollection(order);
+                bool enableCartCommunication = Global.EnableCartCommunication(settings, order.Complete);
 
-                if (Global.EnableCartCommunication(settings, order.Complete))
+                if (enableCartCommunication)
                 {
                     ProcessOrderLines(settings, response, order, discountOrderLines, logger);
+
                     if (!order.Complete || settings.ErpControlsDiscount)
                     {
                         if (settings.ErpControlsDiscount)
                         {
                             foreach (var discountLine in discountOrderLines)
                                 order.OrderLines.Add(discountLine, false);
+
+                            SetOrderPrices(order, orderNode, settings, logger, orderId);
 
                             // When GetCart DwApi request is executed and ERP controls discounts:
                             // old discount lines are deleted and new discounts are not saved
@@ -873,10 +950,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         }
                         else if (!order.Complete)
                         {
+                            SetOrderPrices(order, orderNode, settings, logger, orderId);
                             Services.Orders.CalculateDiscounts(order);
                         }
+                        else
+                        {
+                            SetOrderPrices(order, orderNode, settings, logger, orderId);
+                        }
+                    }
+                    else
+                    {
+                        SetOrderPrices(order, orderNode, settings, logger, orderId);
                     }
                     LiveShippingFeeProvider.ProcessShipping(settings, order, orderNode, logger);
+                }
+                else
+                {
+                    SetOrderPrices(order, orderNode, settings, logger, orderId);
                 }
 
                 if (createOrder)
@@ -900,7 +990,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     {
                         UpdateDynamicwebShipping(order, orderNode, shippingFeeSentInRequest, settings, logger);
                     }
-                    if (settings.UseUnitPrices)
+                    if (enableCartCommunication)
                     {
                         Services.Orders.Save(order);
                     }
@@ -923,6 +1013,22 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 Services.OrderDebuggingInfos.Save(order, $"Order saved in ERP successfully.", OrderErpCallSucceed, DebuggingInfoType.Undefined);
             }
             return true;
+        }
+
+        private static void SetOrderPrices(Order order, XmlNode orderNode, Settings settings, Logger logger, string orderId)
+        {
+            // Set Order prices
+            order.AllowOverridePrices = settings.ErpControlsDiscount;
+            order.DisableDiscountCalculation = settings.ErpControlsDiscount;
+            try
+            {
+                SetPrices(settings, order, orderNode, logger);
+                SetCustomerNumber(order, orderNode);
+            }
+            catch (Exception ex)
+            {
+                logger.Log(ErrorLevel.Error, $"Exception setting prices: {ex.Message} Order = {orderId}");
+            }
         }
 
         /// <summary>
@@ -1132,6 +1238,48 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
             }
             return orderLine;
+        }
+
+        private static void MergeOrderLines(Settings settings, Order order)
+        {
+            if (order.Complete || !settings.AddOrderLineFieldsToRequest || settings.ErpControlsDiscount || order.OrderLines.Count <= 1)
+            {
+                return;
+            }
+            var newLines = order.OrderLines.Where(l => string.IsNullOrEmpty(l.Id)).ToList();
+            if (!newLines.Any())
+            {
+                return;
+            }
+            var mergedLines = new List<OrderLine>();
+            foreach (var newLine in newLines)
+            {
+                foreach (OrderLine theOrderLine in order.OrderLines.Where(l => !string.IsNullOrEmpty(l.Id)).ToList())
+                {
+                    if (!string.IsNullOrEmpty(theOrderLine.DiscountId) || theOrderLine.IsDiscount() || !theOrderLine.IsProduct())
+                    {
+                        continue;
+                    }
+                    if (Services.OrderLines.CanBeMerged(theOrderLine, newLine))
+                    {
+                        theOrderLine.Quantity += newLine.Quantity;
+                        theOrderLine.AllowOverridePrices = false;
+                        for (int i = 0, loopTo = theOrderLine.BomOrderLines.Count - 1; i <= loopTo; i++)
+                            theOrderLine.BomOrderLines[i].Quantity += newLine.BomOrderLines[i].Quantity;
+                        mergedLines.Add(newLine);
+                        break;
+                    }
+                }
+            }
+            if (mergedLines.Any())
+            {
+                foreach (var mergedLine in mergedLines)
+                {
+                    order.OrderLines.Remove(mergedLine);
+                }
+                SaveOrderHash(settings, string.Empty);
+                Services.Orders.ClearCachedPrices(order);
+            }
         }
 
         #region Hash helper methods
