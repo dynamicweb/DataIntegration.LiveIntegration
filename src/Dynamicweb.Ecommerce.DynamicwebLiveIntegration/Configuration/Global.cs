@@ -24,7 +24,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// <value>Returns <c>true</c> if lazy loaded is enabled in the settings and the current request is not a lazy loaded request, <c>false</c> otherwise.</value>
         public static bool IsProductLazyLoad(Settings settings)
         {
-            return settings.LazyLoadProductInfo && !Converter.ToBoolean(Context.Current.Request["getproductinfo"]);
+            return settings.LazyLoadProductInfo && !Converter.ToBoolean(Context.Current?.Request?["getproductinfo"]);
         }
 
         /// <summary>

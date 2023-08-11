@@ -293,7 +293,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                 }
                 finally
                 {
-                    NotificationManager.Notify(OnAfterErpCommunication, new OnAfterErpCommunicationArgs(request, erpXmlResponse, referenceName, exception, settings, logger));
+                    NotificationManager.Notify(OnAfterErpCommunication, new OnAfterErpCommunicationArgs(request, erpXmlResponse, result, referenceName, exception, settings, logger));
                 }
 
                 // no retry or xml reply from ERP then leave

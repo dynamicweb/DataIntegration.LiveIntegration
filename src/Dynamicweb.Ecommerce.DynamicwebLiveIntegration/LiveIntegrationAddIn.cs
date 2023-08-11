@@ -688,9 +688,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         }
                     }
                     break;
-                case "ERP shipping item type":
+                case "ERP shipping item type":                    
                     options.Add(Constants.OrderConfiguration.DefaultShippingItemType, "Item Charge");
                     options.Add("Account", "G/L Account");
+                    options.Add("Item", "Item");
+                    options.Add("FixedAsset", "Fixed Asset");
                     options.Add("Resource", "Resource");
                     break;
                 default:

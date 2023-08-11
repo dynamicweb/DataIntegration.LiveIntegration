@@ -249,7 +249,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         internal static string GetTranslation(string key)
         {
             string result = null;
-            if (Context.Current.Items.Contains(key))
+            if (Context.Current?.Items != null && Context.Current.Items.Contains(key))
             {
                 result = (string)Context.Current.Items[key];
             }
@@ -257,13 +257,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 Rendering.Translation.TranslationEntryCollection translations = Rendering.Translation.Translation.GetTranslations(key,
                 Rendering.Translation.KeyScope.DesignsShared, null);
-                CultureInfo culture = ExecutingContext.GetCulture(true);
-                Rendering.Translation.TranslationEntry translationEntry = translations.Values.FirstOrDefault(v => string.Equals(v?.CultureName, culture?.Name, StringComparison.OrdinalIgnoreCase));
-                if (translationEntry != null && !string.IsNullOrEmpty(translationEntry.Value))
+                if (translations?.Values != null)
                 {
-                    result = translationEntry.Value;
+                    CultureInfo culture = ExecutingContext.GetCulture(true);
+                    Rendering.Translation.TranslationEntry translationEntry = translations.Values.FirstOrDefault(v => string.Equals(v?.CultureName, culture?.Name, StringComparison.OrdinalIgnoreCase));
+                    if (translationEntry != null && !string.IsNullOrEmpty(translationEntry.Value))
+                    {
+                        result = translationEntry.Value;
+                    }
+                    if (Context.Current?.Items != null)
+                        Context.Current.Items[key] = result;
                 }
-                Context.Current.Items[key] = result;
             }
             return result;
         }
