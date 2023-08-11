@@ -2,6 +2,7 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Extensibility.Notifications;
 using System;
+using System.Xml;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
 {
@@ -103,12 +104,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// </summary>
             /// <param name="request">The request that has been sent.</param>
             /// <param name="response">The response that has been received.</param>
+            /// <param name="xmlDocument">The document that has been received. You can manipulate this document to alter the XML being passed from the ERP to the Liveintegration Orderhandler.</param>
             /// <param name="referenceName">Name of the reference.</param>
             /// <param name="exception">The exception that has occurred.</param>
-            public OnAfterErpCommunicationArgs(string request, string response, string referenceName, Exception exception, Settings settings, Logger logger)
+            public OnAfterErpCommunicationArgs(string request, string response, XmlDocument xmlDocument, string referenceName, Exception exception, Settings settings, Logger logger)
             {
                 Request = request;
                 Response = response;
+                XmlDocument = xmlDocument;
                 ReferenceName = referenceName;
                 Exception = exception;
                 Settings = settings;
@@ -132,6 +135,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// </summary>
             /// <value>The response.</value>
             public string Response { get; }
+
+            /// <summary>
+            /// Gets the XML document that has been created. You can manipulate this document to alter the XML being passed from the ERP to the Liveintegration Orderhandler.
+            /// </summary>
+            /// <value>The document.</value>
+            public XmlDocument XmlDocument { get; }
 
             /// <summary>
             /// Gets the exception that has occurred.
