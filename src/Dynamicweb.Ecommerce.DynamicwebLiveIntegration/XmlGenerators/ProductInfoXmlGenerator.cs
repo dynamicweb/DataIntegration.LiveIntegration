@@ -31,7 +31,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             var xmlRoot = xmlDocument.CreateElement("GetEcomData");
             var user = settings.Context.User;
 
-            xmlRoot.SetAttribute("ExternalUserId", !string.IsNullOrWhiteSpace(user?.ExternalID) ? user.ExternalID : currentSettings.AnonymousUserKey);
+            xmlRoot.SetAttribute("ExternalUserId", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
             xmlRoot.SetAttribute("AccessUserCustomerNumber", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
             xmlRoot.SetAttribute("VatCountryCode", !string.IsNullOrWhiteSpace(settings?.Context?.PriceContext?.Country?.Code2) ? settings.Context.PriceContext.Country.Code2 : Services.Countries.GetCountries().FirstOrDefault().Code2);
             xmlRoot.SetAttribute("VatPostingGroup", !string.IsNullOrWhiteSpace(settings?.Context?.PriceContext?.Country?.VatPostingGroup) ? settings.Context.PriceContext.Country.VatPostingGroup : Services.Countries.GetCountries().FirstOrDefault().VatPostingGroup);

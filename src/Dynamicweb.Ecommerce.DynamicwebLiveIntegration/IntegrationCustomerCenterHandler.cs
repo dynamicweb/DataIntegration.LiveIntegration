@@ -384,12 +384,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 bool forceDownload = Context.Current.Request.GetBoolean("forceDownload");
                 if (forceDownload)
                 {
-                    string fileName = string.Format("IntegrationCustomerCenterItem{0}.pdf", id);
+                    string fileName = string.Format("{0}{1}.pdf", !string.IsNullOrEmpty(settings.Type) ? settings.Type : "IntegrationCustomerCenterItem", id);
                     if (!string.IsNullOrEmpty(request["Filename"])){
                         fileName = request["Filename"];
                         fileName = Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
                     }
-                    string filePath = SystemInformation.MapPath("/" + Dynamicweb.DataIntegration.ProviderHelpers.FileHelper.FilesFolderName + "/System/Log/LiveIntegration/" + fileName);
+                    string filePath = SystemInformation.MapPath("/" + Dynamicweb.Content.Files.FilesAndFolders.GetFilesFolderName() + "/System/Log/LiveIntegration/" + fileName);
                     using (Stream stream = File.OpenWrite(filePath))
                     {
                         DecodeStream(inputStream, stream);
