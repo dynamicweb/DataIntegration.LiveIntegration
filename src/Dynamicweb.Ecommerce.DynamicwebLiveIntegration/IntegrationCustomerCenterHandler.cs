@@ -389,7 +389,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         fileName = request["Filename"];
                         fileName = Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
                     }
-                    string filePath = SystemInformation.MapPath("/" + Dynamicweb.Content.Files.FilesAndFolders.GetFilesFolderName() + "/System/Log/LiveIntegration/" + fileName);
+                    string filePath = SystemInformation.MapPath("/Files/System/Log/LiveIntegration/" + fileName);
                     using (Stream stream = File.OpenWrite(filePath))
                     {
                         DecodeStream(inputStream, stream);
