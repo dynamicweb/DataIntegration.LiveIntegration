@@ -22,9 +22,9 @@
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Dynamicweb.Core" Version="10.0.0" />
+		<PackageReference Include="Dynamicweb.Core" Version="10.0.0-*" />
 		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.0.0" />
-		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.0.0" />
+		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.0.0-*" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
 </Project>
