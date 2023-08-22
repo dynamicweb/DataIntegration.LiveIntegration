@@ -349,10 +349,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <summary>
         /// Retrieves order information in pdf
         /// </summary>
-        /// <param name="request">Request</param>
-        /// <param name="response">Response</param>
-        /// <param name="securityKey">Security key</param>
-        internal static void RetrievePDF(IRequest request, IResponse response)
+        internal static string RetrievePDF(IRequest request)
         {
             string shopId = Global.CurrentShopId;
             var currentSettings = SettingsManager.GetSettingsByShop(shopId);
@@ -360,11 +357,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 string id = request["id"];
                 User user = Helpers.GetCurrentExtranetUser();
-                if (user == null)
-                {
-                    SetAccessDenied(response);
-                    return;
-                }
+
                 RetrievePdfXmlGeneratorSettings settings = new RetrievePdfXmlGeneratorSettings()
                 {
                     Type = request["type"],
@@ -373,40 +366,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 };
                 string requestString = new RetrievePdfXmlGenerator().GenerateXml(settings);
                 string base64EncodedPDF = Connector.RetrievePDF(currentSettings, requestString);
-
-                MemoryStream inputStream = new MemoryStream();
-                StreamWriter writer = new StreamWriter(inputStream);
-                writer.Write(base64EncodedPDF);
-                writer.Flush();
-                inputStream.Position = 0;
-                response.ContentType = "application/pdf";
-
-                bool forceDownload = Context.Current.Request.GetBoolean("forceDownload");
-                if (forceDownload)
-                {
-                    string fileName = string.Format("{0}{1}.pdf", !string.IsNullOrEmpty(settings.Type) ? settings.Type : "IntegrationCustomerCenterItem", id);
-                    if (!string.IsNullOrEmpty(request["Filename"])){
-                        fileName = request["Filename"];
-                        fileName = Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
-                    }
-                    string filePath = SystemInformation.MapPath("/Files/System/Log/LiveIntegration/" + fileName);
-                    using (Stream stream = File.OpenWrite(filePath))
-                    {
-                        DecodeStream(inputStream, stream);
-                    }
-                    response.Clear();
-                    response.AddHeader("content-disposition", string.Format("attachment;filename={0}", fileName));
-                    response.BinaryWrite(File.ReadAllBytes(filePath));
-                    response.Flush();
-                    File.Delete(filePath);
-                }
-                else
-                {
-                    DecodeStream(inputStream, response.OutputStream);
-                    response.OutputStream.Flush();
-                    response.OutputStream.Close();
-                }
+                return base64EncodedPDF;
             }
+            return null;
         }
 
         /// <summary>
@@ -429,15 +391,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
             }
-        }
-
-        private static void SetAccessDenied(IResponse response)
-        {
-            response.ClearHeaders();
-            response.Status = "403 Access denied";
-            response.StatusCode = 403;
-            response.StatusDescription = "Access denied";
-            response.End();
-        }        
+        }          
     }
 }

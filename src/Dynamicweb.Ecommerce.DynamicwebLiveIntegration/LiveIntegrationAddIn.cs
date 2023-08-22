@@ -825,11 +825,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <summary>
         /// Retrieves order information in pdf
         /// </summary>
-        /// <param name="request">Request</param>
-        /// <param name="response">Response</param>
-        public override void RetrievePDF(IRequest request, IResponse response)
+        public override string RetrievePDF(IRequest request)
         {
-            IntegrationCustomerCenterHandler.RetrievePDF(request, response);
+            return IntegrationCustomerCenterHandler.RetrievePDF(request);
         }
 
         /// <summary>
