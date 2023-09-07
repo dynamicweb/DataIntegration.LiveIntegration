@@ -335,7 +335,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="discountOrderLines">The discount order lines.</param>
         private static void HandleIntegrationFailure(Settings settings, Order order, string failedState, string orderId, OrderLineCollection discountOrderLines, Logger logger)
         {
-            if (Global.EnableCartCommunication(settings, order.Complete))
+            if (discountOrderLines != null && Global.EnableCartCommunication(settings, order.Complete))
             {
                 RemoveDiscounts(order);
                 order.OrderLines.Add(discountOrderLines);
@@ -481,7 +481,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="discountOrderLines">The discount order lines.</param>
         /// <param name="orderLineNode">The order line node.</param>
         /// <param name="orderLineType">Type of the order line.</param>
-        private static void ProcessDiscountOrderLine(Settings settings, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds)
+        private static void ProcessDiscountOrderLine(Settings settings, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds, OrderLineFieldCollection allOrderLineFields)
         {
             string orderLineId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineId']")?.InnerText;
 
@@ -585,6 +585,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     orderLine.Price.VAT = orderLine.Price.VAT > 0 ? -orderLine.Price.VAT : orderLine.Price.VAT;
                 }
 
+                ProcessOrderLineCustomFields(settings, orderLine, allOrderLineFields, orderLineNode);
+
                 discountOrderLines.Add(orderLine);
             }
             catch (Exception ex)
@@ -636,13 +638,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     // 1=order discount, 3=Product Discount                    
                     if (processDiscounts && (orderLineType == "1" || orderLineType == "3"))
                     {
-                        ProcessDiscountOrderLine(settings, order, discountOrderLines, orderLineNode, orderLineType, logger, orderLineIds);
+                        ProcessDiscountOrderLine(settings, order, discountOrderLines, orderLineNode, orderLineType, logger, orderLineIds, allOrderLineFields);
                     }
 
                     // 4=Product Tax                    
                     if (orderLineType == "4")
                     {
-                        ProcessTaxOrderLine(settings, order, orderLineNode, logger, orderLineIds);
+                        ProcessTaxOrderLine(settings, order, orderLineNode, logger, orderLineIds, allOrderLineFields);
                     }
                 }
 
@@ -667,7 +669,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
         }
 
-        private static void ProcessTaxOrderLine(Settings settings, Order order, XmlNode orderLineNode, Logger logger, List<string> orderLineIds)
+        private static void ProcessTaxOrderLine(Settings settings, Order order, XmlNode orderLineNode, Logger logger, List<string> orderLineIds, OrderLineFieldCollection allOrderLineFields)
         {
             string orderLineId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineId']")?.InnerText;
 
@@ -752,6 +754,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     ReadDouble(settings, orderLineNode, "column [@columnName='OrderLinePriceWithVat']", logger),
                     ReadDouble(settings, orderLineNode, "column [@columnName='OrderLinePriceWithoutVat']", logger),
                     priceVat);
+
+                ProcessOrderLineCustomFields(settings, orderLine, allOrderLineFields, orderLineNode);
 
                 order.OrderLines.Add(orderLine);
             }
@@ -850,33 +854,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     UpdateOrderLinesPricesCurrency(order);
 
                     // Set OrderLineCustomFields values
-                    if (settings.AddOrderLineFieldsToRequest && allOrderLineFields != null && allOrderLineFields.Count > 0)
-                    {
-                        XmlNode orderLineFieldNode = null;
-                        foreach (OrderLineField olf in allOrderLineFields)
-                        {
-                            orderLineFieldNode = orderLineNode.SelectSingleNode(
-                                $"column [@columnName='{olf.SystemName}']");
-                            if (orderLineFieldNode != null)
-                            {
-                                if (orderLine.OrderLineFieldValues == null)
-                                {
-                                    orderLine.OrderLineFieldValues = new OrderLineFieldValueCollection();
-                                }
-
-                                OrderLineFieldValue olfv = orderLine.OrderLineFieldValues.FirstOrDefault(fv => fv != null && string.Compare(olf.SystemName, fv.OrderLineFieldSystemName, StringComparison.OrdinalIgnoreCase) == 0);
-                                if (olfv != null)
-                                {
-                                    olfv.Value = orderLineFieldNode.InnerText;
-                                }
-                                else
-                                {
-                                    olfv = new OrderLineFieldValue(olf.SystemName, orderLineFieldNode.InnerText);
-                                    orderLine.OrderLineFieldValues.Add(olfv);
-                                }
-                            }
-                        }
-                    }
+                    ProcessOrderLineCustomFields(settings, orderLine, allOrderLineFields, orderLineNode);
                 }
             }
             catch (Exception ex)
@@ -1279,6 +1257,37 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
                 SaveOrderHash(settings, string.Empty);
                 Services.Orders.ClearCachedPrices(order);
+            }
+        }
+
+        private static void ProcessOrderLineCustomFields(Settings settings, OrderLine orderLine, OrderLineFieldCollection allOrderLineFields, XmlNode orderLineNode)
+        {            
+            if (settings.AddOrderLineFieldsToRequest && allOrderLineFields != null && allOrderLineFields.Count > 0)
+            {
+                XmlNode orderLineFieldNode = null;
+                foreach (OrderLineField olf in allOrderLineFields)
+                {
+                    orderLineFieldNode = orderLineNode.SelectSingleNode(
+                        $"column [@columnName='{olf.SystemName}']");
+                    if (orderLineFieldNode != null)
+                    {
+                        if (orderLine.OrderLineFieldValues == null)
+                        {
+                            orderLine.OrderLineFieldValues = new OrderLineFieldValueCollection();
+                        }
+
+                        OrderLineFieldValue olfv = orderLine.OrderLineFieldValues.FirstOrDefault(fv => fv != null && string.Compare(olf.SystemName, fv.OrderLineFieldSystemName, StringComparison.OrdinalIgnoreCase) == 0);
+                        if (olfv != null)
+                        {
+                            olfv.Value = orderLineFieldNode.InnerText;
+                        }
+                        else
+                        {
+                            olfv = new OrderLineFieldValue(olf.SystemName, orderLineFieldNode.InnerText);
+                            orderLine.OrderLineFieldValues.Add(olfv);
+                        }
+                    }
+                }
             }
         }
 
