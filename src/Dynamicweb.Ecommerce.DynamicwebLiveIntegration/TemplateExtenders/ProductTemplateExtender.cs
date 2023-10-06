@@ -88,7 +88,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                             pricesTemplate.SetTag("Ecom:Product.Prices.GroupID", price.UserGroupId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.ValidFrom", price.ValidFrom.HasValue ? price.ValidFrom.Value.ToShortDateString() : String.Empty);
                             pricesTemplate.SetTag("Ecom:Product.Prices.ValidTo", price.ValidTo.HasValue ? price.ValidTo.Value.ToShortDateString() : String.Empty);
-                            pricesTemplate.SetTag("Ecom:Product.Prices.PeriodID", price.PeriodId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.UnitID", price.UnitId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.LanguageID", price.LanguageId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.Country", price.CountryCode);
