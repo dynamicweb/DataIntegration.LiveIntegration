@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>10.0.3</Version>		
+		<Version>10.0.4</Version>		
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
-		<Description>Dynamicweb Live Integration</Description>
+		<Title>Live Integration</Title>
+		<Description>Live Integration</Description>
 	</PropertyGroup>
 	<PropertyGroup>
 		<PackageProjectUrl>https://doc.dynamicweb.com/</PackageProjectUrl>
-		<PackageTags>Dynamicweb dw10 addin liveintegration dataintegration providers</PackageTags>
+		<PackageTags>Dynamicweb dw10 addin integration framework</PackageTags>
 		<Product>Dynamicweb CMS</Product>
 		<Company>Dynamicweb Software A/S</Company>
 		<Authors>Dynamicweb Software A/S</Authors>
-		<Copyright>Copyright © 2020 Dynamicweb Software A/S</Copyright>
+		<Copyright>Copyright © 2023 Dynamicweb Software A/S</Copyright>
 	</PropertyGroup>
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
