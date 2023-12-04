@@ -243,7 +243,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         }
         internal static void SaveTranslation(string key, string value)
         {
-            Rendering.Translation.Translation.SetTranslation(key, value, ExecutingContext.GetCulture(), Rendering.Translation.KeyScope.DesignsShared, null);
+            Rendering.Translation.Translation.SetTranslation(key, value, ExecutingContext.GetCulture(), Rendering.Translation.KeyScope.DesignsShared, null, null);
         }
 
         internal static string GetTranslation(string key)
