@@ -24,7 +24,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Dynamicweb" Version="10.0.7" />
-		<PackageReference Include="Dynamicweb.Core" Version="10.0.7" />
+		<PackageReference Include="Dynamicweb.Core" Version="10.0.22" />
 		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.0.0" />
 		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.0.7" />
 	</ItemGroup>

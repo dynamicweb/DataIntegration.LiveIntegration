@@ -20,7 +20,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             string productIdentifier, ResponseCacheLevel productCacheLevel, LiveContext context, Logger logger)
         {
             // If Product is not in the cache, then get it from Erp
-            if (!ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User))
+            if (!ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User, context.Currency))
             {
                 if (!string.IsNullOrEmpty(variantId) && (!settings.GetProductInformationForAllVariants))
                 {
@@ -37,7 +37,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 bool fetchedProductInfo = ProductManager.FetchProductInfos(products, context, settings, logger, true);
                 if (fetchedProductInfo &&
                     // Check if requested product was not received from response
-                    !ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User)
+                    !ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User, context.Currency)
                     )
                 {
                     new Logger(settings).Log(ErrorLevel.Error, $"Error receiving product info for product: {ProductManager.ProductProvider.GetProductIdentifier(settings, product)}.");
@@ -63,7 +63,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     if (settings.EnableLivePrices &&
                         (settings.LiveProductInfoForAnonymousUsers || context.Customer != null) &&
                         (context.Customer == null || !context.Customer.IsLivePricesDisabled)
-                        && settings.IsLiveIntegrationEnabled
+                        && Global.IsIntegrationActive(settings)
                         && (string.IsNullOrWhiteSpace(settings.ShopId) || settings.ShopId == context.Shop?.Id)
                         && !Global.IsProductLazyLoad(settings)
                         && Connector.IsWebServiceConnectionAvailable(settings, logger))
@@ -80,14 +80,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                                 products.Add(product, selection.Quantity);
                         }
                         LiveContext liveContext = new LiveContext(context);                        
-                        if (!ProductManager.FetchProductInfos(products, liveContext, settings, logger))
+                        if (!ProductManager.FetchProductInfos(products, liveContext, settings, logger, true))
                         {
                             return;
                         }
                         foreach (var productWithQuantity in products)
                         {
                             var product = productWithQuantity.Key;
-                            ProductInfo productInfo = ProductManager.GetProductInfo(product, settings, context.Customer);
+                            ProductInfo productInfo = ProductManager.GetProductInfo(product, settings, context.Customer, liveContext);
                             if (productInfo != null)
                             {
                                 ProductManager.ProductProvider.FillProductValues(productInfo, product, settings, productWithQuantity.Value, liveContext);

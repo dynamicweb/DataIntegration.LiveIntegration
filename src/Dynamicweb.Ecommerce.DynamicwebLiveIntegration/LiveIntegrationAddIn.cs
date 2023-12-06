@@ -1,4 +1,5 @@
-﻿using Dynamicweb.DataIntegration.EndpointManagement;
+﻿using Dynamicweb.Content;
+using Dynamicweb.DataIntegration.EndpointManagement;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
@@ -136,6 +137,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         [AddInParameterGroup("General")]
         [AddInParameterOrder(40)]
         public string ShopId { get; set; }
+
+        /// <summary>
+        /// Gets or sets Website
+        /// </summary>
+        /// <value>The website identifier.</value>
+        [AddInParameter("Website")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=true;nonetext=Any")]
+        [AddInParameterGroup("General")]
+        [AddInParameterOrder(43)]
+        public int AreaId { get; set; }
 
         /// <summary>
         /// Number format culture
@@ -633,6 +644,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         options.Add(shop.Id, shop.Name);
                     }
                     break;
+                case "Website":
+                    foreach (var area in new AreaService().GetAreas())
+                    {
+                        options.Add(area.ID, area.Name);
+                    }
+                    break;
                 case "Cart communication type":
                     options.Add(Constants.CartCommunicationType.None, Constants.CartCommunicationType.None);
                     options.Add(Constants.CartCommunicationType.Full, Constants.CartCommunicationType.Full);
@@ -688,7 +705,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         }
                     }
                     break;
-                case "ERP shipping item type":                    
+                case "ERP shipping item type":
                     options.Add(Constants.OrderConfiguration.DefaultShippingItemType, "Item Charge");
                     options.Add("Account", "G/L Account");
                     options.Add("Item", "Item");

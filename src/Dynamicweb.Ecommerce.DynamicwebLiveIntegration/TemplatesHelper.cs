@@ -101,7 +101,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return Products.ProductManager.FetchProductInfos(
                 new Dictionary<Product, double> { { product, quantity } },
                 new LiveContext(Services.Currencies.GetCurrency(currencyCode), Helpers.GetCurrentExtranetUser(), Services.Shops.GetShop(shopId)),
-                settings, new Logging.Logger(settings), updateCache);
+                settings, new Logging.Logger(settings), false, updateCache);
         }
 
         /// <summary>
@@ -118,6 +118,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled)
                     && settings.LazyLoadProductInfo;
             }
-        }
+        }        
     }
 }

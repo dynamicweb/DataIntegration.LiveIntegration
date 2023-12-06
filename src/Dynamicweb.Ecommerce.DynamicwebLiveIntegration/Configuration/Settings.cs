@@ -106,6 +106,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         public string ShopId { get; set; }
 
         /// <summary>
+        /// Gets or sets the ID of the website used in this integration.
+        /// </summary>
+        /// <value>The website identifier.</value>
+        public int AreaId { get; set; }
+
+        /// <summary>
         /// Global tag for connection availability
         /// </summary>
         /// <value>The name of the web service connection status global tag.</value>
@@ -412,6 +418,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 target.WebServiceURI = source.WebServiceURI;
                 target.Endpoint = source.Endpoint;
                 target.ShopId = source.ShopId;
+                target.AreaId = source.AreaId;                
                 target.SecurityKey = source.SecurityKey;
                 target.ConnectionTimeout = source.ConnectionTimeout;
                 target.AutoPingInterval = source.AutoPingInterval < Constants.MinPingInterval ? Constants.MinPingInterval : source.AutoPingInterval;
