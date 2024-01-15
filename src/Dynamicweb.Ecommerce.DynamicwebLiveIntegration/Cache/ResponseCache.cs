@@ -1,8 +1,8 @@
 using Dynamicweb.Caching;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
+using Dynamicweb.Ecommerce.International;
 using Dynamicweb.Security.UserManagement;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Xml;
 
@@ -28,7 +28,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
             //If it is WebApi requests - No Session available
             if (cacheModel == ResponseCacheLevel.Session && (Context.Current == null || Context.Current.Session == null))
             {
-                int userId = user != null ? user.ID : 0;                
+                int userId = user != null ? user.ID : 0;
                 if (userId != 0)
                 {
                     string userSessionKey = GetUserSessionKey(userId.ToString());
@@ -134,13 +134,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
                 List<string> keysToRemove = new List<string>();
                 foreach (string key in Context.Current.Session.Keys)
                 {
-                    if (key.StartsWith(ProductInfosKey))                    
-                        keysToRemove.Add(key);                    
+                    if (key.StartsWith(ProductInfosKey))
+                        keysToRemove.Add(key);
                 }
                 foreach (string key in keysToRemove)
                 {
                     Context.Current.Session.Remove(key);
-                }                
+                }
             }
             catch
             {
@@ -187,16 +187,31 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
         /// <returns><c>True</c> if product is cached, otherwise <c>false</c>.</returns>
         public static bool IsProductInCache(ResponseCacheLevel productCacheLevel, string productIdentifier, User user)
         {
+            return IsProductInCache(productCacheLevel, productIdentifier, user, null);
+        }
+
+        /// <summary>
+        /// Check if product is cached.
+        /// </summary>
+        /// <returns><c>True</c> if product is cached, otherwise <c>false</c>.</returns>
+        public static bool IsProductInCache(ResponseCacheLevel productCacheLevel, string productIdentifier, User user, Currency currency)
+        {
             // Verify cache
             var cachedProductInfo = GetProductInfos(productCacheLevel, user);
             if (cachedProductInfo is object && cachedProductInfo.Keys.Count > 0)
             {
-                return cachedProductInfo.ContainsKey(productIdentifier);
+                if (currency is null)
+                    return cachedProductInfo.ContainsKey(productIdentifier);
+
+                if (cachedProductInfo.TryGetValue(productIdentifier, out var productInfo))
+                {
+                    return Equals(currency.Code, productInfo["CurrencyCode"]);
+                }
             }
 
             return false;
         }
 
-        private static string GetUserSessionKey(string userId) => $"{ProductInfosKey}{userId}";        
+        private static string GetUserSessionKey(string userId) => $"{ProductInfosKey}{userId}";
     }
 }

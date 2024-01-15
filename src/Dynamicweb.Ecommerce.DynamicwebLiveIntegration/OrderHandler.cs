@@ -137,7 +137,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             // save this hash for next calls
             SaveOrderHash(settings, currentHash);
 
-            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger);
+            bool? requestCancelled = null;
+            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out requestCancelled);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
                 bool processResponseResult = ProcessResponse(settings, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
@@ -147,7 +148,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             else
             {
                 // error occurred                
-                if(createOrder)
+                if (createOrder && (!requestCancelled.HasValue || !requestCancelled.Value))
                 {
                     HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);
                     Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with null response returned.", OrderErpCallFailed, DebuggingInfoType.Undefined);
@@ -278,9 +279,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="order">The order.</param>
         /// <param name="createOrder">if set to <c>true</c> [create order].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger)
+        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled)
         {
             XmlDocument response = null;
+            requestCancelled = null;
 
             string orderIdentifier = Helpers.OrderIdentifier(order);
 
@@ -294,9 +296,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 Notifications.Order.OnBeforeSendingOrderToErpArgs onBeforeSendingOrderToErpArgs = new Notifications.Order.OnBeforeSendingOrderToErpArgs(order, createOrder, settings, logger);
                 NotificationManager.Notify(Notifications.Order.OnBeforeSendingOrderToErp, onBeforeSendingOrderToErpArgs);
+                requestCancelled = onBeforeSendingOrderToErpArgs.Cancel;
 
                 if (!onBeforeSendingOrderToErpArgs.Cancel)
-                {
+                {                    
                     response = Connector.CalculateOrder(settings, requestXml, order.Id, createOrder, out Exception error, logger);
 
                     if (createOrder && error != null)
@@ -317,7 +320,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
                 else
-                {
+                {                    
                     Services.OrderDebuggingInfos.Save(order, "Order not sent to ERP because a subscriber cancelled sending it", OrderErpCallCancelled, DebuggingInfoType.Undefined);
                 }
             }
@@ -970,6 +973,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                     if (enableCartCommunication)
                     {
+                        if (settings.ErpControlsDiscount)
+                            order.IsPriceCalculatedByProvider = true;
                         Services.Orders.Save(order);
                     }
                 }
@@ -1261,7 +1266,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         }
 
         private static void ProcessOrderLineCustomFields(Settings settings, OrderLine orderLine, OrderLineFieldCollection allOrderLineFields, XmlNode orderLineNode)
-        {            
+        {
             if (settings.AddOrderLineFieldsToRequest && allOrderLineFields != null && allOrderLineFields.Count > 0)
             {
                 XmlNode orderLineFieldNode = null;

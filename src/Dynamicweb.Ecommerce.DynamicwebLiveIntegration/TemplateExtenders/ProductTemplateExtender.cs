@@ -88,6 +88,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                             pricesTemplate.SetTag("Ecom:Product.Prices.GroupID", price.UserGroupId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.ValidFrom", price.ValidFrom.HasValue ? price.ValidFrom.Value.ToShortDateString() : String.Empty);
                             pricesTemplate.SetTag("Ecom:Product.Prices.ValidTo", price.ValidTo.HasValue ? price.ValidTo.Value.ToShortDateString() : String.Empty);
+                            pricesTemplate.SetTag("Ecom:Product.Prices.PeriodID", price.PeriodId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.UnitID", price.UnitId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.LanguageID", price.LanguageId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.Country", price.CountryCode);
@@ -147,7 +148,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                 Diagnostics.ExecutionTable.Current.Add($"ProductTemplateExtender FetchProductInfos product[id='{product?.Id}' variantId='{product.VariantId}'] START");
                 var products = new Dictionary<Product, double>();
                 products.Add(Product, 1);
-                if (ProductManager.FetchProductInfos(products, new LiveContext(Helpers.GetCurrentCurrency(), user, Services.Shops.GetShop(Global.CurrentShopId)), settings, new Logger(settings)))
+                var context = new LiveContext(Helpers.GetCurrentCurrency(), user, Services.Shops.GetShop(Global.CurrentShopId));
+                if (ProductManager.FetchProductInfos(products, context, settings, new Logger(settings), false))
                 {
                     productInfo = ProductManager.GetProductInfo(product, settings, user);
                 }

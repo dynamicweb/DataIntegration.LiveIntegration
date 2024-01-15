@@ -218,6 +218,12 @@
         string ShopId { get; set; }
 
         /// <summary>
+        /// Gets or sets the ID of the website used in this integration.
+        /// </summary>
+        /// <value>The website identifier.</value>
+        int AreaId { get; set; }
+
+        /// <summary>
         /// Gets or sets the text for product discounts.
         /// </summary>
         /// <value>The text for product discounts.</value>

@@ -64,7 +64,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 logger.Log(ErrorLevel.DebugInfo, $"Reload prices. products #{productsToUpdate.Count()}");
                 
                 var context = new LiveContext(order.GetPriceContext());
-                if (!ProductManager.FetchProductInfos(productsToUpdate, context, settings, logger))
+                if (!ProductManager.FetchProductInfos(productsToUpdate, context, settings, logger, false))
                 {
                     return;
                 }

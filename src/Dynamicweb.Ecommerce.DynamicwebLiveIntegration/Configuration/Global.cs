@@ -15,7 +15,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// <value>Returns<c>true</c> when live integration is enabled and the executing context is not the backend, <c>false</c> otherwise.</value>
         public static bool IsIntegrationActive(Settings settings)
         {
-            return settings != null ? settings.IsLiveIntegrationEnabled : false;
+            var active = settings != null ? settings.IsLiveIntegrationEnabled : false;
+            if(active && settings.AreaId > 0)
+            {
+                var pageView = PageView.Current();
+                int currentAreaId = (pageView is object) ? pageView.Area?.ID ?? 0 : Converter.ToInt32(Context.Current?.Request?["AreaId"]);
+                active = currentAreaId > 0 ? currentAreaId == settings.AreaId : active;
+            }                
+            return active;
         }
 
         /// <summary>
