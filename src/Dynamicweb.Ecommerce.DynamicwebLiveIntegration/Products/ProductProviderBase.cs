@@ -162,8 +162,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="quantity">The quantity.</param>
         public virtual void FillProductValues(ProductInfo productInfo, Product product, Settings settings, double quantity, LiveContext context)
         {
-            var price = GetPriceInfo(context, productInfo, quantity);
-            PriceInfo productPrice = product.GetPrice(context.PriceContext ?? new PriceContext(context.Currency, context.Country));
+            var price = GetPriceInfo(context, productInfo, quantity);            
+            PriceInfo productPrice = PriceManager.GetPrice(context.PriceContext ?? new PriceContext(context.Currency, context.Country), product);
             productPrice.PriceWithoutVAT = price.PriceWithoutVAT;
             productPrice.PriceWithVAT = price.PriceWithVAT;
 
