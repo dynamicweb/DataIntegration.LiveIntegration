@@ -74,7 +74,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                         foreach (var price in prices)
                         {
                             PriceContext context = new PriceContext(Common.Context.Currency, Common.Context.Country);
-                            var calculated = PriceCalculated.Create(context, new PriceRaw(price.Amount, price.Currency), product);
+                            var calculated = PriceCalculated.Create(context, new PriceRaw(price.Amount, Common.Context.Currency), product);
                             calculated.Calculate();
 
                             pricesTemplate.SetTag("Ecom:Product.Prices.Amount", calculated.PriceWithoutVATFormattedNoSymbol);

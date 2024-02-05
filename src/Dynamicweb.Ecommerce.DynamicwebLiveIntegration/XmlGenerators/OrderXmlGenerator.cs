@@ -221,7 +221,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
 
             if (!settings.GenerateXmlForHash)
             {
-                AddChildXmlNode(itemNode, "OrderPriceTotal", order.TotalPrice.ToIntegrationString(currentSettings, logger));
+                AddChildXmlNode(itemNode, "OrderPriceTotal", order.Price?.PriceWithVAT.ToIntegrationString(currentSettings, logger));
             }
             AddChildXmlNode(itemNode, "OrderCaptureAmount", order.CaptureAmount.ToIntegrationString(currentSettings, logger));
             AddChildXmlNode(itemNode, "OrderVoucherCode", order.VoucherCode);
