@@ -270,7 +270,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             try
             {
                 // If master: exchange master product with default variant
-                if (product.IsVariantMaster && !string.IsNullOrEmpty(product.DefaultVariantComboId))
+                if (Services.Products.IsVariantMaster(product) && !string.IsNullOrEmpty(product.DefaultVariantComboId))
                 {
                     Product returnProduct = Services.Products.GetProductById(product.Id, product.DefaultVariantComboId, product.LanguageId);
                     return returnProduct;
