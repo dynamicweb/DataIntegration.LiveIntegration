@@ -74,7 +74,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                         foreach (var price in prices)
                         {
                             PriceContext context = new PriceContext(Common.Context.Currency, Common.Context.Country);
-                            var calculated = PriceCalculated.Create(context, new PriceRaw(price.Amount, price.Currency), product);
+                            var calculated = PriceCalculated.Create(context, new PriceRaw(price.Amount, Common.Context.Currency), product);
                             calculated.Calculate();
 
                             pricesTemplate.SetTag("Ecom:Product.Prices.Amount", calculated.PriceWithoutVATFormattedNoSymbol);
@@ -87,8 +87,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                             pricesTemplate.SetTag("Ecom:Product.Prices.UserCustomerNumber", price.UserCustomerNumber);
                             pricesTemplate.SetTag("Ecom:Product.Prices.GroupID", price.UserGroupId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.ValidFrom", price.ValidFrom.HasValue ? price.ValidFrom.Value.ToShortDateString() : String.Empty);
-                            pricesTemplate.SetTag("Ecom:Product.Prices.ValidTo", price.ValidTo.HasValue ? price.ValidTo.Value.ToShortDateString() : String.Empty);
-                            pricesTemplate.SetTag("Ecom:Product.Prices.PeriodID", price.PeriodId);
+                            pricesTemplate.SetTag("Ecom:Product.Prices.ValidTo", price.ValidTo.HasValue ? price.ValidTo.Value.ToShortDateString() : String.Empty);                            
                             pricesTemplate.SetTag("Ecom:Product.Prices.UnitID", price.UnitId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.LanguageID", price.LanguageId);
                             pricesTemplate.SetTag("Ecom:Product.Prices.Country", price.CountryCode);

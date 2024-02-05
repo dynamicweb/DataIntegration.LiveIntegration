@@ -354,7 +354,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 Services.Orders.DowngradeToCart(order);
                 Common.Context.SetCart(order);
-                order.CartV2StepIndex = --order.CartV2StepIndex;
+                //order.CartV2StepIndex = --order.CartV2StepIndex; // DW10 Api breaking change
                 order.Complete = false;
             }
 

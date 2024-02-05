@@ -10,7 +10,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         {
             if (!string.IsNullOrEmpty(product.VariantId))
             {
-                return product.VariantGroups.FirstOrDefault(vg => vg.Family) != null;
+                return Services.VariantGroups.GetVariantGroupsByProductId(product.Id)?.FirstOrDefault(vg => vg.Family) != null;
             }
             return false;
         }
