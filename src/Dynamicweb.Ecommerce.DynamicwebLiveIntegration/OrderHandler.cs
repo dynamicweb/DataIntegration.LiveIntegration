@@ -901,6 +901,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     shippingFeeSentInRequest = order.ShippingFee;
                 }
+                if (!createOrder && settings.ErpControlsDiscount)
+                    order.IsPriceCalculatedByProvider = true;
 
                 SetCustomOrderFields(settings, order, orderNode);
 
@@ -972,9 +974,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         UpdateDynamicwebShipping(order, orderNode, shippingFeeSentInRequest, settings, logger);
                     }
                     if (enableCartCommunication)
-                    {
-                        if (settings.ErpControlsDiscount)
-                            order.IsPriceCalculatedByProvider = true;
+                    {                        
                         Services.Orders.Save(order);
                     }
                 }

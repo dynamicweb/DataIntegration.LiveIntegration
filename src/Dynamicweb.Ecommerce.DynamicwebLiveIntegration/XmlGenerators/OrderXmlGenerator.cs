@@ -61,7 +61,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
 
             AddChildXmlNode(orderNode, "OrderCustomerAccessUserExternalId", !string.IsNullOrWhiteSpace(user?.ExternalID) ? user.ExternalID : currentSettings.AnonymousUserKey);
             AddChildXmlNode(orderNode, "OrderCustomerNumber", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
-            AddChildXmlNode(orderNode, "OrderCustomerName", order.CustomerName);
+            AddChildXmlNode(orderNode, "OrderCustomerName", !string.IsNullOrWhiteSpace(user?.Name) ? user.Name : order.CustomerName);
             AddChildXmlNode(orderNode, "OrderCustomerAddress", order.CustomerAddress);
             AddChildXmlNode(orderNode, "OrderCustomerAddress2", order.CustomerAddress2);
             AddChildXmlNode(orderNode, "OrderCustomerCity", order.CustomerCity);
