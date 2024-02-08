@@ -654,6 +654,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     options.Add(Constants.CartCommunicationType.None, Constants.CartCommunicationType.None);
                     options.Add(Constants.CartCommunicationType.Full, Constants.CartCommunicationType.Full);
                     options.Add(Constants.CartCommunicationType.OnlyOnOrderComplete, Constants.CartCommunicationType.OnlyOnOrderComplete);
+                    options.Add(Constants.CartCommunicationType.CartOnly, Constants.CartCommunicationType.CartOnly);
                     break;
 
                 case "Number format culture":

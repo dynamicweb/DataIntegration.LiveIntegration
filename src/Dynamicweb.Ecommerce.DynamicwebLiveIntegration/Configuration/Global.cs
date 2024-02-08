@@ -55,6 +55,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 case Constants.CartCommunicationType.OnlyOnOrderComplete:
                     return orderComplete;
 
+                case Constants.CartCommunicationType.CartOnly:
+                    return !orderComplete;
+
                 default:
                     return false;
             }
