@@ -48,6 +48,11 @@
             /// Info is sent to the ERP for completed orders only (which means Dynamicweb calculates the cart).
             /// </summary>
             public const string OnlyOnOrderComplete = "Only on Order Complete";
+
+            /// <summary>
+            /// Info is sent to the ERP for only cart orders.
+            /// </summary>
+            public const string CartOnly = "Cart only";
         }
 
         /// <summary>

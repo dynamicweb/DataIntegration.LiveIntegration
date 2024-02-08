@@ -1,5 +1,4 @@
 ﻿using Dynamicweb.Core;
-using Dynamicweb.Data;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
@@ -233,32 +232,28 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Creates the order line.
         /// </summary>
         /// <param name="order">The order.</param>
-        /// <param name="productId">The product identifier.</param>
+        /// <param name="productNumber">The product identifier.</param>
         /// <returns>OrderLine.</returns>
-        private static OrderLine CreateOrderLine(Order order, string productId, Logger logger)
+        private static OrderLine CreateOrderLine(Order order, string productNumber, Logger logger)
         {
             if (order == null)
             {
                 throw new ArgumentNullException(nameof(order));
             }
 
-            if (string.IsNullOrEmpty(productId))
+            if (string.IsNullOrEmpty(productNumber))
             {
-                throw new ArgumentNullException(nameof(productId));
+                throw new ArgumentNullException(nameof(productNumber));
             }
 
-            var scalar = Converter.ToString(Database.ExecuteScalar($"SELECT TOP 1 ProductID FROM EcomProducts WHERE ProductNumber = '{productId}'"));
-
-            if (string.IsNullOrWhiteSpace(scalar))
+            var product = Services.Products.GetProductByNumber(productNumber, order.LanguageId);
+            if (product is null && !string.Equals(order.LanguageId, Services.Languages.GetDefaultLanguageId(), StringComparison.OrdinalIgnoreCase))
             {
-                logger.Log(ErrorLevel.Error, $"Can not CreateOrderLine: No product found with ProductID = '{productId}'");
-                return null;
+                product = Services.Products.GetProductByNumber(productNumber, Services.Languages.GetDefaultLanguageId());
             }
-
-            var product = Services.Products.GetProductById(scalar, string.Empty, false);
-            if (product == null || product.Id != productId)
+            if (product == null)
             {
-                logger.Log(ErrorLevel.Error, $"Cannot CreateOrderLine: No product found or ProductNumber is different from the response ProductID = '{productId}' Order = {order.Id}");
+                logger.Log(ErrorLevel.Error, $"Cannot CreateOrderLine: No product found with ProductNumber = '{productNumber}' Order = {order.Id}");
                 return null;
             }
 
@@ -299,7 +294,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 requestCancelled = onBeforeSendingOrderToErpArgs.Cancel;
 
                 if (!onBeforeSendingOrderToErpArgs.Cancel)
-                {                    
+                {
                     response = Connector.CalculateOrder(settings, requestXml, order.Id, createOrder, out Exception error, logger);
 
                     if (createOrder && error != null)
@@ -320,7 +315,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
                 else
-                {                    
+                {
                     Services.OrderDebuggingInfos.Save(order, "Order not sent to ERP because a subscriber cancelled sending it", OrderErpCallCancelled, DebuggingInfoType.Undefined);
                 }
             }
@@ -974,7 +969,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         UpdateDynamicwebShipping(order, orderNode, shippingFeeSentInRequest, settings, logger);
                     }
                     if (enableCartCommunication)
-                    {                        
+                    {
                         Services.Orders.Save(order);
                     }
                 }
