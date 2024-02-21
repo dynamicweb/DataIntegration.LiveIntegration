@@ -1,4 +1,6 @@
-﻿namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
+﻿using System.Reflection;
+
+namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 {
     /// <summary>
     /// Global constants class for all constant values in this project.
@@ -17,6 +19,8 @@
         /// </summary>
         internal static readonly int MinPingInterval = 30;
         internal static readonly int DefaultPingInterval = 60;
+
+        internal static readonly string AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         /// <summary>
         /// Nested class with cache configuration constants.
