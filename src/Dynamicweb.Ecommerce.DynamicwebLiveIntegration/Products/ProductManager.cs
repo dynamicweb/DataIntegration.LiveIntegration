@@ -23,7 +23,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
     /// </summary>
     public static class ProductManager
     {
-        private static readonly string ProductProviderCacheKey = "DynamicwebLiveIntegrationProductProvider";        
+        private static readonly string ProductProviderCacheKey = $"{Constants.AssemblyVersion}DynamicwebLiveIntegrationProductProvider";
 
         /// <summary>
         /// Gets the product provider. Implement your own class deriving ProductProviderBase if you want to override the built-in behavior.
@@ -33,25 +33,34 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         {
             get
             {
-                if (!Caching.Cache.Current.TryGet(ProductProviderCacheKey, out ProductProviderBase provider))
+                ProductProviderBase provider;
+                try
                 {
-                    foreach (Type addIn in AddInManager.GetAddInClasses(typeof(ProductProviderBase)))
+                    Caching.Cache.Current.TryGet(ProductProviderCacheKey, out provider);                                        
+                }
+                catch
+                {
+                    provider = new ProductProviderBase();
+                    Caching.Cache.Current[ProductProviderCacheKey] = provider;                    
+                }
+                if (provider is null)
+                {
+                    foreach (Type addIn in AddInManager.GetTypes(typeof(ProductProviderBase)))
                     {
                         if (!ReferenceEquals(addIn, typeof(ProductProviderBase)))
                         {
-                            provider = (ProductProviderBase)AddInManager.CreateAddInInstance(addIn);
+                            provider = (ProductProviderBase)AddInManager.GetInstance(addIn);
                             break;
                         }
                     }
 
-                    if (provider == null)
+                    if (provider is null)
                     {
                         provider = new ProductProviderBase();
                     }
 
                     Caching.Cache.Current[ProductProviderCacheKey] = provider;
                 }
-
                 return provider;
             }
         }
@@ -268,8 +277,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             foreach (var productWithQuantity in products)
             {
                 Product product = productWithQuantity.Key;
-                string productIdentifier = ProductProvider.GetProductIdentifier(settings, product);              
-                bool isProductCached =  ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
+                string productIdentifier = ProductProvider.GetProductIdentifier(settings, product);
+                bool isProductCached = ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
                     doCurrencyCheck ? context.Currency : null);
 
                 if (!isProductCached)
@@ -283,7 +292,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             variants = GetFilteredVariants(variants);
                             foreach (var variant in variants)
                             {
-                                var variantProductIdentifier = ProductProvider.GetProductIdentifier(settings, variant);                                
+                                var variantProductIdentifier = ProductProvider.GetProductIdentifier(settings, variant);
                                 var isVariantProductCached = ResponseCache.IsProductInCache(productCacheLevel, variantProductIdentifier, context.User,
                                     doCurrencyCheck ? context.Currency : null);
 
@@ -305,7 +314,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 
                     if (string.IsNullOrEmpty(product.VariantId) || GetFilteredVariants(new List<Product>() { product }).Any())
                     {
-                        productIdentifier = ProductProvider.GetProductIdentifier(settings, product);                        
+                        productIdentifier = ProductProvider.GetProductIdentifier(settings, product);
                         isProductCached = ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
                             doCurrencyCheck ? context.Currency : null);
                         if (!isProductCached)

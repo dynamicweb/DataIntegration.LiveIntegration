@@ -1,4 +1,5 @@
 using Dynamicweb.Caching;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.International;
 using Dynamicweb.Security.UserManagement;
@@ -14,8 +15,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
     /// </summary>
     internal class ResponseCache
     {
-        private const string ProductInfosKey = "Dynamicweb.eCommerce.LiveIntegration.Prices.ProductInfosCached";
-        private const string WebOrdersKey = "Dynamicweb.eCommerce.LiveIntegration.Connector.ErpOrdersCached";
+        private static readonly string ProductInfosKey = $"{Constants.AssemblyVersion}Dynamicweb.eCommerce.LiveIntegration.Prices.ProductInfosCached";
+        private static readonly string WebOrdersKey = $"{Constants.AssemblyVersion}Dynamicweb.eCommerce.LiveIntegration.Connector.ErpOrdersCached";
         private const int WebApiCacheTimeout = 20;
 
         /// <summary>
