@@ -8,6 +8,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 {
     public static class ProductViewModelExtensions
     {
+        /// <summary>
+        /// Gets the prices found for different product units, quantities, etc in the ERP
+        /// </summary>
+        /// <param name="productViewModel">Product ViewModel</param>
+        /// <returns>List of prices found for product in the response "EcomPrices" xml tags</returns>
         public static List<PriceListViewModel> GetUnitPrices(this ProductViewModel productViewModel)
         {
             var result = new List<PriceListViewModel>();
