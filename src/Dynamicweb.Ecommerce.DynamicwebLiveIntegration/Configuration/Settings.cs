@@ -42,6 +42,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             CalculatePriceUsingProductNumber = true;
             CalculateOrderUsingProductNumber = true;
             AutoPingInterval = Constants.DefaultPingInterval;
+            ConnectionTimeout = Constants.DefaultConnectionTimeout;
             CartCommunicationType = Constants.CartCommunicationType.Full;
         }
 

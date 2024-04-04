@@ -115,7 +115,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         [AddInParameterEditor(typeof(IntegerNumberParameterEditor), "minValue=30;Info=Minimum value is 30")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(30)]
-        public int ConnectionTimeout { get; set; } = 30;
+        public int ConnectionTimeout { get; set; } = Constants.DefaultConnectionTimeout;
 
         /// <summary>
         /// Interval between pings (seconds)
@@ -796,6 +796,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             if (AutoPingInterval < Constants.MinPingInterval)
             {
                 AutoPingInterval = Constants.MinPingInterval;
+            }
+            if(ConnectionTimeout < Constants.DefaultConnectionTimeout)
+            {
+                ConnectionTimeout = Constants.DefaultConnectionTimeout;
             }
             SettingsFileHandler handler = new SettingsFileHandler();
             handler.SaveSettings(settings);

@@ -19,6 +19,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// </summary>
         internal static readonly int MinPingInterval = 30;
         internal static readonly int DefaultPingInterval = 60;
+        internal static readonly int DefaultConnectionTimeout = 30;
 
         internal static readonly string AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
