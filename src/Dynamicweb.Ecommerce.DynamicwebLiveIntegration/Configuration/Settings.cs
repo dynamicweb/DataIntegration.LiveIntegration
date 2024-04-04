@@ -18,7 +18,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             // default values
             InstanceId = string.Empty;
             IsLiveIntegrationEnabled = false;
-            LazyLoadProductInfo = true;
+            LazyLoadProductInfo = false;
             AddProductFieldsToRequest = true;
 
             QueueOrdersToExport = true;
