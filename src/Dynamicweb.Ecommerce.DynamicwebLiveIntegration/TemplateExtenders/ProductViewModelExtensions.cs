@@ -1,6 +1,8 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.ProductCatalog;
+using Dynamicweb.Ecommerce.Products;
+using Dynamicweb.Security.UserManagement;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,11 +26,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             var user = Helpers.GetCurrentExtranetUser();
             var product = Services.Products.GetProductById(productViewModel.Id, productViewModel.VariantId, productViewModel.LanguageId);
 
+            return GetUnitPrices(settings, user, product);                        
+        }
+
+        internal static List<PriceListViewModel> GetUnitPrices(Settings settings, User user, Product product)
+        {
+            var result = new List<PriceListViewModel>();            
+
             if (settings is not null && Helpers.CanCheckPrice(settings, product, user))
             {
                 var productInfo = ProductManager.GetProductInfo(product, settings, user);
                 if (productInfo is not null)
-                {                    
+                {
                     var prices = (IList<ProductPrice>)productInfo["Prices"];
                     if (prices is not null && prices.Count > 0)
                     {
