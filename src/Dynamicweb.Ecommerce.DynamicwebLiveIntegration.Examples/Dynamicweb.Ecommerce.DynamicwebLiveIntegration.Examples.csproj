@@ -14,7 +14,7 @@
 		<Copyright>Copyright © 2020 Dynamicweb Software A/S</Copyright>
 	</PropertyGroup>
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -23,10 +23,10 @@
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Dynamicweb" Version="10.0.33" />
-		<PackageReference Include="Dynamicweb.Core" Version="10.0.33" />
-		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.0.33" />
-		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.0.33" />
+		<PackageReference Include="Dynamicweb" Version="10.4.0" />
+		<PackageReference Include="Dynamicweb.Core" Version="10.4.0" />
+		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.4.0" />
+		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.4.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.csproj" />
