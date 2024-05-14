@@ -142,5 +142,27 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.ProductPriceProvider.FindPriceInfoWithContext END");
             }
         }
+        
+        IEnumerable<KeyValuePair<PriceQuantityInfo, PriceInfo>> IPriceInfoProvider.FindQuantityPriceInfos(PriceContext context, Product product)
+        {
+            var settings = SettingsManager.GetSettingsByShop(context.Shop?.Id);
+            if (!Global.IsIntegrationActive(settings))
+                return Enumerable.Empty<KeyValuePair<PriceQuantityInfo, PriceInfo>>();
+
+            var result = new List<KeyValuePair<PriceQuantityInfo, PriceInfo>>();
+            var unitPrices = ProductViewModelExtensions.GetUnitPrices(settings, context.Customer, product);
+            foreach (var unitPrice in unitPrices)
+            {
+                result.Add(new KeyValuePair<PriceQuantityInfo, PriceInfo>(
+                    new PriceQuantityInfo()
+                    {
+                        Quantity = unitPrice.Quantity ?? 0,
+                        UnitId = unitPrice.UnitId,
+                    },
+                    ProductProviderBase.GetPriceInfo(context, unitPrice.Amount, unitPrice.AmountWithVat)
+                ));
+            }
+            return result;
+        }
     }
 }

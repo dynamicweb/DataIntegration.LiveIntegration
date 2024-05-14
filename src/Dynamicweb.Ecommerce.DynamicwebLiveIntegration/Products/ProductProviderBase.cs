@@ -124,33 +124,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 priceWithVat = erpPriceResponse?.AmountWithVat;
             }
 
-            PriceInfo result = context.PriceContext != null ? new PriceInfo(context.PriceContext.Currency) : new PriceInfo(context.Currency);
-            result.PriceWithoutVAT = priceWithoutVat != null ? priceWithoutVat.Value : 0;
-            if (priceWithVat != null)
-            {
-                result.PriceWithVAT = priceWithVat.Value;
-                if (result.PriceWithVAT >= result.PriceWithoutVAT && result.PriceWithoutVAT > 0)
-                {
-                    //This is to handle the case where the ERP returns VAT and VAT percent, but DW is setup to i.e. 0% vat.
-                    result.VAT = result.PriceWithVAT - result.PriceWithoutVAT;
-                }
-            }
-            else
-            {
-                var price = new PriceRaw
-                {
-                    Price = result.PriceWithoutVAT,
-                    Currency = context.Currency
-                };
-                PriceContext priceContext = new PriceContext(context.Currency, context.Country);
-                var calculated = PriceCalculated.Create(priceContext, price);
-                if (calculated != null)
-                {
-                    calculated.Calculate();
-                    result.PriceWithVAT = calculated.PriceWithVAT;
-                }
-            }
-
+            PriceInfo result = GetPriceInfo(context.PriceContext != null ? context.PriceContext : new PriceContext(context.Currency, context.Country), priceWithoutVat, priceWithVat);
             return result;
         }
 
@@ -296,6 +270,36 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     pfv.Value = productInfo[pfv.ProductField.SystemName];
                 }
             }
+        }
+
+        internal static PriceInfo GetPriceInfo(PriceContext priceContext, double? priceWithoutVat, double? priceWithVat)
+        {
+            PriceInfo result = new PriceInfo(priceContext.Currency);
+            result.PriceWithoutVAT = priceWithoutVat != null ? priceWithoutVat.Value : 0;
+            if (priceWithVat != null)
+            {
+                result.PriceWithVAT = priceWithVat.Value;
+                if (result.PriceWithVAT >= result.PriceWithoutVAT && result.PriceWithoutVAT > 0)
+                {
+                    //This is to handle the case where the ERP returns VAT and VAT percent, but DW is setup to i.e. 0% vat.
+                    result.VAT = result.PriceWithVAT - result.PriceWithoutVAT;
+                }
+            }
+            else
+            {
+                var price = new PriceRaw
+                {
+                    Price = result.PriceWithoutVAT,
+                    Currency = priceContext.Currency
+                };
+                var calculated = PriceCalculated.Create(priceContext, price);
+                if (calculated != null)
+                {
+                    calculated.Calculate();
+                    result.PriceWithVAT = calculated.PriceWithVAT;
+                }
+            }
+            return result;
         }
     }
 }
