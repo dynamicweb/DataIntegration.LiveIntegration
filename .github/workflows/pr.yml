@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - main
-      - milestone/10.0
+      - milestones/*
 
 jobs:
   call-workflow:
