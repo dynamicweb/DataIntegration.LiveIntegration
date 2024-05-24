@@ -481,7 +481,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 if (ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, user, context?.Currency))
                 {
                     Dictionary<string, ProductInfo> productInfoCache = ResponseCache.GetProductInfos(productCacheLevel, user);
-                    productInfoCache.TryGetValue(productIdentifier, out productInfo);
+                    productInfoCache?.TryGetValue(productIdentifier, out productInfo);
                 }
             }
             return productInfo;

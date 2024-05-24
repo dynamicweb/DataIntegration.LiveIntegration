@@ -45,7 +45,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
                     // If it is anonymous user we can not determine what external user id is sent in the ERP request
                     // So we can not cache to not break anonymous requests for the different users with different external ids
                     // Cache per one request only
-                    if (Context.Current.Items is object)
+                    if (Context.Current?.Items is object)
                     {
                         return GetConnectorResponsesFromItems<ProductInfo>(ProductInfosKey);
                     }
@@ -131,7 +131,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
             // Clear ProductInfo cache
             try
             {
-                Context.Current.Session.Remove(ProductInfosKey);
+                Context.Current?.Session?.Remove(ProductInfosKey);
                 List<string> keysToRemove = new List<string>();
                 foreach (string key in Context.Current.Session.Keys)
                 {
@@ -140,7 +140,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
                 }
                 foreach (string key in keysToRemove)
                 {
-                    Context.Current.Session.Remove(key);
+                    Context.Current?.Session?.Remove(key);
                 }
             }
             catch
@@ -149,7 +149,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
 
             try
             {
-                Context.Current.Items.Remove(ProductInfosKey);
+                Context.Current?.Items?.Remove(ProductInfosKey);
             }
             catch
             {
@@ -158,7 +158,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
             // Clear Responses cache
             try
             {
-                Context.Current.Session.Remove(WebOrdersKey);
+                Context.Current?.Session?.Remove(WebOrdersKey);
             }
             catch
             {
@@ -166,7 +166,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
 
             try
             {
-                Context.Current.Items.Remove(WebOrdersKey);
+                Context.Current?.Items?.Remove(WebOrdersKey);
             }
             catch
             {

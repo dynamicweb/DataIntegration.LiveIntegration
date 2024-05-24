@@ -283,7 +283,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             Dictionary<string, XmlDocument> responsesCache = ResponseCache.GetWebOrdersConnectorResponses(GetOrderCacheLevel(settings));
 
-            if (!createOrder && responsesCache.ContainsKey(orderIdentifier))
+            if (!createOrder && responsesCache is object && responsesCache.ContainsKey(orderIdentifier))
             {
                 response = responsesCache[orderIdentifier];
             }
@@ -304,14 +304,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                     NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));
 
-                    if (responsesCache.ContainsKey(orderIdentifier))
+                    if (responsesCache is object)
                     {
-                        responsesCache.Remove(orderIdentifier);
-                    }
+                        if (responsesCache.ContainsKey(orderIdentifier))
+                        {
+                            responsesCache.Remove(orderIdentifier);
+                        }
 
-                    if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
-                    {
-                        responsesCache.Add(orderIdentifier, response);
+                        if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
+                        {
+                            responsesCache.Add(orderIdentifier, response);
+                        }
                     }
                 }
                 else
@@ -921,6 +924,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                             // old discount lines are deleted and new discounts are not saved
                             // So at that time in backend the order lines will look incorrect, so order needs to be saved to keep discounts: https://vimeo.com/724424362/132443e631
                             if (!settings.UseUnitPrices && discountOrderLines.Count > 0 &&
+                                Context.Current?.Request?.RawUrl is object &&
                                 Context.Current.Request.RawUrl.Contains($"/dwapi/ecommerce/carts/{order.Secret}"))
                             {
                                 Services.Orders.Save(order);

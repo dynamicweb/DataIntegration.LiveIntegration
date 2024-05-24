@@ -12,7 +12,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             if (args != null)
             {
                 var myArgs = (Ecommerce.Notifications.Ecommerce.Order.AfterSaveArgs)args;
-                if (Context.Current.Session is object || ExecutingContext.IsBackEnd() ||
+                if (Context.Current?.Session is object || ExecutingContext.IsBackEnd() ||
                     myArgs.Order == null || myArgs.Order.OrderLines.Count <= 0 ||
                     !myArgs.Order.Complete || myArgs.Order.IsCart || 
                     !string.IsNullOrEmpty(myArgs.Order.IntegrationOrderId))
