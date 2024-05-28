@@ -20,7 +20,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Orders
                 {                    
                     if (Global.EnableCartCommunication(settings, cart.Complete))
                     {
-                        var contextCurrency = Context.Current.Request.GetString("CurrencyCode");
+                        var contextCurrency = Context.Current?.Request?.GetString("CurrencyCode");
                         if (!string.IsNullOrEmpty(contextCurrency) && !string.Equals(cart.CurrencyCode, contextCurrency, System.StringComparison.OrdinalIgnoreCase))
                         {                            
                             Services.Orders.ForcePriceRecalculation(cart);                            
