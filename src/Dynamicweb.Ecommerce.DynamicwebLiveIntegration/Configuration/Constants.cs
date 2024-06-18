@@ -21,7 +21,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         internal static readonly int DefaultPingInterval = 60;
         internal static readonly int DefaultConnectionTimeout = 30;
 
-        internal static readonly string AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        internal static readonly string AssemblyVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
 
         /// <summary>
         /// Nested class with cache configuration constants.
