@@ -631,7 +631,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
 
                     string orderLineType = orderLineTypeNode?.InnerText;
-                    if (orderLineType == "0" || string.IsNullOrWhiteSpace(orderLineType))
+                    if (string.IsNullOrWhiteSpace(orderLineType) || orderLineType == "0" || orderLineType == "2")
                     {
                         ProcessProductOrderLine(settings, order, orderLineIds, orderLines, allOrderLineFields, orderLineNode, responseIdOrderLineDictionary, logger);
                     }
