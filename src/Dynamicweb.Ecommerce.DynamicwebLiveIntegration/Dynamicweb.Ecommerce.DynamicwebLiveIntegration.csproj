@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>10.4.2</Version>		
+		<Version>10.4.3</Version>		
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
 		<Title>Live Integration</Title>
 		<Description>Live Integration</Description>
