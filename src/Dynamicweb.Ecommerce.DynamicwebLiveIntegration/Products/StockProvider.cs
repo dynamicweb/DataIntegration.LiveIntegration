@@ -1,6 +1,7 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
-using Dynamicweb.Ecommerce.International;
+using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Ecommerce.Products;
 using Dynamicweb.Ecommerce.Stocks;
 using System.Collections.Generic;
@@ -16,13 +17,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             if (Helpers.CanCheckPrice(settings, product, user))
             {
                 Diagnostics.ExecutionTable.Current.Add($"DynamicwebLiveIntegration.StockProvider.FindStockLevel product[id='{product?.Id}' variantId='{product.VariantId}'] START");
-                var products = new Dictionary<Product, double>();
-                products.Add(product, 1);
+                var priceProductSelection = product.GetPriceProductSelection(1, unitId);
+                var products = new List<PriceProductSelection>() { priceProductSelection };
+
+                var context = new LiveContext(Helpers.GetCurrentCurrency(), user, Services.Shops.GetShop(Global.CurrentShopId));
 
                 var logger = new Logger(settings);
-                if (ProductManager.FetchProductInfos(products, new LiveContext(null, user, Services.Shops.GetShop(Global.CurrentShopId)), settings, logger, false))
+                if (ProductManager.FetchProductInfos(products, context, settings, logger, false))
                 {
-                    ProductInfo productInfo = ProductManager.GetProductInfo(product, settings, user);
+                    ProductInfo productInfo = ProductManager.GetProductInfo(product, settings, user, context, priceProductSelection.UnitId);
                     if (productInfo != null)
                     {
                         if (settings?.AddProductFieldsToRequest ?? false)
@@ -35,6 +38,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 Diagnostics.ExecutionTable.Current.Add($"DynamicwebLiveIntegration.StockProvider.FindStockLevel product[id='{product?.Id}' variantId='{product.VariantId}'] END");
             }
             return null;
-        }        
+        }
     }
 }

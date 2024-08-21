@@ -285,7 +285,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             if (order != null)
             {
                 Order ecomCart;
-                if (!Frontend.Cart.CartCatch.CartIsPresent())
+                if (Common.Context.Cart is not object)
                 {
                     ecomCart = new Order(Common.Context.Currency, Common.Context.Country, Common.Context.Language)
                     {

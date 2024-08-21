@@ -47,6 +47,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 Context.Current.Items["IsWebServiceConnectionAvailable"] = isWebServiceConnectionAvailable;
                 Context.Current.Items["IsLazyLoadingForProductInfoEnabled"] = isLazyLoadingForProductInfoEnabled;
             }
-        }
+        }        
     }
 }

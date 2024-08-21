@@ -100,10 +100,26 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     else
                     {
                         // Trigger ShippingProvider to calculate and store shipping value on order
-                        var calculateShippingUsingShippingProvider = order.ShippingFee;
+                        var calculateShippingUsingShippingProvider = GetShippingFee(order);
                     }
                 }
             }
+        }
+
+        internal static PriceInfo GetShippingFee(Order order)
+        {
+            // Trigger ShippingProvider to calculate and store shipping value on order
+            var isPriceCalculatedByProvider = order.IsPriceCalculatedByProvider;
+            if (isPriceCalculatedByProvider)
+            {
+                order.IsPriceCalculatedByProvider = false;
+            }
+            var calculateShippingUsingShippingProvider = order.ShippingFee;
+            if (isPriceCalculatedByProvider)
+            {
+                order.IsPriceCalculatedByProvider = true;
+            }
+            return calculateShippingUsingShippingProvider;
         }
     }
 }

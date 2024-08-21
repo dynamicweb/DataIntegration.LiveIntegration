@@ -1,4 +1,5 @@
 ﻿using Dynamicweb.Extensibility.Notifications;
+using Dynamicweb.Security.UserManagement;
 using System.Linq;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples.Notifications.IntegrationCustomerCenter
@@ -23,7 +24,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples.Notifications.
             // TODO: Add code here
             if (myArgs?.ItemListXmlGeneratorSettings != null)
             {
-                var user = Security.UserManagement.User.GetCurrentExtranetUser();
+                var user = UserContext.Current.User;
                 if(user != null)
                 {                                     
                     Security.UserManagement.Common.CustomFields.CustomFieldValue customField = 

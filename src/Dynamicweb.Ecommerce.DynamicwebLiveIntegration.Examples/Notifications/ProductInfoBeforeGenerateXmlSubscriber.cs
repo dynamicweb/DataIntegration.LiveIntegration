@@ -20,7 +20,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples.Notifications
             var myArgs = (ProductInfo.OnBeforeGenerateProductInfoXmlArgs)args;
 
             // TODO: Add code here
-            if (myArgs?.Products != null)
+            if (myArgs?.ProductSelections != null)
             {
 
             }

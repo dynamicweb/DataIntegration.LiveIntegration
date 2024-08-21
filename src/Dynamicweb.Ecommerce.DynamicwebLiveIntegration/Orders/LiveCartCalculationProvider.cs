@@ -3,6 +3,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Environment;
+using System.Linq;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Orders
 {
@@ -27,6 +28,20 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Orders
                         }                                                   
                         bool? result = OrderHandler.UpdateOrder(settings, cart, SubmitType.LiveOrderOrCart);
                         return result.HasValue ? result.Value : false;
+                    }
+                }
+                else
+                {
+                    if (cart.OrderLines.Any(ol => ol.AllowOverridePrices) && cart.DisableDiscountCalculation && cart.AllowOverridePrices)
+                    {
+                        foreach (var line in cart.OrderLines)
+                        {
+                            if (line.AllowOverridePrices)
+                                line.AllowOverridePrices = false;
+                        }                        
+                        cart.DisableDiscountCalculation = false;
+                        cart.AllowOverridePrices = false;
+                        Services.Orders.ForcePriceRecalculation(cart);                        
                     }
                 }
             }

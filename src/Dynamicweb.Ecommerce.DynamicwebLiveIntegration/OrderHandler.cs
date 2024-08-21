@@ -69,7 +69,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             logger.Log(ErrorLevel.DebugInfo, $"Updating order with ID: {orderId}. Complete: {order.Complete}. Order submitted from the backend: {executingContextIsBackEnd}");
 
             // use current user if is not backend running or if the cart is Anonymous
-            var user = User.GetUserByID(order.CustomerAccessUserId);
+            var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
 
             /* create order: if it is false, you will get a calculate order from the ERP with the total prices */
             /* if it is true, then a new order will be created in the ERP */
@@ -136,8 +136,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             // save this hash for next calls
             SaveOrderHash(settings, currentHash);
 
-            bool? requestCancelled = null;
-            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out requestCancelled);
+            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
                 bool processResponseResult = ProcessResponse(settings, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
@@ -295,7 +294,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 if (!onBeforeSendingOrderToErpArgs.Cancel)
                 {
-                    response = Connector.CalculateOrder(settings, requestXml, order.Id, createOrder, out Exception error, logger);
+                    response = Connector.CalculateOrder(settings, requestXml, order, createOrder, out Exception error, logger);
 
                     if (createOrder && error != null)
                     {
@@ -413,8 +412,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <param name="order">The order.</param>
         /// <param name="orderNode">The order node.</param>
-        private static void OrderPriceCalculation(Settings settings, Order order, XmlNode orderNode, Logger logger)
+        private static void OrderPriceCalculation(Settings settings, Order order, XmlNode orderNode, Logger logger, out bool updatePriceBeforeFeesFromOrderPrice)
         {
+            updatePriceBeforeFeesFromOrderPrice = false;
             //If currency was changed order Price and order lines Price have prices in previous currency
             if (order.Price.Currency != order.Currency)
             {
@@ -422,13 +422,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
             UpdateOrderLinesPricesCurrency(order);
 
-            var orderPriceNode = orderNode.SelectSingleNode("column [@columnName='OrderPrice']");
-
-            if (orderPriceNode == null)
-            {
-                orderPriceNode = orderNode.SelectSingleNode("column [@columnName='OrderPriceWithVat']");
-            }
-
+            var orderPriceNode = orderNode.SelectSingleNode("column [@columnName='OrderPrice']") ?? orderNode.SelectSingleNode("column [@columnName='OrderPriceWithVat']");
             if (orderPriceNode != null)
             {
                 order.Price.PriceWithVAT = Helpers.ToDouble(settings, logger, orderPriceNode.InnerText);
@@ -455,6 +449,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             else
             {
                 order.PriceBeforeFees.PriceWithVAT = order.Price.PriceWithVAT;
+                updatePriceBeforeFeesFromOrderPrice = true;
             }
 
             var orderPriceBeforeFeesWithoutVat = orderNode.SelectSingleNode("column [@columnName='OrderPriceBeforeFeesWithoutVat']");
@@ -466,6 +461,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             else
             {
                 order.PriceBeforeFees.PriceWithoutVAT = order.Price.PriceWithoutVAT;
+                updatePriceBeforeFeesFromOrderPrice = true;
             }
 
             if (order.PriceBeforeFees.PriceWithVAT > 0 && order.PriceBeforeFees.PriceWithoutVAT > 0)
@@ -623,15 +619,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 foreach (XmlNode orderLineNode in orderLinesNodes)
                 {
-                    XmlNode orderLineTypeNode = orderLineNode.SelectSingleNode("column [@columnName='OrderLineType']");
-
-                    if (orderLineTypeNode == null)
-                    {
-                        orderLineTypeNode = orderLineNode.SelectSingleNode("column [@columnName='OrderLineTypeId']");
-                    }
-
+                    XmlNode orderLineTypeNode = orderLineNode.SelectSingleNode("column [@columnName='OrderLineType']") ?? orderLineNode.SelectSingleNode("column [@columnName='OrderLineTypeId']");
                     string orderLineType = orderLineTypeNode?.InnerText;
-                    if (string.IsNullOrWhiteSpace(orderLineType) || orderLineType == "0" || orderLineType == "2")
+                    if (string.IsNullOrWhiteSpace(orderLineType) || orderLineType == "0" || orderLineType == "2") // 2=Fixed
                     {
                         ProcessProductOrderLine(settings, order, orderLineIds, orderLines, allOrderLineFields, orderLineNode, responseIdOrderLineDictionary, logger);
                     }
@@ -785,6 +775,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 if (!string.IsNullOrWhiteSpace(productNumber))
                 {
                     OrderLine orderLine = orderLines.FirstOrDefault(ol => ol.ProductNumber == productNumber);
+
                     if (orderLine == null && settings.AddOrderLinePartsToRequest)
                     {
                         orderLine = GetBomOrderLine(orderLineNode, responseIdOrderLineDictionary, productNumber);
@@ -906,6 +897,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 var discountOrderLines = new OrderLineCollection(order);
                 bool enableCartCommunication = Global.EnableCartCommunication(settings, order.Complete);
+                bool updatePriceBeforeFeesFromOrderPrice = false;
 
                 if (enableCartCommunication)
                 {
@@ -918,7 +910,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                             foreach (var discountLine in discountOrderLines)
                                 order.OrderLines.Add(discountLine, false);
 
-                            SetOrderPrices(order, orderNode, settings, logger, orderId);
+                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
 
                             // When GetCart DwApi request is executed and ERP controls discounts:
                             // old discount lines are deleted and new discounts are not saved
@@ -932,23 +924,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         }
                         else if (!order.Complete)
                         {
-                            SetOrderPrices(order, orderNode, settings, logger, orderId);
+                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
                             Services.Orders.CalculateDiscounts(order);
                         }
                         else
                         {
-                            SetOrderPrices(order, orderNode, settings, logger, orderId);
+                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
                         }
                     }
                     else
                     {
-                        SetOrderPrices(order, orderNode, settings, logger, orderId);
+                        SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
                     }
                     LiveShippingFeeProvider.ProcessShipping(settings, order, orderNode, logger);
                 }
                 else
                 {
-                    SetOrderPrices(order, orderNode, settings, logger, orderId);
+                    SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
                 }
 
                 if (createOrder)
@@ -970,7 +962,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     if (!settings.ErpControlsShipping && shippingFeeSentInRequest != null)
                     {
-                        UpdateDynamicwebShipping(order, orderNode, shippingFeeSentInRequest, settings, logger);
+                        UpdateDynamicwebShipping(order, orderNode, shippingFeeSentInRequest, settings, logger, updatePriceBeforeFeesFromOrderPrice);
                     }
                     if (enableCartCommunication)
                     {
@@ -997,14 +989,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return true;
         }
 
-        private static void SetOrderPrices(Order order, XmlNode orderNode, Settings settings, Logger logger, string orderId)
+        private static void SetOrderPrices(Order order, XmlNode orderNode, Settings settings, Logger logger, string orderId, out bool updatePriceBeforeFeesFromOrderPrice)
         {
+            updatePriceBeforeFeesFromOrderPrice = false;
             // Set Order prices
             order.AllowOverridePrices = settings.ErpControlsDiscount;
             order.DisableDiscountCalculation = settings.ErpControlsDiscount;
             try
             {
-                SetPrices(settings, order, orderNode, logger);
+                SetPrices(settings, order, orderNode, logger, out updatePriceBeforeFeesFromOrderPrice);
                 SetCustomerNumber(order, orderNode);
             }
             catch (Exception ex)
@@ -1146,9 +1139,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <param name="order">The order.</param>
         /// <param name="orderNode">The order node.</param>
-        private static void SetPrices(Settings settings, Order order, XmlNode orderNode, Logger logger)
+        private static void SetPrices(Settings settings, Order order, XmlNode orderNode, Logger logger, out bool updatePriceBeforeFeesFromOrderPrice)
         {
-            OrderPriceCalculation(settings, order, orderNode, logger);
+            OrderPriceCalculation(settings, order, orderNode, logger, out updatePriceBeforeFeesFromOrderPrice);
             var orderDiscount = orderNode.SelectSingleNode("column [@columnName='OrderSalesDiscount']");
             if (orderDiscount != null)
             {
@@ -1178,7 +1171,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
         }
 
-        private static void UpdateDynamicwebShipping(Order order, XmlNode orderNode, PriceInfo shippingFeeSentInRequest, Settings settings, Logger logger)
+        private static void UpdateDynamicwebShipping(Order order, XmlNode orderNode, PriceInfo shippingFeeSentInRequest, Settings settings, Logger logger, bool updatePriceBeforeFeesFromOrderPrice)
         {
             Notifications.Order.OnBeforeUpdateDynamicwebShippingArgs onBeforeUpdateDynamicwebShippingArgs = new Notifications.Order.OnBeforeUpdateDynamicwebShippingArgs(order, orderNode, shippingFeeSentInRequest, settings, logger);
             NotificationManager.Notify(Notifications.Order.OnBeforeUpdateDynamicwebShipping, onBeforeUpdateDynamicwebShippingArgs);
@@ -1189,7 +1182,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 if (string.Equals(order.ShippingMethodId, shippingMethodId))
                 {
                     //Calculate new shipping fee based on the update orderlines from the ERP response
-                    var newShippingFee = order.ShippingFee;
+                    var newShippingFee = LiveShippingFeeProvider.GetShippingFee(order);
                     //Standard BC/NAV codeunits add the shipping fee from Request to the total order price in the Response
                     //But after ERP response the Dynamicweb shipping can be changed so it is needed to correct the order price
                     var correctionFee = newShippingFee.Substract(shippingFeeSentInRequest);
@@ -1198,6 +1191,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         order.Price.PriceWithVAT = order.Price.PriceWithVAT + correctionFee.PriceWithVAT;
                         order.Price.PriceWithoutVAT = order.Price.PriceWithoutVAT + correctionFee.PriceWithoutVAT;
                         order.Price.VAT = order.Price.PriceWithVAT - order.Price.PriceWithoutVAT;
+                        if (updatePriceBeforeFeesFromOrderPrice)
+                        {
+                            order.PriceBeforeFees.PriceWithVAT = order.Price.PriceWithVAT;
+                            order.PriceBeforeFees.PriceWithoutVAT = order.Price.PriceWithoutVAT;
+                            order.PriceBeforeFees.VAT = order.Price.VAT;
+                        }
                     }
                 }
             }

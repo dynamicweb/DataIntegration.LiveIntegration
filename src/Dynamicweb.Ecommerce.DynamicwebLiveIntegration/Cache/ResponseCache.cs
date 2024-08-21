@@ -58,7 +58,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
             else
             {
                 string key = ProductInfosKey;
-                if (cacheModel == ResponseCacheLevel.Session && user?.CurrentSecondaryUser != null
+                if (cacheModel == ResponseCacheLevel.Session && UserContext.Current.ImpersonatingUser != null
                     && !string.IsNullOrEmpty(user.CustomerNumber))
                 {
                     key = GetUserSessionKey(user.CustomerNumber);
@@ -174,7 +174,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
             if (Caching.Cache.Current != null && (Context.Current == null || Context.Current.Session == null))
             {
                 Caching.Cache.Current.Remove(WebOrdersKey);
-                var user = User.GetCurrentExtranetUser();
+                var user = UserContext.Current.User;
                 if (user is object)
                 {
                     Caching.Cache.Current.Remove(GetUserSessionKey(user.ID.ToString()));

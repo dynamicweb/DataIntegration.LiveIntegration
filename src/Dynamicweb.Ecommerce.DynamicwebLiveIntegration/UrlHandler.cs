@@ -88,7 +88,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return (!string.IsNullOrEmpty(url) && url.Contains(";")) ? url.Substring(0, url.IndexOf(";", StringComparison.Ordinal)) : url;
         }
 
-        internal int GetEndpointId(string multipleUrlsText)
+        internal int GetEndpointId(string multipleUrlsText, Order order)
         {
             int id = 0;
             if (!string.IsNullOrEmpty(multipleUrlsText))
@@ -99,9 +99,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     if (urls.Any(u => u.Contains(";")))
                     {
                         string url;
-                        if (ExecutingContext.IsFrontEnd())
+                        bool isFrontEnd = ExecutingContext.IsFrontEnd();
+                        if (isFrontEnd || order != null)
                         {
-                            url = GetMatchedUrl(urls);
+                            url = GetMatchedUrl(urls, order);
+
+                            if(!isFrontEnd && string.IsNullOrEmpty(url))
+                            {
+                                url = urls[0];
+                            }
                         }
                         else
                         {
@@ -121,15 +127,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return id;
         }
 
-        internal Endpoint GetEndpoint(string multipleUrlsText, bool logIfNotFound, Logger logger)
+        internal Endpoint GetEndpoint(string multipleUrlsText, bool logIfNotFound, Logger logger, Order order)
         {
             if (!string.IsNullOrEmpty(multipleUrlsText))
             {
-                int id = GetEndpointId(multipleUrlsText);
+                int id = GetEndpointId(multipleUrlsText, order);
 
                 EndpointService endpointService = new EndpointService();
                 var endpoint = endpointService.GetEndpointById(id);
-                if(logIfNotFound && id > 0 && endpoint == null)
+                if (logIfNotFound && id > 0 && endpoint == null)
                 {
                     logger.Log(ErrorLevel.DebugInfo, $"Endpoint {id} does not exist.");
                 }
@@ -138,19 +144,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return null;
         }
 
-        internal Endpoint GetEndpoint(Settings settings, Logger logger)
+        internal Endpoint GetEndpoint(Settings settings, Logger logger, Order order)
         {
             Endpoint ret = null;
             string multiLineUrlText = settings.Endpoint;
             if (!string.IsNullOrEmpty(multiLineUrlText))
             {
-                if (Context.Current?.Items[UrlCacheKey] != null)
+                if (Context.Current?.Items[UrlCacheKey] != null && ExecutingContext.IsFrontEnd())
                 {
                     ret = (Endpoint)Context.Current.Items[UrlCacheKey];
                 }
                 else
                 {
-                    ret = GetEndpoint(multiLineUrlText, false, logger);
+                    ret = GetEndpoint(multiLineUrlText, false, logger, order);
                     if (Context.Current?.Items != null)
                     {
                         Context.Current.Items[UrlCacheKey] = ret;
@@ -164,10 +170,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets the web service URL for the current context.
         /// </summary>
         /// <returns>System.String.</returns>
-        public string GetWebServiceUrl(Settings settings)
+        [Obsolete("Use GetWebServiceUrl(Settings settings, Order order) instead")]
+        public string GetWebServiceUrl(Settings settings) => GetWebServiceUrl(settings, null);
+
+
+        /// <summary>
+        /// Gets the web service URL for the current context.
+        /// </summary>
+        /// <returns>System.String.</returns>
+        public string GetWebServiceUrl(Settings settings, Order order)
         {
             string ret = string.Empty;
-            if (Context.Current?.Items[UrlCacheKey] != null)
+            if (Context.Current?.Items[UrlCacheKey] != null && ExecutingContext.IsFrontEnd())
             {
                 ret = (string)Context.Current.Items[UrlCacheKey];
             }
@@ -179,7 +193,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     if (multiLineUrlText.Contains(";"))
                     {
-                        ret = GetMatchedUrl(urls);
+                        ret = GetMatchedUrl(urls, order);
                     }
                     else
                     {
@@ -195,7 +209,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return ret;
         }
 
-        private string GetMatchedUrl(string[] urls)
+        private string GetMatchedUrl(string[] urls, Order order)
         {
             string ret = null;
             foreach (string url in urls)
@@ -210,15 +224,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     {
                         if (fieldName.StartsWith("User."))
                         {
-                            if (TreatUserFields(fieldName, fieldValue))
+                            if (TreatUserFields(fieldName, fieldValue, order))
                             {
                                 ret = GetUrl(url);
                                 break;
                             }
                         }
-                        else if (fieldName.StartsWith("Order.") && GetCurrentOrder() != null)
+                        else if (fieldName.StartsWith("Order.") && GetCurrentOrder(order) != null)
                         {
-                            foreach (OrderFieldValue ofv in GetCurrentOrder().OrderFieldValues)
+                            foreach (OrderFieldValue ofv in GetCurrentOrder(order).OrderFieldValues)
                             {
                                 if (ofv != null && ofv.OrderField != null && ofv.OrderField.SystemName == fieldName.Substring(6) && (string)ofv.Value == fieldValue)
                                 {
@@ -227,7 +241,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                                 }
                             }
                         }
-                        else if (fieldName == "Session.Shop" && fieldValue == GetCurrentShopId())
+                        else if (fieldName == "Session.Shop" && fieldValue == GetCurrentShopId(order))
                         {
                             ret = GetUrl(url);
                             break;
@@ -236,14 +250,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
             }
             return ret;
-        }        
+        }
 
         /// <summary>
         /// Gets the current order.
         /// </summary>
         /// <returns>Order.</returns>
-        private Order GetCurrentOrder()
+        private Order GetCurrentOrder(Order order)
         {
+            if(ExecutingContext.IsBackEnd() && order != null)
+            {
+                return order;
+            }
+
             Order ret = Common.Context.Cart;
 
             if (ret == null && !string.IsNullOrEmpty(Context.Current?.Request["orderid"]))
@@ -258,8 +277,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets the current shop identifier.
         /// </summary>
         /// <returns>System.String.</returns>
-        private string GetCurrentShopId()
+        private string GetCurrentShopId(Order order)
         {
+            if (ExecutingContext.IsBackEnd() && order != null)
+            {
+                return order.ShopId;
+            }
+
             string ret = string.Empty;
 
             if (Dynamicweb.Frontend.PageView.Current() != null && Dynamicweb.Frontend.PageView.Current().Area != null)
@@ -353,9 +377,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="fieldValue">The field value.</param>
         /// <returns><c>true</c> if the user field matched the passed <c>fieldName</c>, <c>false</c> otherwise.</returns>
-        private bool TreatUserFields(string fieldName, string fieldValue)
-        {
-            User user = Helpers.GetCurrentExtranetUser();
+        private bool TreatUserFields(string fieldName, string fieldValue, Order order)
+        {            
+            User user = (ExecutingContext.IsBackEnd() && order != null) ? UserManagementServices.Users.GetUserById(order.CustomerAccessUserId) :
+                Helpers.GetCurrentExtranetUser();
 
             if (user == null)
             {

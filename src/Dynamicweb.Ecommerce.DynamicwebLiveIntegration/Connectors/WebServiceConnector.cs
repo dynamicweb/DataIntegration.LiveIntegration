@@ -2,6 +2,7 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,10 +14,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     /// Web service connector
     /// </summary>
     internal class WebServiceConnector : ConnectorBase
-    {        
+    {
         private static readonly ILogger LegacyLogger = LogManager.System.GetLogger(LogCategory.DataIntegration, "ERPIntegration");
 
-        public WebServiceConnector(Settings settings, Logger logger) : base(settings, logger)
+        public WebServiceConnector(Settings settings, Logger logger, Order order = null) : base(settings, logger, order)
         {
         }
 
@@ -33,7 +34,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         {
             get
             {
-                string url = UrlHandler.Instance.GetWebServiceUrl(Settings);
+                string url = UrlHandler.Instance.GetWebServiceUrl(Settings, Order);
                 if (!string.IsNullOrEmpty(url))
                 {
                     return url;
@@ -68,13 +69,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             if (Settings == null || !Settings.IsLiveIntegrationEnabled)
             {
                 return false;
-            }            
+            }
             return ExecuteConnectionAvailableRequest(new EndpointInfo(WebServiceUrl), out _);
         }
 
         internal override string Execute(string request)
         {
-            return Execute(GetEndpointInfo(UrlHandler.Instance.GetWebServiceUrl(Settings)), request);
+            return Execute(GetEndpointInfo(UrlHandler.Instance.GetWebServiceUrl(Settings, Order)), request);
         }
 
         internal override string Execute(EndpointInfo endpoint, string request, TimeSpan responseTimeout)

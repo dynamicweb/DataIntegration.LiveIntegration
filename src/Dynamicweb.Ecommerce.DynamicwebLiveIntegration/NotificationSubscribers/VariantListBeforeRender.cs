@@ -21,7 +21,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                         settings.GetProductInformationForAllVariants &&
                         CanCheckPrice(settings))
                     {
-                        var user = User.GetCurrentExtranetUser();
+                        var user = UserContext.Current.User;
                         foreach (var vcp in variantCombinationProducts)
                         {
                             var variantProduct = vcp.Value;

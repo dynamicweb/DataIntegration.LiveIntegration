@@ -1,8 +1,11 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators;
+using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Ecommerce.Products;
 using Dynamicweb.Extensibility.Notifications;
+using System;
 using System.Collections.Generic;
 using System.Xml;
 
@@ -29,6 +32,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
         /// </example>
         public const string OnAfterGenerateProductInfoXml = "Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications.LiveIntegration.OnAfterGenerateProductInfoXml";
 
+        private static List<PriceProductSelection> GetProductSelectionsFromProducts(Dictionary<Product, double> products)
+        {
+            var productSelections = new List<PriceProductSelection>();
+            foreach (var product in products)
+            {
+                productSelections.Add(product.Key.GetPriceProductSelection(product.Value, null));
+            }
+            return productSelections;
+        }
+
         /// <summary>
         /// Arguments class for the OnBeforeGenerateProductInfoXml subscriber.
         /// </summary>
@@ -40,9 +53,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// </summary>
             /// <param name="products">The products for which the XML is generated.</param>
             /// <param name="settings">An instance of ProductInfoXmlGeneratorSettings that determines how the XML is generated.</param>
+            [Obsolete("Use OnBeforeGenerateProductInfoXmlArgs(List<PriceProductSelection> products, ProductInfoXmlGeneratorSettings settings, Settings liveIntegrationSettings, Logger logger)")]
             public OnBeforeGenerateProductInfoXmlArgs(Dictionary<Product, double> products, ProductInfoXmlGeneratorSettings settings, Settings liveIntegrationSettings, Logger logger)
             {
-                Products = products;
+                ProductSelections = GetProductSelectionsFromProducts(products);
+                GeneratorSettings = settings;
+                Settings = liveIntegrationSettings;
+                Logger = logger;
+            }
+
+            public OnBeforeGenerateProductInfoXmlArgs(List<PriceProductSelection> products, ProductInfoXmlGeneratorSettings settings, Settings liveIntegrationSettings, Logger logger)
+            {
+                ProductSelections = products;
                 GeneratorSettings = settings;
                 Settings = liveIntegrationSettings;
                 Logger = logger;
@@ -52,7 +74,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// Gets the products for which the XML is being generated..
             /// </summary>
             /// <value>The products.</value>
+            [Obsolete("Use ProductSelections")]
             public Dictionary<Product, double> Products { get; }
+
+
+            /// <summary>
+            /// Gets the products for which the XML is being generated..
+            /// </summary>
+            /// <value>The products.</value>
+            public List<PriceProductSelection> ProductSelections { get; }
 
             /// <summary>
             /// Gets the ProductInfoXmlGeneratorSettings that determines how the XML is generated
@@ -83,9 +113,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// <param name="products">The products for which the XML has been generated.</param>
             /// <param name="settings">The ProductInfoXmlGeneratorSettings that determines how the XML is generated.</param>
             /// <param name="xmlDocument">The XML document that has been created. You can manipulate this document to alter the XML being sent to the ERP.</param>
+            [Obsolete("Use OnAfterGenerateProductInfoXmlArgs(List<PriceProductSelection> products, ProductInfoXmlGeneratorSettings settings, XmlDocument xmlDocument, Settings liveIntegrationSettings, Logger logger)")]
             public OnAfterGenerateProductInfoXmlArgs(Dictionary<Product, double> products, ProductInfoXmlGeneratorSettings settings, XmlDocument xmlDocument, Settings liveIntegrationSettings, Logger logger)
             {
-                Products = products;
+                ProductSelections = GetProductSelectionsFromProducts(products);
+                GeneratorSettings = settings;
+                XmlDocument = xmlDocument;
+                Settings = liveIntegrationSettings;
+                Logger = logger;
+            }
+
+            public OnAfterGenerateProductInfoXmlArgs(List<PriceProductSelection> products, ProductInfoXmlGeneratorSettings settings, XmlDocument xmlDocument, Settings liveIntegrationSettings, Logger logger)
+            {
+                ProductSelections = products;
                 GeneratorSettings = settings;
                 XmlDocument = xmlDocument;
                 Settings = liveIntegrationSettings;
@@ -96,7 +136,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// Gets the products for which the XML has been generated.
             /// </summary>
             /// <value>The products.</value>
+            [Obsolete("Use ProductSelections")]
             public Dictionary<Product, double> Products { get; }
+
+
+            /// <summary>
+            /// Gets the products for which the XML has been generated.
+            /// </summary>
+            /// <value>The products.</value>
+            public List<PriceProductSelection> ProductSelections { get; }
 
             /// <summary>
             /// Gets the ProductInfoXmlGeneratorSettings that determines how the XML is generated.

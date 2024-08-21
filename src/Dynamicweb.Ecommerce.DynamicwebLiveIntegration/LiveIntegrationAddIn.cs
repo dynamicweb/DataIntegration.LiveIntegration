@@ -632,7 +632,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         if (state.IsDeleted)
                             continue;
 
-                        options.Add(state.Id, state.Name);
+                        options.Add(state.Id, state.GetName(Services.Languages.GetDefaultLanguageId()));
                     }
                     break;
 
