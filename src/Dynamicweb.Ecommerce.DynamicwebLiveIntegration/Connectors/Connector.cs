@@ -3,6 +3,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Extensibility.Notifications;
 using System;
 using System.Collections.Concurrent;
@@ -48,21 +49,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         static Connector()
         {
             int timeout = SystemConfiguration.Instance.GetInt32($"{Constants.LiveIntegrationSettingsKey}/TooManyRequestsTimeoutSeconds");
-            if(timeout > 0)
+            if (timeout > 0)
             {
                 TooManyRequestsTimeoutSeconds = timeout;
             }
         }
 
-        private static ConnectorBase GetConnector(Settings settings, Logger logger)
+        private static ConnectorBase GetConnector(Settings settings, Logger logger, Order order = null)
         {
             if (settings == null || string.IsNullOrEmpty(settings.Endpoint))
             {
-                return new WebServiceConnector(settings, logger);
+                return new WebServiceConnector(settings, logger, order);
             }
             else
             {
-                return new EndpointConnector(settings, logger);
+                return new EndpointConnector(settings, logger, order);
             }
         }
 
@@ -74,7 +75,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         /// <param name="createOrder">if set to <c>true</c> [create order].</param>
         /// <param name="error">The error.</param>
         /// <returns>XmlDocument.</returns>
+        [Obsolete("Use CalculateOrder(Settings settings, string orderXml, Order order, bool createOrder, out Exception error, Logger logger) instead")]
         public static XmlDocument CalculateOrder(Settings settings, string orderXml, string orderId, bool createOrder, out Exception error, Logger logger)
+        {
+            return CalculateOrder(settings, orderXml, Services.Orders.GetById(orderId), createOrder, out error, logger);
+        }
+
+        /// <summary>
+        /// Calculates the order.
+        /// </summary>
+        /// <param name="orderXml">The order XML.</param>
+        /// <param name="order">The order</param>
+        /// <param name="createOrder">if set to <c>true</c> [create order].</param>
+        /// <param name="error">The error.</param>
+        /// <returns>XmlDocument.</returns>
+        public static XmlDocument CalculateOrder(Settings settings, string orderXml, Order order, bool createOrder, out Exception error, Logger logger)
         {
             error = null;
             XmlDocument document = null;
@@ -83,13 +98,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             {
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.CalculateOrder START");
                 // only retry if is not create order, for create order schedule task will send later
-                document = Communicate(settings, orderXml, $"CalculateOrder (ID: {orderId}, CreateOrder: {createOrder})", logger, !createOrder, true);
+                document = Communicate(settings, orderXml, $"CalculateOrder (ID: {order.Id}, CreateOrder: {createOrder})", logger, !createOrder, true, order);
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.CalculateOrder END");
             }
             catch (Exception ex)
             {
                 logger.Log(ErrorLevel.ConnectionError,
-                    $"Error CalculateOrder Order Id:'{orderId}' CreateOrder:'{createOrder}' Message:'{ex.Message}'.");
+                    $"Error CalculateOrder Order Id:'{order.Id}' CreateOrder:'{createOrder}' Message:'{ex.Message}'.");
                 error = ex;
             }
 
@@ -136,16 +151,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         /// </summary>
         public static bool IsWebServiceConnectionAvailable(Settings settings, Logger logger)
         {
-            if(settings is null)
+            if (settings is null)
             {
                 return true;
             }
             else
             {
                 var connector = GetConnector(settings, logger);
-                return connector.IsWebServiceConnectionAvailable();                
-            }            
-        }       
+                return connector.IsWebServiceConnectionAvailable();
+            }
+        }
 
         /// <summary>
         /// Retrieves data from the request string.
@@ -168,10 +183,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         /// <param name="retry">if set to <c>true</c> [retry].</param>
         /// <param name="throwException">if set to <c>true</c> [throw exception].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument Communicate(Settings settings, string request, string referenceName, Logger logger, bool retry = true, bool throwException = false)
+        private static XmlDocument Communicate(Settings settings, string request, string referenceName, Logger logger, bool retry = true, bool throwException = false, Order order = null)
         {
-            HttpStatusCode httpStatusCode = HttpStatusCode.OK;
-            return Communicate(settings, request, referenceName, logger, out httpStatusCode, retry, throwException);
+            return Communicate(settings, request, referenceName, logger, out _, retry, throwException, order);
         }
 
         /// <summary>
@@ -182,19 +196,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         /// <param name="retry">if set to <c>true</c> [retry].</param>
         /// <param name="throwException">if set to <c>true</c> [throw exception].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument Communicate(Settings settings, string request, string referenceName, Logger logger, out HttpStatusCode httpStatusCode, bool retry = true, bool throwException = false)
-        {            
+        private static XmlDocument Communicate(Settings settings, string request, string referenceName, Logger logger, out HttpStatusCode httpStatusCode, bool retry = true, bool throwException = false, Order order = null)
+        {
             XmlDocument result = null;
             int retryCount = 0;
             httpStatusCode = HttpStatusCode.OK;
-            var connector = GetConnector(settings, logger);
+            var connector = GetConnector(settings, logger, order);
 
             if (InstanceIdTooManyRequestsCollection.TryGetValue(settings.InstanceId, out DateTime lastErrorTime) &&
                 DateTime.Now.Subtract(lastErrorTime).TotalSeconds < TooManyRequestsTimeoutSeconds)
             {
-                logger.Log(ErrorLevel.DebugInfo, $"Skip due to 429 error timeout: {referenceName} Request: '{request}'.");                
+                logger.Log(ErrorLevel.DebugInfo, $"Skip due to 429 error timeout: {referenceName} Request: '{request}'.");
                 return null;
-            }            
+            }
 
             // if ERP is down and in retry mode wait!
             while (!connector.IsWebServiceConnectionAvailable())
@@ -226,11 +240,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                 try
                 {
                     NotificationManager.Notify(OnBeforeErpCommunication, new OnBeforeErpCommunicationArgs(request, referenceName, settings, logger));
-                                        
+
                     logger.Log(ErrorLevel.DebugInfo, $"Request {referenceName} sent: '{request}'.");
                     Diagnostics.ExecutionTable.Current.Add($"DynamicwebLiveIntegration: Request {referenceName} sent: '{WebUtility.HtmlEncode(request)}'.");
 
-                    erpXmlResponse = connector.Execute(endpoint, request);                    
+                    erpXmlResponse = connector.Execute(endpoint, request);
 
                     if (!string.IsNullOrEmpty(erpXmlResponse))
                     {
@@ -329,7 +343,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             catch (Exception ex)
             {
                 logger.Log(ErrorLevel.ResponseError, string.Format("Response RetrievePDF returned error: '{0}'.", ex.Message));
-                throw ex;
+                throw;
             }
             Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.RetrievePDF END");
             return base64EncodedPDF;

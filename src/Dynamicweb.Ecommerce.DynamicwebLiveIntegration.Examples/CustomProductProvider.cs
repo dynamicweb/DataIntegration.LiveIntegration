@@ -11,17 +11,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples
     /// </summary>
     /// <seealso cref="Products.ProductProviderBase" />
     public class CustomProductProvider : ProductProviderBase
-    {
-        /// <summary>
-        /// Gets the product identifier.
-        /// </summary>
-        /// <param name="product">The product.</param>
-        /// <returns>System.String.</returns>
-        public override string GetProductIdentifier(Settings settings, Product product)
-        {
-            return GetProductIdentifier(settings, product, null);
-        }
-
+    {        
         /// <summary>
         /// Gets the product identifier.
         /// </summary>

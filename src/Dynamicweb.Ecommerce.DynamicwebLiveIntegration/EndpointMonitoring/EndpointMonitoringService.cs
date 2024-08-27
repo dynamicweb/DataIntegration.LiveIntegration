@@ -115,7 +115,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
         {
             if (endpoint != null)
             {
-                EndpointCollection.TryRemove(endpoint.GetUrl(), out EndpointStatus status);
+                EndpointCollection.TryRemove(endpoint.GetUrl(), out _);
                 PingTimers.TryRemove(endpoint.Id, out Timer timer);
                 timer?.Dispose();
             }

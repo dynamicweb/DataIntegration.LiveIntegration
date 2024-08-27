@@ -1,4 +1,5 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Ecommerce.Products;
 using System.Linq;
 
@@ -26,6 +27,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
                 !new Stocks.UnitOfMeasureService().GetUnitOfMeasures(product.Id).Any(u => u.UnitId.Equals(unitId)))            
                 return false;            
             return true;
-        }        
+        }
+
+        public static PriceProductSelection GetPriceProductSelection(this Product product, double quantity, string unitId) => new PriceProductSelection(product, unitId, 0, quantity, 0);
     }
 }

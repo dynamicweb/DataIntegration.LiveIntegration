@@ -1,4 +1,5 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Prices;
@@ -144,13 +145,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
             var productInfo = ProductManager.GetProductInfo(product, settings, user);
             if (productInfo == null)
             {
+                var productSelection = Product.GetPriceProductSelection(1, null);
                 Diagnostics.ExecutionTable.Current.Add($"ProductTemplateExtender FetchProductInfos product[id='{product?.Id}' variantId='{product.VariantId}'] START");
-                var products = new Dictionary<Product, double>();
-                products.Add(Product, 1);
+                var products = new List<PriceProductSelection>() { productSelection };                
                 var context = new LiveContext(Helpers.GetCurrentCurrency(), user, Services.Shops.GetShop(Global.CurrentShopId));
                 if (ProductManager.FetchProductInfos(products, context, settings, new Logger(settings), false))
                 {
-                    productInfo = ProductManager.GetProductInfo(product, settings, user);
+                    productInfo = ProductManager.GetProductInfo(product, settings, user, context, productSelection.UnitId);
                 }
                 Diagnostics.ExecutionTable.Current.Add($"ProductTemplateExtender FetchProductInfos product[id='{product?.Id}' variantId='{Product.VariantId}'] END");
             }

@@ -2,6 +2,7 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using Dynamicweb.Ecommerce.Orders;
 using System;
 using System.Collections.Generic;
 
@@ -11,26 +12,22 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     /// Endpoint Connector
     /// </summary>
     internal class EndpointConnector : ConnectorBase
-    {        
-        public EndpointConnector(Settings settings, Logger logger) : base(settings, logger)
+    {
+        public EndpointConnector(Settings settings, Logger logger, Order order = null) : base(settings, logger, order)
         {
         }
 
         internal override EndpointInfo GetEndpoint()
         {
             return new EndpointInfo(GetEndpoint(Settings.Endpoint, Logger));
-        }        
+        }
 
         internal Endpoint GetEndpoint(string multipleUrlsText, Logger logger)
         {
             if (!string.IsNullOrEmpty(multipleUrlsText))
             {
-                var endpoint = UrlHandler.Instance.GetEndpoint(multipleUrlsText, false, logger);
-                if (endpoint == null)
-                {
-                    throw new ArgumentException("Cannot find appropriate endpoint. Check Endpoint settings.");
-                }
-                return endpoint;
+                var endpoint = UrlHandler.Instance.GetEndpoint(multipleUrlsText, false, logger, Order);
+                return endpoint ?? throw new ArgumentException("Cannot find appropriate endpoint. Check Endpoint settings.");
             }
             else
             {
@@ -51,7 +48,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             if (Settings == null || !Settings.IsLiveIntegrationEnabled)
             {
                 return false;
-            }            
+            }
             return ExecuteConnectionAvailableRequest(new EndpointInfo(GetEndpoint(Settings.Endpoint, Logger)), out _);
         }
 
@@ -65,7 +62,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             string response = null;
             if (endpoint?.Endpoint != null)
             {
-                EndpointService endpointService = new EndpointService();                
+                EndpointService endpointService = new EndpointService();
                 response = endpointService.Execute(endpoint.Endpoint.Id, endpointService.GetDynamicwebServiceSoapBody(endpoint.Endpoint, request), responseTimeout);
                 EndpointMonitoringService.Success(endpoint);
             }
@@ -74,7 +71,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
         internal override string Execute(string request)
         {
-            return Execute(GetEndpointInfo(UrlHandler.Instance.GetEndpoint(Settings, Logger)), request);
+            return Execute(GetEndpointInfo(UrlHandler.Instance.GetEndpoint(Settings, Logger, Order)), request);
         }
 
         internal override IEnumerable<string> GetUrls(string multipleUrlsText)
@@ -85,7 +82,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         internal override bool IsConnectionAvailableFromBackend(string endpointId, out string error)
         {
             error = null;
-            var endpoint = UrlHandler.Instance.GetEndpoint(endpointId, false, Logger);
+            var endpoint = UrlHandler.Instance.GetEndpoint(endpointId, false, Logger, Order);
             if (endpoint != null)
             {
                 EndpointMonitoringService.ClearEndpoint(GetEndpointInfo(endpoint));

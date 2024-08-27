@@ -2,6 +2,7 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
+using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Ecommerce.Products;
 using Dynamicweb.Extensibility.Notifications;
 using System;
@@ -23,7 +24,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// <param name="products">The products.</param>
         /// <param name="settings">The settings.</param>
         /// <returns>System.String.</returns>
-        internal string GenerateProductInfoXml(Settings currentSettings, Dictionary<Product, double> products, ProductInfoXmlGeneratorSettings settings, Logger logger)
+        internal string GenerateProductInfoXml(Settings currentSettings, List<PriceProductSelection> products, ProductInfoXmlGeneratorSettings settings, Logger logger)
         {
             NotificationManager.Notify(Notifications.ProductInfo.OnBeforeGenerateProductInfoXml, new Notifications.ProductInfo.OnBeforeGenerateProductInfoXmlArgs(products, settings, currentSettings, logger));
             var xmlDocument = BuildXmlDocument();
@@ -59,7 +60,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// <param name="products">The products.</param>
         /// <param name="settings">The settings.</param>
         /// <returns>XmlNode.</returns>
-        private XmlNode BuildProductInfoXml(Settings currentSettings, XmlDocument xmlDocument, Dictionary<Product, double> products, ProductInfoXmlGeneratorSettings settings, Logger logger)
+        private XmlNode BuildProductInfoXml(Settings currentSettings, XmlDocument xmlDocument, List<PriceProductSelection> products, ProductInfoXmlGeneratorSettings settings, Logger logger)
         {
             if (products == null || !products.Any())
             {
@@ -79,7 +80,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
 
             foreach (var productWithQuantity in products)
             {
-                Product product = productWithQuantity.Key;
+                Product product = productWithQuantity.Product;
                 var itemNode = xmlDocument.CreateElement("Product");
                 tableNode.AppendChild(itemNode);
 
@@ -88,10 +89,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                     AddChildXmlNode(itemNode, "ProductId", doCalculatePriceUsingProductNumber ? product.Number : product.Id);
                     AddChildXmlNode(itemNode, "ProductVariantId", ProductManager.ProductProvider.GetProductVariantIdIdentifier(product));
                     AddChildXmlNode(itemNode, "ProductNumber", product.Number);
-                    AddChildXmlNode(itemNode, "ProductUnitId", product.DefaultUnitId ?? string.Empty);
-                    AddChildXmlNode(itemNode, "ProductIdentifier", ProductManager.ProductProvider.GetProductIdentifier(currentSettings, product));
+                    AddChildXmlNode(itemNode, "ProductUnitId", settings.GetUnitPrices ? productWithQuantity.UnitId : product.DefaultUnitId ?? string.Empty);
+                    AddChildXmlNode(itemNode, "ProductIdentifier", ProductManager.ProductProvider.GetProductIdentifier(currentSettings, product, productWithQuantity.UnitId));
                     AddChildXmlNode(itemNode, "CurrencyCode", currencyCode);
-                    AddChildXmlNode(itemNode, "Quantity", productWithQuantity.Value.ToIntegrationString(currentSettings, logger));
+                    AddChildXmlNode(itemNode, "Quantity", productWithQuantity.Quantity.ToIntegrationString(currentSettings, logger));
 
                     if (settings.AddProductFieldsToRequest && product.ProductFieldValues.Count > 0)
                     {

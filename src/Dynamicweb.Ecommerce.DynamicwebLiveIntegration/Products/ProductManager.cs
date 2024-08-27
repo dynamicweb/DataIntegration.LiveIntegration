@@ -70,9 +70,20 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </summary>
         /// <param name="product">The product.</param>
         /// <param name="quantity">The quantity.</param>
+        [Obsolete("Use FillProductValues(Settings settings, Product product, double quantity, LiveContext context, string unitId)")]
         public static void FillProductValues(Settings settings, Product product, double quantity, LiveContext context)
         {
-            ProductInfo productInfo = GetProductInfo(product, settings, context.User);
+            FillProductValues(settings, product, quantity, context, null);
+        }
+
+        /// <summary>
+        /// Fills the product values from the response.
+        /// </summary>
+        /// <param name="product">The product.</param>
+        /// <param name="quantity">The quantity.</param>
+        public static void FillProductValues(Settings settings, Product product, double quantity, LiveContext context, string unitId)
+        {
+            ProductInfo productInfo = GetProductInfo(product, settings, context.User, context, unitId);
             if (productInfo != null)
             {
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.ProductManager.FillProductValues START");
@@ -107,7 +118,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="user">The user.</param>
         /// <param name="updateCache">Update cache with products information retrieved.</param>
         /// <returns><c>true</c> if product information was fetched, <c>false</c> otherwise.</returns>
-        internal static bool FetchProductInfos(Dictionary<Product, double> products, LiveContext context, Settings settings, Logger logger, bool doCurrencyCheck, bool updateCache = true)
+        internal static bool FetchProductInfos(List<PriceProductSelection> products, LiveContext context, Settings settings, Logger logger, bool doCurrencyCheck, bool updateCache = true)
         {
             if (products == null || products.Count == 0)
             {
@@ -146,7 +157,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 
             var productCacheLevel = settings.GetProductCacheLevel();
             // Check for existence of the given products in the Cache
-            Dictionary<Product, double> productsForRequest = GetProductsForRequest(settings, productCacheLevel, products, logger, context, doCurrencyCheck);
+            var productsForRequest = GetProductsForRequest(settings, productCacheLevel, products, logger, context, doCurrencyCheck);
 
             if (productsForRequest.Count == 0)
             {
@@ -164,14 +175,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 
             for (var i = 0; i < numberOfRequests; i++)
             {
-                var currentSetFetched = FetchProductInfosInternal(productsForRequest.OrderBy(pair => pair.Key?.Id).Skip(i * settings.MaxProductsPerRequest).Take(settings.MaxProductsPerRequest).ToDictionary(pair => pair.Key, pair => pair.Value), productCacheLevel, context, settings, logger, updateCache);
+                var currentSetFetched = FetchProductInfosInternal(productsForRequest.OrderBy(p => p.Product.Id).Skip(i * settings.MaxProductsPerRequest).Take(settings.MaxProductsPerRequest).ToList(), productCacheLevel, context, settings, logger, updateCache);
                 allProductsSuccessfullyFetched = allProductsSuccessfullyFetched ? currentSetFetched : allProductsSuccessfullyFetched;
             }
 
             return allProductsSuccessfullyFetched;
         }
 
-        private static bool FetchProductInfosInternal(Dictionary<Product, double> productsForRequest, ResponseCacheLevel productCacheLevel, LiveContext context, Settings settings, Logger logger, bool updateCache = true)
+        private static bool FetchProductInfosInternal(List<PriceProductSelection> productsForRequest, ResponseCacheLevel productCacheLevel, LiveContext context, Settings settings, Logger logger, bool updateCache = true)
         {
             Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.ProductManager.FetchProductInfos START");
             string request = BuildProductRequest(settings, productsForRequest, context, logger);
@@ -247,7 +258,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </summary>
         /// <param name="products">The products.</param>
         /// <returns>System.String.</returns>
-        private static string BuildProductRequest(Settings settings, Dictionary<Product, double> products, LiveContext context, Logger logger)
+        private static string BuildProductRequest(Settings settings, List<PriceProductSelection> products, LiveContext context, Logger logger)
         {
             var xmlGenerator = new ProductInfoXmlGenerator();
             var xmlGeneratorSettings = new ProductInfoXmlGeneratorSettings
@@ -268,17 +279,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         }
 
 
-        private static Dictionary<Product, double> GetProductsForRequest(Settings settings, ResponseCacheLevel productCacheLevel, Dictionary<Product, double> products, Logger logger, LiveContext context, bool doCurrencyCheck)
+        private static List<PriceProductSelection> GetProductsForRequest(Settings settings, ResponseCacheLevel productCacheLevel, List<PriceProductSelection> products, Logger logger, LiveContext context, bool doCurrencyCheck)
         {
             // Check for existence of the given products in the Cache
-            Dictionary<Product, double> productsForRequest = new Dictionary<Product, double>();
+            List<PriceProductSelection> productsForRequest = new List<PriceProductSelection>();
             bool getProductInformationForAllVariants = settings.GetProductInformationForAllVariants;
 
             foreach (var productWithQuantity in products)
             {
-                Product product = productWithQuantity.Key;
-                string productIdentifier = ProductProvider.GetProductIdentifier(settings, product);
-                bool isProductCached = ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
+                Product product = productWithQuantity.Product;
+                string productIdentifier = ProductProvider.GetProductIdentifier(settings, productWithQuantity.Product, productWithQuantity.UnitId);              
+                bool isProductCached =  ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
                     doCurrencyCheck ? context.Currency : null);
 
                 if (!isProductCached)
@@ -292,18 +303,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             variants = GetFilteredVariants(variants);
                             foreach (var variant in variants)
                             {
-                                var variantProductIdentifier = ProductProvider.GetProductIdentifier(settings, variant);
+                                var variantProductIdentifier = ProductProvider.GetProductIdentifier(settings, variant, variant.DefaultUnitId);                                
                                 var isVariantProductCached = ResponseCache.IsProductInCache(productCacheLevel, variantProductIdentifier, context.User,
                                     doCurrencyCheck ? context.Currency : null);
 
                                 if (!isVariantProductCached)
                                 {
-                                    var isVariantProductAdded = productsForRequest.ContainsKey(variant);
+                                    var isVariantProductAdded = productsForRequest.Any(p => p.Product == variant);
                                     var isVariantProductLivePriceEnabled = ProductProvider.IsLivePriceEnabledForProduct(variant);
 
                                     if (!isVariantProductAdded && isVariantProductLivePriceEnabled && variant.HasIdentifier(settings))
                                     {
-                                        productsForRequest.Add(variant, productWithQuantity.Value);
+                                        productsForRequest.Add(variant.GetPriceProductSelection(productWithQuantity.Quantity, null));
                                     }
                                 }
                             }
@@ -314,16 +325,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 
                     if (string.IsNullOrEmpty(product.VariantId) || GetFilteredVariants(new List<Product>() { product }).Any())
                     {
-                        productIdentifier = ProductProvider.GetProductIdentifier(settings, product);
+                        productIdentifier = ProductProvider.GetProductIdentifier(settings, product, productWithQuantity.UnitId);                        
                         isProductCached = ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
                             doCurrencyCheck ? context.Currency : null);
                         if (!isProductCached)
                         {
-                            bool isProductAdded = productsForRequest.ContainsKey(product);
+                            bool isProductAdded = productsForRequest.Any(p => p.Product == product);
                             bool isProductLivePriceEnabled = ProductProvider.IsLivePriceEnabledForProduct(product);
                             if (!isProductAdded && isProductLivePriceEnabled && product.HasIdentifier(settings))
                             {
-                                productsForRequest.Add(product, productWithQuantity.Value);
+                                productsForRequest.Add(product.GetPriceProductSelection(productWithQuantity.Quantity, productWithQuantity.UnitId));
                             }
                         }
                     }
@@ -463,7 +474,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <returns></returns>
         public static ProductInfo GetProductInfo(Product product, Settings settings, User user)
         {
-            return GetProductInfo(product, settings, user, null);
+            return GetProductInfo(product, settings, user, null, null);
         }
 
         /// <summary>
@@ -471,12 +482,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </summary>
         /// <param name="product">The product</param>
         /// <returns></returns>
+        [Obsolete("Use GetProductInfo(Product product, Settings settings, User user, LiveContext context, string unitId)")]
         public static ProductInfo GetProductInfo(Product product, Settings settings, User user, LiveContext context)
+        {            
+            return GetProductInfo(product, settings, user, context, null);
+        }
+
+        /// <summary>
+        /// Gets the ProductInfo from the ERP
+        /// </summary>
+        /// <param name="product">The product</param>
+        /// <returns></returns>
+        public static ProductInfo GetProductInfo(Product product, Settings settings, User user, LiveContext context, string unitId)
         {
             ProductInfo productInfo = null;
             if (product != null)
             {
-                string productIdentifier = ProductProvider.GetProductIdentifier(settings, product);
+                string productIdentifier = ProductProvider.GetProductIdentifier(settings, product, unitId);
                 var productCacheLevel = settings.GetProductCacheLevel();
                 if (ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, user, context?.Currency))
                 {

@@ -1,5 +1,6 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Products;
 using System;
@@ -97,10 +98,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <returns><c>true</c> if product information was updated, <c>false</c> otherwise.</returns>
         public static bool UpdateProduct(Product product, double quantity, string currencyCode, string shopId, bool updateCache = false)
         {
-            var settings = SettingsManager.GetSettingsByShop(shopId);            
+            var settings = SettingsManager.GetSettingsByShop(shopId);
+            var productSelection = product.GetPriceProductSelection(1, null);
+            var context = new LiveContext(Services.Currencies.GetCurrency(currencyCode), Helpers.GetCurrentExtranetUser(), Services.Shops.GetShop(shopId));
             return Products.ProductManager.FetchProductInfos(
-                new Dictionary<Product, double> { { product, quantity } },
-                new LiveContext(Services.Currencies.GetCurrency(currencyCode), Helpers.GetCurrentExtranetUser(), Services.Shops.GetShop(shopId)),
+                new List<Prices.PriceProductSelection>(){ productSelection },
+                context,
                 settings, new Logging.Logger(settings), false, updateCache);
         }
 

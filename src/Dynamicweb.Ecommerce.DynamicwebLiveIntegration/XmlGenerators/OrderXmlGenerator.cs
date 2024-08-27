@@ -57,7 +57,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// <param name="order">The order.</param>
         private static void AddCustomerInformation(Settings currentSettings, XmlElement orderNode, Order order)
         {
-            var user = User.GetUserByID(order.CustomerAccessUserId);
+            var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
 
             AddChildXmlNode(orderNode, "OrderCustomerAccessUserExternalId", !string.IsNullOrWhiteSpace(user?.ExternalID) ? user.ExternalID : currentSettings.AnonymousUserKey);
             AddChildXmlNode(orderNode, "OrderCustomerNumber", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
@@ -123,7 +123,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             var orderLineFields = CreateTableNode(xmlDocument, "EcomOrderLineFields");
 
             foreach (var orderLine in order.OrderLines.Where(x => x.OrderLineFieldValues.Any()))
-            {                
+            {
                 foreach (var field in orderLine.OrderLineFieldValues)
                 {
                     var itemNode = CreateAndAppendItemNode(orderLineFields, "EcomOrderLineFields");
@@ -156,10 +156,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
 
             if (!settings.GenerateXmlForHash || !settings.ErpControlsDiscount)
             {
-                // Order lines (order discounts, and product discounts)
+                // Order lines (order discounts, and product discounts)                
                 foreach (var orderLine in order.OrderLines.Where(ol => ol.IsDiscount()))
                 {
-                    CreateOrderLineXml(currentSettings, tableNode, orderLine, settings, logger);
+                    if (!string.IsNullOrEmpty(orderLine.GiftCardCode))
+                    {
+                        if (_orderPriceWithoutVat is null)
+                        {
+                            _orderPriceWithoutVat = GetOrderPriceWithoutVat(order);
+                        }
+                        CreateOrderLineXml(currentSettings, tableNode, orderLine, settings, logger);
+                    }
+                    else
+                    {
+                        CreateOrderLineXml(currentSettings, tableNode, orderLine, settings, logger);
+                    }
                 }
             }
 
@@ -210,13 +221,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 // Dynamicweb handles shipping
                 AddChildXmlNode(itemNode, "OrderShippingMethodName", order.ShippingMethod, true);
                 AddChildXmlNode(itemNode, "OrderShippingMethodId", order.ShippingMethodId);
-                AddChildXmlNode(itemNode, "OrderShippingFee", order.ShippingFee.PriceWithVAT.ToIntegrationString(currentSettings, logger));
-                AddChildXmlNode(itemNode, "OrderShippingFeeWithoutVat", order.ShippingFee.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
+                if (!settings.GenerateXmlForHash)
+                {
+                    AddChildXmlNode(itemNode, "OrderShippingFee", order.ShippingFee.PriceWithVAT.ToIntegrationString(currentSettings, logger));
+                    AddChildXmlNode(itemNode, "OrderShippingFeeWithoutVat", order.ShippingFee.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
+                }
                 AddChildXmlNode(itemNode, "OrderShippingItemType", settings.ErpShippingItemType);
                 AddChildXmlNode(itemNode, "OrderShippingItemKey", settings.ErpShippingItemKey);
                 AddChildXmlNode(itemNode, "OrderShippingCode", order.ShippingMethodCode);
-                AddChildXmlNode(itemNode, "OrderShippingAgentCode", order.ShippingMethodAgentCode);                                        
-                AddChildXmlNode(itemNode, "OrderShippingAgentServiceCode", order.ShippingMethodAgentServiceCode);                    
+                AddChildXmlNode(itemNode, "OrderShippingAgentCode", order.ShippingMethodAgentCode);
+                AddChildXmlNode(itemNode, "OrderShippingAgentServiceCode", order.ShippingMethodAgentServiceCode);
             }
 
             if (!settings.GenerateXmlForHash)
@@ -227,8 +241,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(itemNode, "OrderVoucherCode", order.VoucherCode);
             AddChildXmlNode(itemNode, "OrderTransactionId", order.TransactionNumber);
             AddChildXmlNode(itemNode, "OrderStateId", order.StateId);
-            AddChildXmlNode(itemNode, "OrderStateName", order.OrderState.Name, true);
-            AddChildXmlNode(itemNode, "ErpControlsDiscount", settings.ErpControlsDiscount.ToString());            
+            AddChildXmlNode(itemNode, "OrderStateName", order.OrderState.GetName(Services.Languages.GetDefaultLanguageId()), true);
+            AddChildXmlNode(itemNode, "ErpControlsDiscount", settings.ErpControlsDiscount.ToString());
             AddChildXmlNode(itemNode, "VatCountryCode", order.VatCountry?.Code2);
             AddChildXmlNode(itemNode, "VatPostingGroup", order.VatCountry?.VatPostingGroup);
 
@@ -277,14 +291,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(itemNode, "OrderLineProductVariantId", orderline.ProductVariantId);
             AddChildXmlNode(itemNode, "OrderLineProductNumber", orderline.ProductNumber);
             AddChildXmlNode(itemNode, "OrderLineProductName", orderline.ProductName); // Product name or discount description
-            AddChildXmlNode(itemNode, "OrderLineProductIdentifier", ProductManager.ProductProvider.GetProductIdentifier(currentSettings, orderline.Product));
+            AddChildXmlNode(itemNode, "OrderLineProductIdentifier", ProductManager.ProductProvider.GetProductIdentifier(currentSettings, orderline.Product, orderline.UnitId));
             AddChildXmlNode(itemNode, "OrderLineQuantity", orderline.Quantity.ToIntegrationString(currentSettings, logger));
             AddChildXmlNode(itemNode, "OrderLineUnitId", orderline.UnitId ?? string.Empty);
             if (!settings.GenerateXmlForHash)
             {
-                AddChildXmlNode(itemNode, "OrderLinePriceWithoutVat", orderline.Price.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
-                AddChildXmlNode(itemNode, "OrderLineUnitPriceWithoutVat", orderline.UnitPrice.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
-                AddChildXmlNode(itemNode, "NetPrice", orderline.IsProduct() ? orderline.Product.DefaultPrice.ToIntegrationString(currentSettings, logger) : string.Empty);
+                if (!string.IsNullOrEmpty(orderline.GiftCardCode))
+                {
+                    var priceWithoutVat = GetGiftCardAmountWithoutVat(orderline);
+                    AddChildXmlNode(itemNode, "OrderLinePriceWithoutVat", priceWithoutVat.ToIntegrationString(currentSettings, logger));
+                    AddChildXmlNode(itemNode, "OrderLineUnitPriceWithoutVat", priceWithoutVat.ToIntegrationString(currentSettings, logger));
+                }
+                else
+                {
+                    AddChildXmlNode(itemNode, "OrderLinePriceWithoutVat", orderline.Price.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
+                    AddChildXmlNode(itemNode, "OrderLineUnitPriceWithoutVat", orderline.UnitPrice.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
+                    AddChildXmlNode(itemNode, "NetPrice", orderline.IsProduct() ? orderline.Product.DefaultPrice.ToIntegrationString(currentSettings, logger) : string.Empty);
+                }
             }
             AddChildXmlNode(itemNode, "OrderLineType", ((int)orderline.OrderLineType).ToString());
             AddChildXmlNode(itemNode, "OrderLineTypeName", orderline.OrderLineType.ToString());
@@ -337,5 +360,44 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             }
             return xml;
         }
+
+        #region GiftCardOrderLine
+
+        private double? _orderPriceWithoutVat = null;
+
+        private double GetOrderPriceWithoutVat(Order order)
+        {
+            var orderPriceWithoutVat = 0d;
+            foreach (var ol in order.OrderLines.Where(ol => !(ol.HasType(OrderLineType.Discount) && !string.IsNullOrEmpty(ol.GiftCardCode))))
+                orderPriceWithoutVat += ol.Price.PriceWithoutVAT;
+            return orderPriceWithoutVat;
+        }
+
+        public double GetGiftCardAmountWithoutVat(OrderLine giftCardOrderLine)
+        {
+            if (_orderPriceWithoutVat.HasValue && _orderPriceWithoutVat != 0d)
+            {
+                if (_orderPriceWithoutVat >= giftCardOrderLine.UnitPrice.PriceWithoutVAT * -1)
+                {
+                    var unitPrice = giftCardOrderLine.UnitPrice;
+                    _orderPriceWithoutVat += giftCardOrderLine.UnitPrice.PriceWithoutVAT;
+                    return unitPrice.PriceWithoutVAT;
+                }
+                else
+                {                    
+                    var giftCardDiscount = _orderPriceWithoutVat.Value;
+                    _orderPriceWithoutVat = 0d;
+                    return giftCardDiscount > 0 ? giftCardDiscount * -1 : giftCardDiscount;
+                }
+            }
+            return 0;
+        }
+
+        private static double MinusVat(double price, double percent)
+        {
+            return (double)((decimal)price / ((decimal)percent / 100M + 1M));
+        }
+
+        #endregion GiftCardOrderLine
     }
 }

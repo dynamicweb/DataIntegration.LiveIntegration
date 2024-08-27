@@ -25,6 +25,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </summary>
         /// <param name="product">The product.</param>
         /// <returns>System.String.</returns>
+        [Obsolete("Use GetProductIdentifier(Settings settings, Product product, string unitId)")]
         public virtual string GetProductIdentifier(Settings settings, Product product)
         {
             return GetProductIdentifier(settings, product, null);
@@ -77,6 +78,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="product">Product</param>
         /// <param name="unitId">Exising product unid id</param>
         /// <returns></returns>
+        [Obsolete]
         public virtual Product GetProductWithUnit(Product product, string unitId)
         {
             var result = product;

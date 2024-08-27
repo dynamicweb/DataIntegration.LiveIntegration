@@ -274,11 +274,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
         internal static User GetCurrentExtranetUser()
         {
-            var user = User.GetCurrentExtranetUser();
+            var user = UserContext.Current.User;
             if (user == null && !string.IsNullOrEmpty(Context.Current?.Request?["UserId"]))
             {
                 var userId = Core.Converter.ToInt32(Security.SystemTools.Crypto.Decrypt(Context.Current.Request["UserId"]));
-                user = User.GetUserByID(userId);
+                user = UserManagementServices.Users.GetUserById(userId);
             }
             return user;
         }        
@@ -288,9 +288,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             var orderFlow = Services.OrderFlows.GetAllFlows().FirstOrDefault(of => of.ID.Equals(state.OrderFlowId));
             if (orderFlow == null)
             {
-                return state.Name;
+                return state.GetName(Services.Languages.GetDefaultLanguageId());
             }
-            return string.Concat(state.Name, " (", orderFlow.Name, ")");
+            return string.Concat(state.GetName(Services.Languages.GetDefaultLanguageId()), " (", orderFlow.Name, ")");
         }
 
         internal static string GetRequestUnitId()

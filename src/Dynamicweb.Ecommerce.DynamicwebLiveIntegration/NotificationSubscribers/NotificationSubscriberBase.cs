@@ -1,12 +1,11 @@
-﻿using Dynamicweb.Content;
-using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
+﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Orders;
-using Dynamicweb.Ecommerce.Products;
+using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Extensibility.Notifications;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +17,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
     /// </summary>
     /// <seealso cref="NotificationSubscriber" />
     public abstract class NotificationSubscriberBase : NotificationSubscriber
-    {       
+    {
         /// <summary>
         /// Gets a value that determines whether live integration is enabled for the current shop, active and a connection to the ERP is available.
         /// </summary>
@@ -32,7 +31,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             }
             else
             {
-                bool result = Global.IsIntegrationActive(settings)                                
+                bool result = Global.IsIntegrationActive(settings)
                                 && Connector.IsWebServiceConnectionAvailable(settings);
                 if (Context.Current?.Items != null)
                 {
@@ -40,7 +39,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 }
                 return result;
             }
-        }        
+        }
 
         /// <summary>
         /// Clears and sets the product information in Dynamicweb for all the products in the order.
@@ -62,7 +61,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             {
                 var logger = new Logger(settings);
                 logger.Log(ErrorLevel.DebugInfo, $"Reload prices. products #{productsToUpdate.Count()}");
-                
+
                 var context = new LiveContext(order.GetPriceContext());
                 if (!ProductManager.FetchProductInfos(productsToUpdate, context, settings, logger, false))
                 {
@@ -71,7 +70,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 // Set values
                 foreach (var productWithQuantity in productsToUpdate)
                 {
-                    ProductManager.FillProductValues(settings, productWithQuantity.Key, productWithQuantity.Value, context);
+                    ProductManager.FillProductValues(settings, productWithQuantity.Product, productWithQuantity.Quantity, context, productWithQuantity.UnitId);
                 }
             }
         }
@@ -80,21 +79,20 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
         /// Gets the products and their current quantities from the order lines.
         /// </summary>
         /// <param name="order">The order from which the products are retrieved.</param>
-        private static Dictionary<Product, double> GetProductsWithQuantities(Order order)
+        private static List<PriceProductSelection> GetProductsWithQuantities(Order order)
         {
-            Dictionary<Product, double> products = new Dictionary<Product, double>();
+            List<PriceProductSelection> products = new List<PriceProductSelection>();
             var productProvider = ProductManager.ProductProvider;
             foreach (var ol in order.OrderLines)
             {
                 if (ol.IsProduct())
                 {
-                    var product = productProvider.GetProductWithUnit(ol.Product, ol.UnitId);
-                    if (!products.ContainsKey(ol.Product))
-                        products.Add(product, ol.Quantity);
+                    if (!products.Any(p => p.Product == ol.Product))
+                        products.Add(ol.Product.GetPriceProductSelection(ol.Quantity, ol.UnitId));
                 }
             }
             return products;
-        }        
+        }
 
         protected bool IsCreateOrderAllowed(Order order)
         {

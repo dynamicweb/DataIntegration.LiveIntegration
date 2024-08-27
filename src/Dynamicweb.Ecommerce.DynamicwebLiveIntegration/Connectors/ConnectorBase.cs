@@ -2,6 +2,7 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Extensibility.Notifications;
 using System;
 using System.Collections.Generic;
@@ -16,12 +17,20 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     {
         protected Settings Settings { get; }
         protected Logger Logger { get; }
-        public ConnectorBase(Settings settings, Logger logger)
+        protected Order Order { get; }
+
+        [Obsolete("Use ConnectorBase(Settings settings, Logger logger, Order order) instead")]
+        public ConnectorBase(Settings settings, Logger logger) : this(settings, logger, null)
+        {
+        }
+
+        public ConnectorBase(Settings settings, Logger logger, Order order)
         {
             Settings = settings;
             Logger = logger;
+            Order = order;
         }
-        
+
         internal abstract EndpointInfo GetEndpoint();
         internal abstract string Execute(string request);
         internal abstract string Execute(EndpointInfo endpoint, string request, TimeSpan responseTimeout);
@@ -33,7 +42,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         /// </summary>
         internal abstract bool IsWebServiceConnectionAvailable();
 
-        internal abstract IEnumerable<string> GetUrls(string multipleUrlsText);        
+        internal abstract IEnumerable<string> GetUrls(string multipleUrlsText);
 
         internal void Error(EndpointInfo endpoint)
         {
@@ -51,7 +60,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             if (EndpointMonitoringService.IsStillValid(Settings, endpoint, out bool connectionAvailable))
             {
                 return connectionAvailable;
-            }            
+            }
             Diagnostics.ExecutionTable.Current?.Add("DynamicwebLiveIntegration.ConnectorBase.IsWebServiceConnectionAvailable(endpoint) START");
             var lastStatus = EndpointMonitoringService.GetEndpointStatus(endpoint);
             bool isWebServiceConnectionAvailable = (lastStatus != null) && !lastStatus.Error;
@@ -62,14 +71,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             string response = null;
             try
             {
-                TimeSpan ts = Settings.ConnectionTimeout > 0 ? new TimeSpan(0, 0, Settings.ConnectionTimeout) : TimeSpan.Zero;                
+                TimeSpan ts = Settings.ConnectionTimeout > 0 ? new TimeSpan(0, 0, Settings.ConnectionTimeout) : TimeSpan.Zero;
                 response = Execute(endpoint, request, ts);
                 success = true;
                 EndpointMonitoringService.Success(endpoint);
             }
             catch (Exception ex)
             {
-                error = ex;                
+                error = ex;
                 Logger?.Log(ErrorLevel.ConnectionError, $"Error checking Web Service connection: '{ex.Message}'. Request: '{request}'.");
 
                 EndpointMonitoringService.Error(Settings, endpoint);
@@ -86,7 +95,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                 NotificationManager.Notify(OnErpCommunicationRestored, new OnErpCommunicationRestoredArgs(request, lastErpCommunication, Settings, Logger));
             }
             if (success && !string.IsNullOrEmpty(response))
-            {             
+            {
                 LicenseService.ValidateLicense(endpoint.GetUrl(), response, Logger);
             }
             Diagnostics.ExecutionTable.Current?.Add("DynamicwebLiveIntegration.ConnectorBase.IsWebServiceConnectionAvailable(endpoint) END");

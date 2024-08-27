@@ -108,12 +108,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 OrderSearchFilter filter = new OrderSearchFilter
                 {
                     PageSize = MaxOrdersToProcess,
-                    ToDate = DateTime.Now.AddMinutes(-1 * MinutesCompleted),
                     ShowUntransferred = true,
                     ShowNotExported = true,
                     Completed = OrderSearchFilter.CompletedStates.Completed,
                     IncludeRecurringOrders = !ExcludeRecurrent
                 };
+
+                if (MinutesCompleted > 0)
+                {
+                    filter.ToCompletedDate = DateTime.Now.AddMinutes(-1 * MinutesCompleted);
+                }
                 if (!string.IsNullOrEmpty(ShopId))
                 {
                     filter.ShopIds = new string[] { ShopId };
@@ -201,7 +205,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     {
                         if (state.IsDeleted)
                             continue;
-                        options.Add(state.Id, state.Name);
+                        options.Add(state.Id, state.GetName(Services.Languages.GetDefaultLanguageId()));
                     }
 
                     break;
