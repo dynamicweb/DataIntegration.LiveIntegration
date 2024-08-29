@@ -135,6 +135,12 @@
         string NotificationEmail { get; set; }
 
         /// <summary>
+        /// Gets or sets the recipient's user groups for notification emails.
+        /// </summary>
+        /// <value>The notification email.</value>
+        string RecipientGroups { get; set; }
+
+        /// <summary>
         /// Gets or sets the sender's email address for notification emails.
         /// </summary>
         /// <value>The notification email sender email.</value>
@@ -240,7 +246,7 @@
         /// </summary>
         /// <value><c>true</c> if [ERP controls discount calculations]; otherwise, <c>false</c>.</value>
         bool ErpControlsDiscount { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the key for shipping item type.
         /// </summary>
@@ -267,8 +273,7 @@
         /// <summary>
         /// Gets or sets the url for the Web Service.
         /// </summary>
-        /// <value>The web service URI.</value>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "URI", Justification = "Could not be renamed now as it requires renaming in BaseLiveIntegrationAddIn in the Dynamicweb.Ecommerce package")]
+        /// <value>The web service URI.</value>        
         string WebServiceURI { get; set; }
 
         /// <summary>

@@ -1,5 +1,10 @@
-﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
+﻿using Dynamicweb.Core;
+using Dynamicweb.Core.Helpers;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
+using Dynamicweb.Security.UserManagement;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
@@ -43,7 +48,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             CalculateOrderUsingProductNumber = true;
             AutoPingInterval = Constants.DefaultPingInterval;
             ConnectionTimeout = Constants.DefaultConnectionTimeout;
-            CartCommunicationType = Constants.CartCommunicationType.Full;
+            CartCommunicationType = Constants.CartCommunicationType.Full;            
         }
 
         /// <summary>
@@ -261,7 +266,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// Gets or sets the key for shipping item type.
         /// </summary>
         /// <value>The key for shipping item type.</value>
-        public string ErpShippingItemType { get; set; }        
+        public string ErpShippingItemType { get; set; }
 
         /// <summary>
         /// Gets or sets the key for shipping item.
@@ -322,7 +327,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// <summary>
         /// Gets or sets a value that determines if calls to the ERP for live product info should be retried in case of a failure.
         /// </summary>
-        public bool MakeRetryForLiveProductInformation { get; set; }       
+        public bool MakeRetryForLiveProductInformation { get; set; }
 
         #endregion Users parameters
 
@@ -333,6 +338,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// </summary>
         /// <value>The notification email.</value>
         public string NotificationEmail { get; set; }
+
+        /// <summary>
+        /// Gets or sets the recipient's user groups for notification emails.
+        /// </summary>
+        /// <value>The comma separated user group ids.</value>
+        public string RecipientGroups { get; set; }
 
         /// <summary>
         /// Gets or sets the sender's email address for notification emails.
@@ -420,7 +431,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 target.WebServiceURI = source.WebServiceURI;
                 target.Endpoint = source.Endpoint;
                 target.ShopId = source.ShopId;
-                target.AreaId = source.AreaId;                
+                target.AreaId = source.AreaId;
                 target.SecurityKey = source.SecurityKey;
                 target.ConnectionTimeout = source.ConnectionTimeout;
                 target.AutoPingInterval = source.AutoPingInterval < Constants.MinPingInterval ? Constants.MinPingInterval : source.AutoPingInterval;
@@ -460,6 +471,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 target.KeepLogFiles = source.KeepLogFiles;
 
                 target.NotificationEmail = source.NotificationEmail;
+                target.RecipientGroups = source.RecipientGroups;
                 target.NotificationTemplate = source.NotificationTemplate;
                 target.NotificationEmailSubject = source.NotificationEmailSubject;
                 target.NotificationEmailSenderName = source.NotificationEmailSenderName;
@@ -482,7 +494,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 }
                 target.InstanceId = source.InstanceId;
                 target.InstanceLabel = source.InstanceLabel;
-                target.SettingsFile = source.SettingsFile;
+                target.SettingsFile = source.SettingsFile;                
+                if(source is Settings sourceSettings)
+                {
+                    sourceSettings._notificationRecipients = null;
+                }
+                if (target is Settings targetSettings)
+                {
+                    targetSettings._notificationRecipients = null;
+                }
             }
         }
 
@@ -491,5 +511,65 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// </summary>
         /// <value>The product cache level.</value>
         public ResponseCacheLevel GetProductCacheLevel() => Helpers.GetEnumValueFromString(ProductCacheLevel, ResponseCacheLevel.Page);
+
+        private List<string> _notificationRecipients = null;
+        internal List<string> NotificationRecipients
+        {
+            get
+            {
+                if (_notificationRecipients is null)
+                {
+                    _notificationRecipients = GetNotificationRecipients();
+                }
+                return _notificationRecipients;
+            }
+        }
+
+        private List<string> GetNotificationRecipients()
+        {            
+            var recipients = new List<string>();
+            if (!string.IsNullOrEmpty(NotificationEmail) && StringHelper.IsValidEmailAddress(NotificationEmail))
+                recipients.Add(NotificationEmail);
+            if (!string.IsNullOrEmpty(RecipientGroups))
+            {               
+                recipients.AddRange(GetRecipients(RecipientGroups.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(id => Converter.ToInt32(id))));
+            }
+            return recipients.Distinct().ToList();
+        }
+
+        private static List<string> GetRecipients(IEnumerable<int> groupIds)
+        {
+            List<string> result = [];
+            var users = new List<User>();
+            foreach (var groupId in groupIds)
+            {
+                var group = UserManagementServices.UserGroups.GetGroupById(groupId);
+                if (group is null)
+                    continue;
+                foreach (var user in UserManagementServices.Users.GetUsersByGroupId(groupId))
+                {
+                    users.Add(user);
+                }
+                foreach (var subGroup in group.GetSubgroups())
+                {
+                    foreach (var user in subGroup.GetUsers())
+                    {
+                        if (!users.Contains(user))
+                        {
+                            users.Add(user);
+                        }
+                    }
+                }
+            }
+            foreach (User user in users)
+            {
+                if (!user.Active || !user.EmailAllowed || !StringHelper.IsValidEmailAddress(user.Email))
+                {
+                    continue;
+                }
+                result.Add(user.Email);
+            }
+            return result;
+        }        
     }
 }

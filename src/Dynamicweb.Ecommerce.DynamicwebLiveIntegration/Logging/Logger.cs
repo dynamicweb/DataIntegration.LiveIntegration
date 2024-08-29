@@ -4,7 +4,6 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Mailing;
 using Dynamicweb.Rendering;
 using System;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -16,13 +15,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
     /// Helper class for logging.
     /// </summary>
     public class Logger
-    {        
+    {
         private static readonly string DateTimeFormat = "MM/dd/yyyy hh:mm:ss.fff tt";
 
         /// <summary>
         /// The synchronize lock.
         /// </summary>
-        private static readonly object SyncLock = new object();
+        private static readonly object SyncLock = new();
 
         /// <summary>
         /// The log file
@@ -35,7 +34,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         /// Prevents a default instance of the <see cref="Logger"/> class from being created.
         /// </summary>
         public Logger(Settings settings)
-        {            
+        {
             _settings = settings;
             if (settings != null)
             {
@@ -77,42 +76,38 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         /// <returns><c>true</c> if email was sent, <c>false</c> otherwise.</returns>
         public bool SendMail(string message)
         {
-            bool result = false;
             string notificationTemplate = _settings.NotificationTemplate;
-            string notificationEmail = _settings.NotificationEmail;
+            if (string.IsNullOrEmpty(message) || string.IsNullOrEmpty(notificationTemplate))
+                return false;
 
-            if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(notificationTemplate) && StringHelper.IsValidEmailAddress(notificationEmail))
-            {
-                Template templateInstance = new Template(notificationTemplate);
-                templateInstance.SetTag("Ecom:LiveIntegration.AddInName", Constants.AddInName);
-                templateInstance.SetTag("Ecom:LiveIntegration.ErrorMessage", message);
+            var recipients = _settings.NotificationRecipients;
+            if (recipients is null || !recipients.Any())
+                return false;
 
-                string notificationEmailSubject = _settings.NotificationEmailSubject;
-                string notificationEmailSenderEmail = _settings.NotificationEmailSenderEmail;
-                string notificationEmailSenderName = _settings.NotificationEmailSenderName;
+            Template templateInstance = new(notificationTemplate);
+            templateInstance.SetTag("Ecom:LiveIntegration.AddInName", Constants.AddInName);
+            templateInstance.SetTag("Ecom:LiveIntegration.ErrorMessage", message);
 
-                using (var mail = new System.Net.Mail.MailMessage())
-                {
-                    mail.IsBodyHtml = true;
-                    mail.Subject = notificationEmailSubject;
-                    mail.SubjectEncoding = System.Text.Encoding.UTF8;
-                    mail.From = new System.Net.Mail.MailAddress(notificationEmailSenderEmail, notificationEmailSenderName, System.Text.Encoding.UTF8);
+            string notificationEmailSubject = _settings.NotificationEmailSubject;
+            string notificationEmailSenderEmail = _settings.NotificationEmailSenderEmail;
+            string notificationEmailSenderName = _settings.NotificationEmailSenderName;
 
-                    // Set parameters for MailMessage
-                    mail.To.Add(notificationEmail);
-                    mail.BodyEncoding = System.Text.Encoding.UTF8;
+            using var mail = new System.Net.Mail.MailMessage();
+            mail.IsBodyHtml = true;
+            mail.Subject = notificationEmailSubject;
+            mail.SubjectEncoding = System.Text.Encoding.UTF8;
+            mail.From = new(notificationEmailSenderEmail, notificationEmailSenderName, System.Text.Encoding.UTF8);
 
-                    // Render Template and set as Body
-                    mail.Body = templateInstance.Output();
+            // Set parameters for MailMessage
+            foreach (var email in recipients)
+                mail.To.Add(email);
+            mail.BodyEncoding = System.Text.Encoding.UTF8;
 
-                    // Send mail
-                    EmailHandler.Send(mail);
-                }
+            // Render Template and set as Body
+            mail.Body = templateInstance.Output();
 
-                result = true;
-            }
-
-            return result;
+            // Send mail
+            return EmailHandler.Send(mail);
         }
 
         /// <summary>
@@ -226,7 +221,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         /// </summary>
         private void KeepOrTruncateFile()
         {
-            FileInfo fi = new FileInfo(_logFile);
+            FileInfo fi = new(_logFile);
             int maxSize = _settings.LogMaxSize;
             if (maxSize > 100)
             {
@@ -338,9 +333,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
                 {
                     string newFile = Path.Combine(folder, Path.GetRandomFileName());
 
-                    using (FileStream ws = new FileStream(newFile, FileMode.CreateNew))
+                    using (FileStream ws = new(newFile, FileMode.CreateNew))
                     {
-                        using (FileStream rs = new FileStream(_logFile, FileMode.Open))
+                        using (FileStream rs = new(_logFile, FileMode.Open))
                         {
                             rs.Seek((long)((fi.Length - maxSize) * 1024 * 1024 * 0.5), SeekOrigin.Begin); // -50%
                             int currChar;
