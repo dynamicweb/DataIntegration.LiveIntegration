@@ -563,7 +563,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             }
             foreach (User user in users)
             {
-                if (!user.Active || !user.EmailAllowed || !StringHelper.IsValidEmailAddress(user.Email))
+                if (!user.Active || !StringHelper.IsValidEmailAddress(user.Email))
                 {
                     continue;
                 }
