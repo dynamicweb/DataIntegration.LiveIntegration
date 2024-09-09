@@ -490,6 +490,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         public string NotificationEmail { get; set; }
 
         /// <summary>
+        /// Gets or sets notification email
+        /// </summary>
+        /// <value>The notification email.</value>
+        [AddInParameter("Notification recipient groups")]
+        [AddInParameterEditor(typeof(UserGroupParameterEditor), "Multiple=true;")]        
+        [AddInParameterGroup("Notifications")]
+        [AddInParameterOrder(235)]
+        public string RecipientGroups { get; set; }
+
+        /// <summary>
         /// Gets or sets notification template
         /// </summary>
         /// <value>The notification template.</value>
