@@ -55,10 +55,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// </summary>
         /// <param name="orderNode">The order node.</param>
         /// <param name="order">The order.</param>
-        private static void AddCustomerInformation(Settings currentSettings, XmlElement orderNode, Order order)
-        {
-            var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
-
+        private static void AddCustomerInformation(Settings currentSettings, XmlElement orderNode, Order order, User user)
+        {            
             AddChildXmlNode(orderNode, "OrderCustomerAccessUserExternalId", !string.IsNullOrWhiteSpace(user?.ExternalID) ? user.ExternalID : currentSettings.AnonymousUserKey);
             AddChildXmlNode(orderNode, "OrderCustomerNumber", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
             AddChildXmlNode(orderNode, "OrderCustomerName", !string.IsNullOrWhiteSpace(user?.Name) ? user.Name : order.CustomerName);
@@ -83,9 +81,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// </summary>
         /// <param name="orderNode">The order node.</param>
         /// <param name="order">The order.</param>
-        private void AddOrderDeliveryInformation(XmlElement orderNode, Order order)
-        {
-            AddChildXmlNode(orderNode, "OrderDeliveryName", !string.IsNullOrWhiteSpace(order.DeliveryName) ? order.DeliveryName : order.CustomerName);
+        private void AddOrderDeliveryInformation(XmlElement orderNode, Order order, User user)
+        {            
+            AddChildXmlNode(orderNode, "OrderDeliveryName",
+                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : !string.IsNullOrWhiteSpace(user?.Name) ? user.Name : order.DeliveryName);
             AddChildXmlNode(orderNode, "OrderDeliveryAddress", order.DeliveryAddress);
             AddChildXmlNode(orderNode, "OrderDeliveryAddress2", order.DeliveryAddress2);
             AddChildXmlNode(orderNode, "OrderDeliveryCity", order.DeliveryCity);
@@ -188,9 +187,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         {
             var tableNode = CreateTableNode(xmlDocument, "EcomOrders");
             var itemNode = CreateAndAppendItemNode(tableNode, "EcomOrders");
+            var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
 
-            AddCustomerInformation(currentSettings, itemNode, order);
-            AddOrderDeliveryInformation(itemNode, order);
+            AddCustomerInformation(currentSettings, itemNode, order, user);
+            AddOrderDeliveryInformation(itemNode, order, user);
 
             // do not use order.Modified in XML unless the field can be ignored for hash calculation
             AddChildXmlNode(itemNode, "CreateOrder", settings.CreateOrder.ToString());
