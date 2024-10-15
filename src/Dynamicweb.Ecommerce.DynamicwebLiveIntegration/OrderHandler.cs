@@ -911,6 +911,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                                 order.OrderLines.Add(discountLine, false);
 
                             SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                            SetTotalOrderDiscount(order);                            
 
                             // When GetCart DwApi request is executed and ERP controls discounts:
                             // old discount lines are deleted and new discounts are not saved
@@ -1292,6 +1293,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
             }
+        }
+
+        private static void SetTotalOrderDiscount(Order order)
+        {
+            PriceInfo totalDiscount = new PriceInfo(order.Currency); ;
+            foreach (var line in order.OrderLines.Where(x => x.HasType(new[] { OrderLineType.Discount, OrderLineType.ProductDiscount })))
+            {
+                totalDiscount = totalDiscount.Add(line.Price);
+            }
+            order.TotalDiscount.PriceWithVAT = totalDiscount.PriceWithVAT;
+            order.TotalDiscount.PriceWithoutVAT = totalDiscount.PriceWithoutVAT;
+            order.TotalDiscount.VAT = totalDiscount.VAT;
         }
 
         #region Hash helper methods
