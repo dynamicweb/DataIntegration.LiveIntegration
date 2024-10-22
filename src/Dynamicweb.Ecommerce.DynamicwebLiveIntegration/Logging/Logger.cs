@@ -84,7 +84,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
             if (recipients is null || !recipients.Any())
                 return false;
 
-            Template templateInstance = new(notificationTemplate);
+            Template templateInstance = new($"/DataIntegration/Notifications/{notificationTemplate}");
             templateInstance.SetTag("Ecom:LiveIntegration.AddInName", Constants.AddInName);
             templateInstance.SetTag("Ecom:LiveIntegration.ErrorMessage", message);
 
