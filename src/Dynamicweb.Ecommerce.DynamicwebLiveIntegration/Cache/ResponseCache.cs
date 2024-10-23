@@ -58,8 +58,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
             else
             {
                 string key = ProductInfosKey;
-                if (cacheModel == ResponseCacheLevel.Session && UserContext.Current.ImpersonatingUser != null
-                    && !string.IsNullOrEmpty(user.CustomerNumber))
+                if (UserContext.Current.ImpersonatingUser != null && !string.IsNullOrEmpty(user.CustomerNumber))
                 {
                     key = GetUserSessionKey(user.CustomerNumber);
                 }
