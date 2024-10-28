@@ -495,6 +495,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
 
                 OrderLine parentLine = null;
+                OrderLine parentLineWithVariant = null;
                 bool useUnitPrices = settings.UseUnitPrices;
 
                 if (orderLine.OrderLineType == OrderLineType.ProductDiscount)
@@ -502,32 +503,42 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     string parentProductId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineProductNumber']")?.InnerText;
                     if (!string.IsNullOrEmpty(parentProductId))
                     {
+                        string parentProductVariantId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineProductVariantId']")?.InnerText;
                         string unitId = null;
                         if (useUnitPrices)
                         {
                             unitId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineUnitId']")?.InnerText;
                         }
                         foreach (var productOrderLine in order.OrderLines)
-                        {
+                        {                            
                             string id = settings.CalculateOrderUsingProductNumber ? productOrderLine.ProductNumber : productOrderLine.ProductId;
                             if (string.Compare(id, parentProductId, StringComparison.OrdinalIgnoreCase) == 0)
                             {
+                                bool found = false;
                                 if (useUnitPrices)
                                 {
                                     if ((string.IsNullOrEmpty(unitId) && string.IsNullOrEmpty(productOrderLine.UnitId)) ||
                                         string.Compare(productOrderLine.UnitId, unitId, StringComparison.OrdinalIgnoreCase) == 0)
                                     {
                                         parentLine = productOrderLine;
+                                        found = true;
                                     }
                                 }
                                 else
                                 {
                                     parentLine = productOrderLine;
+                                    found = true;
+                                }
+                                if (found && !string.IsNullOrEmpty(parentProductVariantId) && string.Equals(productOrderLine.ProductVariantId, parentProductVariantId, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    parentLineWithVariant = productOrderLine;
                                 }
                             }
                         }
                     }
                 }
+
+                parentLine = parentLineWithVariant ?? parentLine;
                 if (parentLine != null && string.IsNullOrEmpty(parentLine.Id))
                 {
                     Services.OrderLines.Save(parentLine);
@@ -672,11 +683,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 };
 
                 OrderLine parentLine = null;
+                OrderLine parentLineWithVariant = null;
                 bool useUnitPrices = settings.UseUnitPrices;
 
                 string parentProductId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineProductNumber']")?.InnerText;
                 if (!string.IsNullOrEmpty(parentProductId))
                 {
+                    string parentProductVariantId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineProductVariantId']")?.InnerText;
                     string unitId = null;
                     if (useUnitPrices)
                     {
@@ -687,22 +700,30 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         string id = settings.CalculateOrderUsingProductNumber ? productOrderLine.ProductNumber : productOrderLine.ProductId;
                         if (string.Compare(id, parentProductId, StringComparison.OrdinalIgnoreCase) == 0)
                         {
+                            bool found = false;
                             if (useUnitPrices)
                             {
                                 if ((string.IsNullOrEmpty(unitId) && string.IsNullOrEmpty(productOrderLine.UnitId)) ||
                                     string.Compare(productOrderLine.UnitId, unitId, StringComparison.OrdinalIgnoreCase) == 0)
                                 {
                                     parentLine = productOrderLine;
+                                    found = true;
                                 }
                             }
                             else
                             {
                                 parentLine = productOrderLine;
+                                found = true;
+                            }
+                            if (found && !string.IsNullOrEmpty(parentProductVariantId) && string.Equals(productOrderLine.ProductVariantId, parentProductVariantId, StringComparison.OrdinalIgnoreCase))
+                            {
+                                parentLineWithVariant = productOrderLine;
                             }
                         }
                     }
                 }
 
+                parentLine = parentLineWithVariant ?? parentLine;
                 if (parentLine != null && string.IsNullOrEmpty(parentLine.Id))
                 {
                     Services.OrderLines.Save(parentLine);
@@ -911,7 +932,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                                 order.OrderLines.Add(discountLine, false);
 
                             SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
-                            SetTotalOrderDiscount(order);                            
+                            SetTotalOrderDiscount(order);
 
                             // When GetCart DwApi request is executed and ERP controls discounts:
                             // old discount lines are deleted and new discounts are not saved
