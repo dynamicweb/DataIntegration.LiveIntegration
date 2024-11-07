@@ -616,7 +616,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             XmlNodeList orderLinesNodes = response.SelectNodes("//item [@table='EcomOrderLines']");
 
             // Process OrderLines
-            if (orderLinesNodes != null && orderLinesNodes.Count > 0)
+            if (orderLinesNodes != null)
             {
                 List<string> orderLineIds = new List<string>();
                 List<OrderLine> orderLines = order.OrderLines.ToList();
