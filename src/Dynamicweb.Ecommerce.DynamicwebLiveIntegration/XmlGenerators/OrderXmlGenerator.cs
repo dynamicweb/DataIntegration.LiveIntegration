@@ -81,7 +81,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// </summary>
         /// <param name="orderNode">The order node.</param>
         /// <param name="order">The order.</param>
-        private void AddOrderDeliveryInformation(XmlElement orderNode, Order order, User user)
+        private void AddOrderDeliveryInformation(OrderXmlGeneratorSettings settings, XmlElement orderNode, Order order, User user)
         {            
             AddChildXmlNode(orderNode, "OrderDeliveryName",
                 !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : !string.IsNullOrWhiteSpace(user?.Name) ? user.Name : order.DeliveryName);
@@ -95,6 +95,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(orderNode, "OrderDeliveryPhone", order.DeliveryPhone);
             AddChildXmlNode(orderNode, "OrderDeliveryFax", order.DeliveryFax);
             AddChildXmlNode(orderNode, "OrderDeliveryCompany", order.DeliveryCompany);
+            if (settings.CreateOrder && order.DeliveryAddressId > 0)
+            {
+                var address = UserManagementServices.UserAddresses.GetAddressById(order.DeliveryAddressId);
+                if (address is object)
+                {
+                    AddChildXmlNode(orderNode, "OrderDeliveryAddressId", !string.IsNullOrEmpty(address.ExternalID) ? address.ExternalID : address.UniqueIdentifier);
+                }
+            }            
         }
 
         /// <summary>
@@ -190,7 +198,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
 
             AddCustomerInformation(currentSettings, itemNode, order, user);
-            AddOrderDeliveryInformation(itemNode, order, user);
+            AddOrderDeliveryInformation(settings, itemNode, order, user);
 
             // do not use order.Modified in XML unless the field can be ignored for hash calculation
             AddChildXmlNode(itemNode, "CreateOrder", settings.CreateOrder.ToString());
