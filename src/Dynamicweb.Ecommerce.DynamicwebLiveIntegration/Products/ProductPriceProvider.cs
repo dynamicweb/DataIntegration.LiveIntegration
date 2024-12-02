@@ -146,7 +146,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         {
             var settings = SettingsManager.GetSettingsByShop(context.Shop?.Id);
             if (!Global.IsIntegrationActive(settings))
-                return Enumerable.Empty<KeyValuePair<PriceQuantityInfo, PriceInfo>>();
+                return null;
 
             var result = new List<KeyValuePair<PriceQuantityInfo, PriceInfo>>();
             var unitPrices = ProductViewModelExtensions.GetUnitPrices(settings, context.Customer, product);
