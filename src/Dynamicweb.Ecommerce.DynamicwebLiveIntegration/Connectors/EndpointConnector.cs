@@ -1,4 +1,5 @@
-﻿using Dynamicweb.DataIntegration.EndpointManagement;
+﻿using Dynamicweb.Core;
+using Dynamicweb.DataIntegration.EndpointManagement;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
@@ -85,16 +86,31 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             var endpoint = UrlHandler.Instance.GetEndpoint(endpointId, false, Logger, Order);
             if (endpoint != null)
             {
-                EndpointMonitoringService.ClearEndpoint(GetEndpointInfo(endpoint));
-
-                if (ExecuteConnectionAvailableRequest(endpoint, out Exception ex))
+                var key = $"IsConnectionAvailableFromBackend{endpointId}";
+                var cachedConnectionState = Context.Current?.Items?[key];
+                if (cachedConnectionState is not null)
                 {
-                    return true;
+                    return Converter.ToBoolean(cachedConnectionState);
                 }
                 else
                 {
-                    error = $"Can not connect to the endpoint: {endpoint.Name} error: {ex?.Message}.";
-                    return false;
+                    EndpointMonitoringService.ClearEndpoint(GetEndpointInfo(endpoint));
+
+                    bool result;
+                    if (ExecuteConnectionAvailableRequest(endpoint, out Exception ex))
+                    {
+                        result = true;
+                    }
+                    else
+                    {
+                        error = $"Can not connect to the endpoint: {endpoint.Name} error: {ex?.Message}.";
+                        result = false;
+                    }
+                    if (Context.Current?.Items is not null)
+                    {
+                        Context.Current.Items[key] = result;
+                    }
+                    return result;
                 }
             }
             else
