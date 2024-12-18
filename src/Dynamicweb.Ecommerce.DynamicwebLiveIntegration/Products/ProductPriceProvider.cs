@@ -145,7 +145,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         IEnumerable<KeyValuePair<PriceQuantityInfo, PriceInfo>> IPriceInfoProvider.FindQuantityPriceInfos(PriceContext context, Product product)
         {
             var settings = SettingsManager.GetSettingsByShop(context.Shop?.Id);
-            if (!Global.IsIntegrationActive(settings))
+            if (settings is null || !Helpers.CanCheckPrice(settings, product, context.Customer))
                 return null;
 
             var result = new List<KeyValuePair<PriceQuantityInfo, PriceInfo>>();
