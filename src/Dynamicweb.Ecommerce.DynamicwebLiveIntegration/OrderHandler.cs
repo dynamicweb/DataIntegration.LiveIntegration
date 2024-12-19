@@ -1052,13 +1052,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="order">The order.</param>
         private static void RemoveDiscounts(Order order)
         {
-            foreach (var orderLine in order.OrderLines)
+            var lines = order.OrderLines.Where(ol => ol.IsDiscount()).ToList();
+            foreach (var orderLine in lines)
             {
-                if (orderLine.IsDiscount())
-                {
-                    order.OrderLines.Remove(orderLine);
-                    Services.OrderLines.Delete(orderLine.Id);
-                }
+                order.OrderLines.Remove(orderLine);
+                Services.OrderLines.Delete(orderLine.Id);
             }
         }
 
