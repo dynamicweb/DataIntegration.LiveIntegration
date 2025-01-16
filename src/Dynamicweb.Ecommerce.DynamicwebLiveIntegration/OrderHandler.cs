@@ -89,15 +89,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
 
             // default states
-            if (successOrderStateId == null)
-            {
-                successOrderStateId = settings.OrderStateAfterExportSucceeded;
-            }
+            successOrderStateId ??= settings.OrderStateAfterExportSucceeded;
 
-            if (failedOrderStateId == null)
-            {
-                failedOrderStateId = settings.OrderStateAfterExportFailed;
-            }
+            failedOrderStateId ??= settings.OrderStateAfterExportFailed;
             var xmlGeneratorSettings = new OrderXmlGeneratorSettings
             {
                 AddOrderLineFieldsToRequest = settings.AddOrderLineFieldsToRequest,
@@ -126,7 +120,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             // get last hash
             string lastHash = GetLastOrderHash(settings);
 
-            if (!string.IsNullOrEmpty(lastHash) && lastHash == currentHash)
+            if (liveIntegrationSubmitType != SubmitType.ScheduledTask && liveIntegrationSubmitType != SubmitType.CaptureTask && 
+                !string.IsNullOrEmpty(lastHash) && lastHash == currentHash)
             {
                 // no changes to order
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
