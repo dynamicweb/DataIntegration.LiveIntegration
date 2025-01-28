@@ -106,7 +106,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
             // Render Template and set as Body
             mail.Body = templateInstance.Output();
 
-            // Send mail
+            // Send mail            
             return EmailHandler.Send(mail);
         }
 
@@ -288,10 +288,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
             }
 
             // Get last time when the email was sent
-            DateTime lastTimeSend = Settings.LastNotificationEmailSent;
+            DateTime lastTimeSend = Settings.LastNotificationEmailSent;                        
             bool emailSent = false;
             if (lastTimeSend == DateTime.MinValue)
             {
+                // used for getting the last errors appeared for the future email
+                Settings.LastNotificationEmailSent = DateTime.Now;
                 emailSent = SendMail(lastError);
             }
             else
@@ -299,6 +301,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
                 // send email if the frequency interval already passed
                 if (DateTime.Now.Subtract(lastTimeSend) >= TimeSpan.FromMinutes((double)frequency))
                 {
+                    Settings.LastNotificationEmailSent = DateTime.Now;
                     if (!isLastErrorInLog)
                     {
                         emailSent = SendMail(GetLastLogData() + lastError);
@@ -313,9 +316,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
             if (emailSent)
             {
                 Log(ErrorLevel.EmailSend, "Send e-mail with errors");
-
-                // used for getting the last errors appeared for the future email
-                Settings.LastNotificationEmailSent = DateTime.Now;
+            }
+            else
+            {                
+                Settings.LastNotificationEmailSent = lastTimeSend;
             }
         }
 
