@@ -2,7 +2,6 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
@@ -13,7 +12,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
     internal class EndpointMonitoringService
     {
         private static readonly ConcurrentDictionary<string, EndpointStatus> EndpointCollection = new ConcurrentDictionary<string, EndpointStatus>();
-        private static readonly List<string> EndpointsInPing = new List<string>();
+        private static readonly ConcurrentDictionary<string, string> EndpointsInPing = new ConcurrentDictionary<string, string>();
         private static readonly ConcurrentDictionary<string, Timer> PingTimers = new ConcurrentDictionary<string, Timer>();
 
         /// <summary>
@@ -26,7 +25,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
         {
             connectionAvailable = false;
 
-            if (EndpointsInPing.Contains(endpoint.Id))
+            if (EndpointsInPing.ContainsKey(endpoint.Id))
             {
                 return true;
             }
@@ -72,6 +71,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
                 PingTimers.TryRemove(endpoint.Id, out Timer timer);
                 timer?.Dispose();
             }
+            EndpointsInPing.TryRemove(endpoint.Id, out _);
             status.SetSuccess();
         }
 
@@ -87,7 +87,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
                 status = new EndpointStatus();
                 EndpointCollection.TryAdd(url, status);
             }
-            if (!EndpointsInPing.Contains(endpoint.Id) && !Environment.ExecutingContext.IsBackEnd())
+            if (!EndpointsInPing.ContainsKey(endpoint.Id) && !Environment.ExecutingContext.IsBackEnd())
             {
                 PingEndpoint(settings, endpoint);
             }
@@ -133,9 +133,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
             {
                 return;
             }
-            if (!EndpointsInPing.Contains(endpoint.Id) && !PingTimers.ContainsKey(endpoint.Id))
+            if (!EndpointsInPing.ContainsKey(endpoint.Id) && !PingTimers.ContainsKey(endpoint.Id))
             {
-                EndpointsInPing.Add(endpoint.Id);
+                EndpointsInPing.TryAdd(endpoint.Id, null);
                 var statusChecker = new EndpointMonitoringService();
                 var timer = new Timer(statusChecker.Ping, settings, 0, autoPingInterval.Value * 1000);
                 PingTimers.TryAdd(endpoint.Id, timer);
@@ -158,10 +158,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
                 currentConnector = new WebServiceConnector(settings, logger);
                 endpoint = new EndpointInfo(settings.WebServiceURI);
             }
-            if (EndpointsInPing.Contains(endpoint.Id))
-            {
-                EndpointsInPing.RemoveAll(e => e == endpoint.Id);
-            }
+            EndpointsInPing.TryRemove(endpoint.Id, out _);
             currentConnector.IsWebServiceConnectionAvailable();
         }
     }
