@@ -320,6 +320,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             }
                         }
                     }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(product.VariantId) && !string.IsNullOrEmpty(product.DefaultVariantComboId) && !string.Equals(product.VariantId, product.DefaultVariantComboId)
+                            && GetFilteredVariants(new List<Product>() { product }).Any())
+                        {
+                            productIdentifier = ProductProvider.GetProductIdentifier(settings, product, productWithQuantity.UnitId);                            
+                            if (!ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User, doCurrencyCheck ? context.Currency : null))
+                            {                                                                
+                                if (ProductProvider.IsLivePriceEnabledForProduct(product) && product.HasIdentifier(settings))
+                                {
+                                    productsForRequest.Add(product.GetPriceProductSelection(productWithQuantity.Quantity, productWithQuantity.UnitId));
+                                }
+                            }                            
+                        }
+                    }
 
                     product = ProductProvider.GetProductFromVariantComboId(product, logger);
 
