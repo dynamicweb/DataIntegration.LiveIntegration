@@ -38,6 +38,16 @@
         /// <summary>
         /// The XML is sent by a Capture order scheduled task that sends orders that were previously not captured.
         /// </summary>
-        CaptureTask
+        CaptureTask,
+
+        /// <summary>
+        /// Request is coming from Backend
+        /// </summary>
+        Backend,
+
+        /// <summary>
+        /// Request is coming from the WebApi
+        /// </summary>
+        WebApi
     }
 }

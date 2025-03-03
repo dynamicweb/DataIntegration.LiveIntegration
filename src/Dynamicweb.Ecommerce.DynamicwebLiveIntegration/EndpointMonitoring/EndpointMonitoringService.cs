@@ -1,6 +1,7 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
@@ -79,7 +80,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
         /// Sets endpoint communication failed.
         /// </summary>        
         /// <param name="endpoint">The endpoint</param>
-        public static void Error(Settings settings, EndpointInfo endpoint)
+        public static void Error(Settings settings, EndpointInfo endpoint, SubmitType submitType)
         {
             string url = endpoint.GetUrl();
             if (!EndpointCollection.TryGetValue(url, out EndpointStatus status))
@@ -87,9 +88,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
                 status = new EndpointStatus();
                 EndpointCollection.TryAdd(url, status);
             }
-            if (!EndpointsInPing.ContainsKey(endpoint.Id) && !Environment.ExecutingContext.IsBackEnd())
+            if (!EndpointsInPing.ContainsKey(endpoint.Id) && !LiveContext.IsBackEnd(submitType))
             {
-                PingEndpoint(settings, endpoint);
+                PingEndpoint(settings, endpoint, submitType);
             }
             status.SetError();
         }
@@ -126,7 +127,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
         /// </summary>
         /// <param name="endpointCollection"></param> 
         /// <param name="endpoint"></param>
-        private static void PingEndpoint(Settings settings, EndpointInfo endpoint)
+        private static void PingEndpoint(Settings settings, EndpointInfo endpoint, SubmitType submitType)
         {
             var autoPingInterval = settings?.AutoPingInterval;
             if (autoPingInterval <= 0)
@@ -137,25 +138,28 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
             {
                 EndpointsInPing.TryAdd(endpoint.Id, null);
                 var statusChecker = new EndpointMonitoringService();
-                var timer = new Timer(statusChecker.Ping, settings, 0, autoPingInterval.Value * 1000);
+                var timer = new Timer(statusChecker.Ping, new Tuple<Settings, SubmitType>(settings, submitType), 0, autoPingInterval.Value * 1000);
                 PingTimers.TryAdd(endpoint.Id, timer);
             }
         }
 
         private void Ping(object stateInfo)
         {
-            Settings settings = (Settings)stateInfo;
+            Tuple<Settings, SubmitType> state = (Tuple<Settings, SubmitType>)stateInfo;
+            Settings settings = state.Item1;
+            SubmitType submitType = state.Item2;
+
             var logger = new Logger(settings);
             ConnectorBase currentConnector = null;
             EndpointInfo endpoint = null;
             if (!string.IsNullOrEmpty(settings.Endpoint))
             {
-                currentConnector = new EndpointConnector(settings, logger);
+                currentConnector = new EndpointConnector(settings, logger, submitType);
                 endpoint = new EndpointInfo(((EndpointConnector)currentConnector).GetEndpoint(settings.Endpoint, logger));
             }
             else if (!string.IsNullOrEmpty(settings.WebServiceURI))
             {
-                currentConnector = new WebServiceConnector(settings, logger);
+                currentConnector = new WebServiceConnector(settings, logger, submitType);
                 endpoint = new EndpointInfo(settings.WebServiceURI);
             }
             EndpointsInPing.TryRemove(endpoint.Id, out _);

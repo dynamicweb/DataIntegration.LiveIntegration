@@ -11,9 +11,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
     {
         public override void OnNotify(string notification, NotificationArgs args)
         {
-            if (args is Ecommerce.Notifications.Ecommerce.VariantList.BeforeRenderArgs)
+            if (args is Ecommerce.Notifications.Ecommerce.VariantList.BeforeRenderArgs beforeRenderArgs)
             {
-                var variantCombinationProducts = ((Ecommerce.Notifications.Ecommerce.VariantList.BeforeRenderArgs)args).VariantCombinationsProducts;
+                var variantCombinationProducts = beforeRenderArgs.VariantCombinationsProducts;
                 if (variantCombinationProducts != null) {
                     var settings = SettingsManager.GetSettingsByShop(Global.CurrentShopId);
                     if (settings != null &&
@@ -46,9 +46,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             }
         }
 
-        private bool CanCheckPrice(Settings settings)
+        private static bool CanCheckPrice(Settings settings)
         {
-           return EnabledAndActive(settings) && settings.EnableLivePrices && 
+           return EnabledAndActive(settings, SubmitType.Live) && settings.EnableLivePrices && 
                 (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null) && 
                 (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled) && 
                 !Global.IsProductLazyLoad(settings); 

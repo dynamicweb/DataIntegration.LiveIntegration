@@ -59,7 +59,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets the URL cache key.
         /// </summary>
         /// <value>The URL cache key.</value>
-        private string UrlCacheKey
+        private static string UrlCacheKey
         {
             get
             {
@@ -83,12 +83,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <returns>System.String.</returns>
-        internal string GetUrl(string url)
+        internal static string GetUrl(string url)
         {
-            return (!string.IsNullOrEmpty(url) && url.Contains(";")) ? url.Substring(0, url.IndexOf(";", StringComparison.Ordinal)) : url;
+            return (!string.IsNullOrEmpty(url) && url.Contains(';')) ? url[..url.IndexOf(';', StringComparison.Ordinal)] : url;
         }
 
-        internal int GetEndpointId(string multipleUrlsText, Order order)
+        internal int GetEndpointId(string multipleUrlsText, Order order, SubmitType submitType)
         {
             int id = 0;
             if (!string.IsNullOrEmpty(multipleUrlsText))
@@ -96,13 +96,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 string[] urls = GetEndpointUrls(multipleUrlsText);
                 if (urls.Length > 0)
                 {
-                    if (urls.Any(u => u.Contains(";")))
+                    if (urls.Any(u => u.Contains(';')))
                     {
                         string url;
                         bool isFrontEnd = ExecutingContext.IsFrontEnd();
                         if (isFrontEnd || order != null)
                         {
-                            url = GetMatchedUrl(urls, order);
+                            url = GetMatchedUrl(urls, order, submitType);
 
                             if(!isFrontEnd && string.IsNullOrEmpty(url))
                             {
@@ -127,11 +127,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return id;
         }
 
-        internal Endpoint GetEndpoint(string multipleUrlsText, bool logIfNotFound, Logger logger, Order order)
+        internal Endpoint GetEndpoint(string multipleUrlsText, bool logIfNotFound, Logger logger, Order order, SubmitType submitType)
         {
             if (!string.IsNullOrEmpty(multipleUrlsText))
             {
-                int id = GetEndpointId(multipleUrlsText, order);
+                int id = GetEndpointId(multipleUrlsText, order, submitType);
 
                 EndpointService endpointService = new EndpointService();
                 var endpoint = endpointService.GetEndpointById(id);
@@ -144,7 +144,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return null;
         }
 
-        internal Endpoint GetEndpoint(Settings settings, Logger logger, Order order)
+        internal Endpoint GetEndpoint(Settings settings, Logger logger, Order order, SubmitType submitType)
         {
             Endpoint ret = null;
             string multiLineUrlText = settings.Endpoint;
@@ -156,7 +156,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
                 else
                 {
-                    ret = GetEndpoint(multiLineUrlText, false, logger, order);
+                    ret = GetEndpoint(multiLineUrlText, false, logger, order, submitType);
                     if (Context.Current?.Items != null)
                     {
                         Context.Current.Items[UrlCacheKey] = ret;
@@ -171,14 +171,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <returns>System.String.</returns>
         [Obsolete("Use GetWebServiceUrl(Settings settings, Order order) instead")]
-        public string GetWebServiceUrl(Settings settings) => GetWebServiceUrl(settings, null);
+        public string GetWebServiceUrl(Settings settings) => GetWebServiceUrl(settings, null, SubmitType.Live);
+
+        /// <summary>
+        /// Gets the web service URL for the current context.
+        /// </summary>
+        /// <returns>System.String.</returns>
+        [Obsolete("Use GetWebServiceUrl(Settings settings, Order order, SubmitType submitType) instead")]
+        public string GetWebServiceUrl(Settings settings, Order order) => GetWebServiceUrl(settings, order, SubmitType.Live);
 
 
         /// <summary>
         /// Gets the web service URL for the current context.
         /// </summary>
         /// <returns>System.String.</returns>
-        public string GetWebServiceUrl(Settings settings, Order order)
+        public string GetWebServiceUrl(Settings settings, Order order, SubmitType submitType)
         {
             string ret = string.Empty;
             if (Context.Current?.Items[UrlCacheKey] != null && ExecutingContext.IsFrontEnd())
@@ -191,9 +198,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 string[] urls = GetWebServiceUrls(multiLineUrlText);
                 if (urls.Length > 0)
                 {
-                    if (multiLineUrlText.Contains(";"))
+                    if (multiLineUrlText.Contains(';'))
                     {
-                        ret = GetMatchedUrl(urls, order);
+                        ret = GetMatchedUrl(urls, order, submitType);
                     }
                     else
                     {
@@ -209,7 +216,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return ret;
         }
 
-        private string GetMatchedUrl(string[] urls, Order order)
+        private string GetMatchedUrl(string[] urls, Order order, SubmitType submitType)
         {
             string ret = null;
             foreach (string url in urls)
@@ -224,24 +231,24 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     {
                         if (fieldName.StartsWith("User."))
                         {
-                            if (TreatUserFields(fieldName, fieldValue, order))
+                            if (TreatUserFields(fieldName, fieldValue, order, submitType))
                             {
                                 ret = GetUrl(url);
                                 break;
                             }
                         }
-                        else if (fieldName.StartsWith("Order.") && GetCurrentOrder(order) != null)
+                        else if (fieldName.StartsWith("Order.") && GetCurrentOrder(order, submitType) != null)
                         {
-                            foreach (OrderFieldValue ofv in GetCurrentOrder(order).OrderFieldValues)
+                            foreach (OrderFieldValue ofv in GetCurrentOrder(order, submitType).OrderFieldValues)
                             {
-                                if (ofv != null && ofv.OrderField != null && ofv.OrderField.SystemName == fieldName.Substring(6) && (string)ofv.Value == fieldValue)
+                                if (ofv != null && ofv.OrderField != null && ofv.OrderField.SystemName == fieldName[6..] && (string)ofv.Value == fieldValue)
                                 {
                                     ret = GetUrl(url);
                                     break;
                                 }
                             }
                         }
-                        else if (fieldName == "Session.Shop" && fieldValue == GetCurrentShopId(order))
+                        else if (fieldName == "Session.Shop" && fieldValue == GetCurrentShopId(order, submitType))
                         {
                             ret = GetUrl(url);
                             break;
@@ -256,9 +263,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets the current order.
         /// </summary>
         /// <returns>Order.</returns>
-        private Order GetCurrentOrder(Order order)
+        private static Order GetCurrentOrder(Order order, SubmitType submitType)
         {
-            if(ExecutingContext.IsBackEnd() && order != null)
+            if(LiveContext.IsBackEnd(submitType) && order != null)
             {
                 return order;
             }
@@ -277,9 +284,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets the current shop identifier.
         /// </summary>
         /// <returns>System.String.</returns>
-        private string GetCurrentShopId(Order order)
+        private static string GetCurrentShopId(Order order, SubmitType submitType)
         {
-            if (ExecutingContext.IsBackEnd() && order != null)
+            if (LiveContext.IsBackEnd(submitType) && order != null)
             {
                 return order.ShopId;
             }
@@ -311,7 +318,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             string multilineUrlText = settings.WebServiceURI;
             if (!string.IsNullOrEmpty(multilineUrlText))
             {
-                if (multilineUrlText.Contains("\r\n") || multilineUrlText.Contains("\n"))
+                if (multilineUrlText.Contains("\r\n") || multilineUrlText.Contains('\n'))
                 {
                     return multilineUrlText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries).Length;
                 }
@@ -326,14 +333,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <param name="multilineUrlText">The multiline URL text.</param>
         /// <returns>System.String[].</returns>
-        internal string[] GetWebServiceUrls(string multilineUrlText)
+        internal static string[] GetWebServiceUrls(string multilineUrlText)
         {
             string[] ret;
 
             if (!string.IsNullOrEmpty(multilineUrlText))
             {
                 ret = new string[] { multilineUrlText };
-                if (multilineUrlText.Contains("\r\n") || multilineUrlText.Contains("\n"))
+                if (multilineUrlText.Contains("\r\n") || multilineUrlText.Contains('\n'))
                 {
                     ret = multilineUrlText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
                 }
@@ -351,14 +358,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <param name="multipleUrlsText">The multiple Urls text.</param>
         /// <returns>System.String[].</returns>
-        internal string[] GetEndpointUrls(string multipleUrlsText)
+        internal static string[] GetEndpointUrls(string multipleUrlsText)
         {
             string[] ret;
 
             if (!string.IsNullOrEmpty(multipleUrlsText))
             {
                 ret = new string[] { multipleUrlsText };
-                if (multipleUrlsText.Contains(","))
+                if (multipleUrlsText.Contains(','))
                 {
                     ret = multipleUrlsText.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
                 }
@@ -377,9 +384,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="fieldValue">The field value.</param>
         /// <returns><c>true</c> if the user field matched the passed <c>fieldName</c>, <c>false</c> otherwise.</returns>
-        private bool TreatUserFields(string fieldName, string fieldValue, Order order)
+        private static bool TreatUserFields(string fieldName, string fieldValue, Order order, SubmitType submitType)
         {            
-            User user = (ExecutingContext.IsBackEnd() && order != null) ? UserManagementServices.Users.GetUserById(order.CustomerAccessUserId) :
+            User user = (LiveContext.IsBackEnd(submitType) && order != null) ? UserManagementServices.Users.GetUserById(order.CustomerAccessUserId) :
                 Helpers.GetCurrentExtranetUser();
 
             if (user == null)

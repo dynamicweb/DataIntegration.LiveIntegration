@@ -7,6 +7,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Extensibility.Notifications;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,7 +23,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
         /// Gets a value that determines whether live integration is enabled for the current shop, active and a connection to the ERP is available.
         /// </summary>
         /// <returns><c>true</c> if the live integration is enabled and active, <c>false</c> otherwise.</returns>
-        protected static bool EnabledAndActive(Settings settings)
+        [Obsolete("Use EnabledAndActive(Settings settings, SubmitType submitType) instead")]
+        protected static bool EnabledAndActive(Settings settings) => EnabledAndActive(settings, SubmitType.Live);
+        /// <summary>
+        /// Gets a value that determines whether live integration is enabled for the current shop, active and a connection to the ERP is available.
+        /// </summary>
+        /// <returns><c>true</c> if the live integration is enabled and active, <c>false</c> otherwise.</returns>
+        protected static bool EnabledAndActive(Settings settings, SubmitType submitType)
         {
             var cacheValue = Context.Current?.Items?["DynamicwebLiveIntegrationEnabledAndActive"];
             if (cacheValue != null)
@@ -32,7 +39,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             else
             {
                 bool result = Global.IsIntegrationActive(settings)
-                                && Connector.IsWebServiceConnectionAvailable(settings);
+                                && Connector.IsWebServiceConnectionAvailable(settings, submitType);
                 if (Context.Current?.Items != null)
                 {
                     Context.Current.Items["DynamicwebLiveIntegrationEnabledAndActive"] = result;
@@ -60,10 +67,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             if (productsToUpdate != null && productsToUpdate.Any())
             {
                 var logger = new Logger(settings);
-                logger.Log(ErrorLevel.DebugInfo, $"Reload prices. products #{productsToUpdate.Count()}");
+                logger.Log(ErrorLevel.DebugInfo, $"Reload prices. products #{productsToUpdate.Count}");
 
                 var context = new LiveContext(order.GetPriceContext());
-                if (!ProductManager.FetchProductInfos(productsToUpdate, context, settings, logger, false))
+                if (!ProductManager.FetchProductInfos(productsToUpdate, context, settings, logger, false, SubmitType.Live))
                 {
                     return;
                 }

@@ -67,7 +67,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         };
                         string request = new ItemDetailsXmlGenerator().GenerateItemDetailsXml(settings);                        
                         logger.Log(ErrorLevel.DebugInfo, string.Format("Request RetrieveItemDetailsFromRemoteSystem sent: '{0}'.", request));
-                        XmlDocument response = Connector.RetrieveDataFromRequestString(currentSettings, request, logger);
+                        XmlDocument response = Connector.RetrieveDataFromRequestString(currentSettings, request, logger, SubmitType.Live);
                         if (response != null && !string.IsNullOrEmpty(response.InnerXml))
                         {
                             logger.Log(ErrorLevel.DebugInfo, string.Format("Response RetrieveItemDetailsFromRemoteSystem received: '{0}'.", response.InnerXml));
@@ -121,7 +121,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     string request = new ItemListXmlGenerator().GenerateItemListXml(settings);
                     var logger = new Logger(currentSettings);
                     logger.Log(ErrorLevel.DebugInfo, string.Format("Request RetrieveItemsListFromRemoteSystem sent: '{0}'.", request));
-                    XmlDocument response = Connector.RetrieveDataFromRequestString(currentSettings, request, logger);
+                    XmlDocument response = Connector.RetrieveDataFromRequestString(currentSettings, request, logger, SubmitType.Live);
                     if (response != null && !string.IsNullOrEmpty(response.InnerXml))
                     {
                         logger.Log(ErrorLevel.DebugInfo, string.Format("Response RetrieveItemsListFromRemoteSystem received: '{0}'.", response.InnerXml));
@@ -202,7 +202,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     bool isTotalCountAttributePresent = itemsNode != null && itemsNode.Attributes["totalCount"] != null;
                     if (isTotalCountAttributePresent)
                     {
-                        Int32.TryParse(itemsNode.Attributes["totalCount"].Value, out totalItemsCount);
+                        int.TryParse(itemsNode.Attributes["totalCount"].Value, out totalItemsCount);
                     }
                     if (totalItemsCount <= 0)
                     {
@@ -365,7 +365,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     ItemId = id
                 };
                 string requestString = new RetrievePdfXmlGenerator().GenerateXml(settings);
-                string base64EncodedPDF = Connector.RetrievePDF(currentSettings, requestString);
+                string base64EncodedPDF = Connector.RetrievePDF(currentSettings, requestString, SubmitType.Live);
                 return base64EncodedPDF;
             }
             return null;
@@ -378,18 +378,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="output">The output.</param>
         private static void DecodeStream(Stream inStream, Stream output)
         {
-            using (System.Security.Cryptography.ICryptoTransform transform = new System.Security.Cryptography.FromBase64Transform())
+            using System.Security.Cryptography.ICryptoTransform transform = new System.Security.Cryptography.FromBase64Transform();
+            using var cryptStream = new System.Security.Cryptography.CryptoStream(inStream, transform, System.Security.Cryptography.CryptoStreamMode.Read);
+            byte[] buffer = new byte[4096];
+            int bytesRead = cryptStream.Read(buffer, 0, buffer.Length);
+            while (bytesRead > 0)
             {
-                using (var cryptStream = new System.Security.Cryptography.CryptoStream(inStream, transform, System.Security.Cryptography.CryptoStreamMode.Read))
-                {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead = cryptStream.Read(buffer, 0, buffer.Length);
-                    while (bytesRead > 0)
-                    {
-                        output.Write(buffer, 0, bytesRead);
-                        bytesRead = cryptStream.Read(buffer, 0, buffer.Length);
-                    }
-                }
+                output.Write(buffer, 0, bytesRead);
+                bytesRead = cryptStream.Read(buffer, 0, buffer.Length);
             }
         }          
     }

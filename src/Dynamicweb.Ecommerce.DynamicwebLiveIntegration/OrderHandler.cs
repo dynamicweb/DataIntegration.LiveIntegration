@@ -8,7 +8,6 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Prices;
-using Dynamicweb.Environment;
 using Dynamicweb.Extensibility.Notifications;
 using Dynamicweb.Security.UserManagement;
 using System;
@@ -63,7 +62,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
 
             var orderId = order.Id ?? "ID is null";
-            bool executingContextIsBackEnd = ExecutingContext.IsBackEnd();
+            bool executingContextIsBackEnd = LiveContext.IsBackEnd(liveIntegrationSubmitType);
 
             var logger = new Logger(settings);
             logger.Log(ErrorLevel.DebugInfo, $"Updating order with ID: {orderId}. Complete: {order.Complete}. Order submitted from the backend: {executingContextIsBackEnd}");
@@ -109,7 +108,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             xmlGeneratorSettings.GenerateXmlForHash = true;
             var requestXmlForHash = new OrderXmlGenerator().GenerateOrderXml(settings, order, xmlGeneratorSettings, logger);
 
-            if (createOrder && settings.SaveCopyOfOrderXml && liveIntegrationSubmitType == SubmitType.LiveOrderOrCart)
+            if (createOrder && settings.SaveCopyOfOrderXml && (liveIntegrationSubmitType == SubmitType.LiveOrderOrCart || liveIntegrationSubmitType == SubmitType.WebApi))
             {
                 SaveCopyOfXml(order.Id, requestXml, logger);
             }
@@ -120,7 +119,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             // get last hash
             string lastHash = GetLastOrderHash(settings);
 
-            if (liveIntegrationSubmitType != SubmitType.ScheduledTask && liveIntegrationSubmitType != SubmitType.CaptureTask && 
+            if (liveIntegrationSubmitType != SubmitType.ScheduledTask && liveIntegrationSubmitType != SubmitType.CaptureTask &&
                 !string.IsNullOrEmpty(lastHash) && lastHash == currentHash)
             {
                 // no changes to order
@@ -131,7 +130,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             // save this hash for next calls
             SaveOrderHash(settings, currentHash);
 
-            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled);
+            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
                 bool processResponseResult = ProcessResponse(settings, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
@@ -230,10 +229,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <returns>OrderLine.</returns>
         private static OrderLine CreateOrderLine(Order order, string productNumber, Logger logger)
         {
-            if (order == null)
-            {
-                throw new ArgumentNullException(nameof(order));
-            }
+            ArgumentNullException.ThrowIfNull(order);
 
             if (string.IsNullOrEmpty(productNumber))
             {
@@ -268,7 +264,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="order">The order.</param>
         /// <param name="createOrder">if set to <c>true</c> [create order].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled)
+        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
         {
             XmlDocument response = null;
             requestCancelled = null;
@@ -277,46 +273,40 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             Dictionary<string, XmlDocument> responsesCache = ResponseCache.GetWebOrdersConnectorResponses(GetOrderCacheLevel(settings));
 
-            if (!createOrder && responsesCache is object && responsesCache.ContainsKey(orderIdentifier))
+            if (!createOrder && responsesCache is not null && responsesCache.TryGetValue(orderIdentifier, out response))
             {
-                response = responsesCache[orderIdentifier];
+                return response;
+            }
+
+            Notifications.Order.OnBeforeSendingOrderToErpArgs onBeforeSendingOrderToErpArgs = new Notifications.Order.OnBeforeSendingOrderToErpArgs(order, createOrder, settings, logger);
+            NotificationManager.Notify(Notifications.Order.OnBeforeSendingOrderToErp, onBeforeSendingOrderToErpArgs);
+            requestCancelled = onBeforeSendingOrderToErpArgs.Cancel;
+
+            if (!onBeforeSendingOrderToErpArgs.Cancel)
+            {
+                response = Connector.CalculateOrder(settings, requestXml, order, createOrder, out Exception error, logger, submitType);
+
+                if (createOrder && error != null)
+                {
+                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {error}", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                }
+
+                NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));
+
+                if (responsesCache is not null)
+                {
+                    responsesCache.Remove(orderIdentifier);
+
+                    if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
+                    {
+                        responsesCache.Add(orderIdentifier, response);
+                    }
+                }
             }
             else
             {
-                Notifications.Order.OnBeforeSendingOrderToErpArgs onBeforeSendingOrderToErpArgs = new Notifications.Order.OnBeforeSendingOrderToErpArgs(order, createOrder, settings, logger);
-                NotificationManager.Notify(Notifications.Order.OnBeforeSendingOrderToErp, onBeforeSendingOrderToErpArgs);
-                requestCancelled = onBeforeSendingOrderToErpArgs.Cancel;
-
-                if (!onBeforeSendingOrderToErpArgs.Cancel)
-                {
-                    response = Connector.CalculateOrder(settings, requestXml, order, createOrder, out Exception error, logger);
-
-                    if (createOrder && error != null)
-                    {
-                        Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {error}", OrderErpCallFailed, DebuggingInfoType.Undefined);
-                    }
-
-                    NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));
-
-                    if (responsesCache is object)
-                    {
-                        if (responsesCache.ContainsKey(orderIdentifier))
-                        {
-                            responsesCache.Remove(orderIdentifier);
-                        }
-
-                        if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
-                        {
-                            responsesCache.Add(orderIdentifier, response);
-                        }
-                    }
-                }
-                else
-                {
-                    Services.OrderDebuggingInfos.Save(order, "Order not sent to ERP because a subscriber cancelled sending it", OrderErpCallCancelled, DebuggingInfoType.Undefined);
-                }
+                Services.OrderDebuggingInfos.Save(order, "Order not sent to ERP because a subscriber cancelled sending it", OrderErpCallCancelled, DebuggingInfoType.Undefined);
             }
-
             return response;
         }
 
@@ -383,7 +373,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             if (order == null
                 || !order.OrderLines.Any()
                 || (order.IsLedgerEntry && settings.SkipLedgerOrder)
-                || (liveIntegrationSubmitType == SubmitType.LiveOrderOrCart && !string.IsNullOrEmpty(order.IntegrationOrderId)))
+                || (!string.IsNullOrEmpty(order.IntegrationOrderId) && (liveIntegrationSubmitType == SubmitType.LiveOrderOrCart || liveIntegrationSubmitType == SubmitType.WebApi)))
             {
                 return false;
             }
@@ -505,7 +495,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                             unitId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineUnitId']")?.InnerText;
                         }
                         foreach (var productOrderLine in order.OrderLines)
-                        {                            
+                        {
                             string id = settings.CalculateOrderUsingProductNumber ? productOrderLine.ProductNumber : productOrderLine.ProductId;
                             if (string.Compare(id, parentProductId, StringComparison.OrdinalIgnoreCase) == 0)
                             {
@@ -1243,7 +1233,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 return;
             }
             var newLines = order.OrderLines.Where(l => string.IsNullOrEmpty(l.Id)).ToList();
-            if (!newLines.Any())
+            if (newLines.Count == 0)
             {
                 return;
             }
@@ -1267,7 +1257,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
             }
-            if (mergedLines.Any())
+            if (mergedLines.Count != 0)
             {
                 foreach (var mergedLine in mergedLines)
                 {

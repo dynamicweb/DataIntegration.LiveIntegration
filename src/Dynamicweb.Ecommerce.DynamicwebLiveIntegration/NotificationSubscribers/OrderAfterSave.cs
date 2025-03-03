@@ -4,6 +4,9 @@ using Dynamicweb.Extensibility.Notifications;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
 {
+    /// <summary>
+    /// LiveIntegration in WebApi handle CreateOrder request implemented for #10951
+    /// </summary>
     [Subscribe(Ecommerce.Notifications.Ecommerce.Order.AfterSave)]
     public class OrderAfterSave : NotificationSubscriberBase
     {
@@ -21,8 +24,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 }
                 
                 Settings settings = SettingsManager.GetSettingsByShop(myArgs.Order.ShopId);
+                var submitType = SubmitType.WebApi;
 
-                if (!EnabledAndActive(settings))
+                if (!EnabledAndActive(settings, submitType))
                 {
                     return;
                 }
@@ -30,7 +34,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 if (settings != null && Global.EnableCartCommunication(settings, myArgs.Order.Complete)
                     && IsCreateOrderAllowed(myArgs.Order))
                 {                    
-                    OrderHandler.UpdateOrder(settings, myArgs.Order, SubmitType.LiveOrderOrCart);                    
+                    OrderHandler.UpdateOrder(settings, myArgs.Order, submitType);                    
                 }
             }
         }

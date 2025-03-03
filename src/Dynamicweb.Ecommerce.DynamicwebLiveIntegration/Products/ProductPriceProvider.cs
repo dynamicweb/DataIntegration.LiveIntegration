@@ -17,7 +17,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
     /// <seealso cref="PriceProvider" />
     public class ProductPriceProvider : PriceProvider, IPriceInfoProvider
     {        
-        private bool? FetchProductInfo(Settings settings, PriceProductSelection product,
+        private static bool? FetchProductInfo(Settings settings, PriceProductSelection product,
             string productIdentifier, ResponseCacheLevel productCacheLevel, LiveContext context, Logger logger)
         {
             // If Product is not in the cache, then get it from Erp
@@ -35,7 +35,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 // After GetProductFromVariantComboId the variantId is empty or other product is returned so new identifier must be generated
                 productIdentifier = ProductManager.ProductProvider.GetProductIdentifier(settings, changedProduct, product.UnitId);
 
-                bool fetchedProductInfo = ProductManager.FetchProductInfos(products, context, settings, logger, true);
+                bool fetchedProductInfo = ProductManager.FetchProductInfos(products, context, settings, logger, true, SubmitType.Live);
                 if (fetchedProductInfo &&
                     // Check if requested product was not received from response
                     !ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User, context.Currency)
@@ -67,7 +67,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                         && Global.IsIntegrationActive(settings)
                         && (string.IsNullOrWhiteSpace(settings.ShopId) || settings.ShopId == context.Shop?.Id)
                         && !Global.IsProductLazyLoad(settings)
-                        && Connector.IsWebServiceConnectionAvailable(settings, logger))
+                        && Connector.IsWebServiceConnectionAvailable(settings, logger, SubmitType.Live))
                     {
                         Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.ProductPriceProvider.PreparePrices START");
                         var productProvider = ProductManager.ProductProvider;
@@ -80,7 +80,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                                 products.Add(selection);
                         }
                         LiveContext liveContext = new LiveContext(context);                        
-                        if (!ProductManager.FetchProductInfos(products, liveContext, settings, logger, true))
+                        if (!ProductManager.FetchProductInfos(products, liveContext, settings, logger, true, SubmitType.Live))
                         {
                             return;
                         }

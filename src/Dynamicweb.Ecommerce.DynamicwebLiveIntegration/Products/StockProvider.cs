@@ -23,7 +23,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 var context = new LiveContext(Helpers.GetCurrentCurrency(), user, Services.Shops.GetShop(Global.CurrentShopId));
 
                 var logger = new Logger(settings);
-                if (ProductManager.FetchProductInfos(products, context, settings, logger, false))
+                if (ProductManager.FetchProductInfos(products, context, settings, logger, false, SubmitType.Live))
                 {
                     ProductInfo productInfo = ProductManager.GetProductInfo(product, settings, user, context, priceProductSelection.UnitId);
                     if (productInfo != null)

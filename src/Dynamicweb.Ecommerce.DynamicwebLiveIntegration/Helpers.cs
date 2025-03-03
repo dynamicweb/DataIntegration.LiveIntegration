@@ -305,7 +305,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
               || Global.IsProductLazyLoad(settings)
               || (user == null && !settings.LiveProductInfoForAnonymousUsers)
               || (user != null && user.IsLivePricesDisabled)
-              || !Connector.IsWebServiceConnectionAvailable(settings)
+              || !Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
               || product == null
               || string.IsNullOrEmpty(product.Id)
               || string.IsNullOrEmpty(product.Number))
@@ -334,18 +334,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <returns>System.String.</returns>
         internal static string CalculateHash(string request)
         {
-            using (var hashEngine = new System.Security.Cryptography.HMACMD5(new byte[] { 14, 4, 78 }))
+            using var hashEngine = new System.Security.Cryptography.HMACMD5(new byte[] { 14, 4, 78 });
+            byte[] hash = hashEngine.ComputeHash(Encoding.UTF8.GetBytes(request));
+            string hashString = string.Empty;
+
+            foreach (byte x in hash)
             {
-                byte[] hash = hashEngine.ComputeHash(Encoding.UTF8.GetBytes(request));
-                string hashString = string.Empty;
-
-                foreach (byte x in hash)
-                {
-                    hashString += $"{x:x2}";
-                }
-
-                return hashString;
+                hashString += $"{x:x2}";
             }
+
+            return hashString;
         }
 
         #endregion Session Hash helper methods

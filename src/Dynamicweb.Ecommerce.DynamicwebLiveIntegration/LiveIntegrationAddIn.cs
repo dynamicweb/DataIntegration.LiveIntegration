@@ -692,7 +692,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         {
                             if (str.Contains(";"))
                             {
-                                int id = Core.Converter.ToInt32(UrlHandler.Instance.GetUrl(str));
+                                int id = Core.Converter.ToInt32(UrlHandler.GetUrl(str));
                                 if (id > 0)
                                 {
                                     if (!endpointFilters.ContainsKey(id))
@@ -761,12 +761,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             string multipleUrlsText = settings?.Endpoint;
             if (!string.IsNullOrEmpty(multipleUrlsText))
             {
-                EndpointConnector endpointConnector = new EndpointConnector(settings, logger);
+                EndpointConnector endpointConnector = new EndpointConnector(settings, logger, SubmitType.Backend);
                 return endpointConnector.IsConnectionAvailableFromBackend(multipleUrlsText);
             }
             else
             {
-                WebServiceConnector webServiceConnector = new WebServiceConnector(settings, logger);
+                WebServiceConnector webServiceConnector = new WebServiceConnector(settings, logger, SubmitType.Backend);
                 return webServiceConnector.IsConnectionAvailableFromBackend(settings.WebServiceURI);
             }
         }
@@ -924,7 +924,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return result;
         }
 
-        private void SaveTranslations(Settings settings)
+        private static void SaveTranslations(Settings settings)
         {
             Helpers.SaveTranslation(Constants.OrderConfiguration.OrderDiscountText, settings.OrderDiscountText);
             Helpers.SaveTranslation(Constants.OrderConfiguration.ProductDiscountText, settings.ProductDiscountText);

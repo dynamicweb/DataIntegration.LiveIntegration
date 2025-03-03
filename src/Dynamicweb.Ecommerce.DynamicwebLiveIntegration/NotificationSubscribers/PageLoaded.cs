@@ -25,13 +25,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 bool isWebServiceConnectionAvailable = false;
                 bool isLazyLoadingForProductInfoEnabled = false;
 
-                Dynamicweb.Notifications.Standard.Page.LoadedArgs loadedArgs = args as Dynamicweb.Notifications.Standard.Page.LoadedArgs;
-                if (loadedArgs != null)
-                {                 
+                if (args is Dynamicweb.Notifications.Standard.Page.LoadedArgs loadedArgs)
+                {
                     var settings = SettingsManager.GetSettingsByShop(Global.GetShopId(loadedArgs.PageViewInstance));
                     if (settings != null && Global.IsIntegrationActive(settings))
                     {
-                        isWebServiceConnectionAvailable = Connector.IsWebServiceConnectionAvailable(settings);
+                        isWebServiceConnectionAvailable = Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live);
                         isLazyLoadingForProductInfoEnabled = Global.IsLazyLoadingForProductInfoEnabled(settings);
 
                         if (Context.Current.Session != null && Convert.ToBoolean(Context.Current.Session["DynamicwebLiveIntegration.OrderExportFailed"]))

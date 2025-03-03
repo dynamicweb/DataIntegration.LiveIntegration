@@ -13,23 +13,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     /// <summary>
     /// Abstract base connector
     /// </summary>
-    internal abstract class ConnectorBase
+    internal abstract class ConnectorBase(Settings settings, Logger logger, Order order, SubmitType submitType)
     {
-        protected Settings Settings { get; }
-        protected Logger Logger { get; }
-        protected Order Order { get; }
+        protected Settings Settings { get; } = settings;
+        protected Logger Logger { get; } = logger;
+        protected Order Order { get; } = order;
 
-        [Obsolete("Use ConnectorBase(Settings settings, Logger logger, Order order) instead")]
-        public ConnectorBase(Settings settings, Logger logger) : this(settings, logger, null)
-        {
-        }
-
-        public ConnectorBase(Settings settings, Logger logger, Order order)
-        {
-            Settings = settings;
-            Logger = logger;
-            Order = order;
-        }
+        protected SubmitType SubmitType { get; } = submitType;
 
         internal abstract EndpointInfo GetEndpoint();
         internal abstract string Execute(string request);
@@ -46,7 +36,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
         internal void Error(EndpointInfo endpoint)
         {
-            EndpointMonitoringService.Error(Settings, endpoint);
+            EndpointMonitoringService.Error(Settings, endpoint, SubmitType);
         }
 
         internal string Execute(EndpointInfo endpoint, string request)
@@ -81,7 +71,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                 error = ex;
                 Logger?.Log(ErrorLevel.ConnectionError, $"Error checking Web Service connection: '{ex.Message}'. Request: '{request}'.");
 
-                EndpointMonitoringService.Error(Settings, endpoint);
+                EndpointMonitoringService.Error(Settings, endpoint, SubmitType);
 
                 NotificationManager.Notify(OnErpCommunicationLost, new OnErpCommunicationLostArgs(request, ex, Settings, Logger));
 

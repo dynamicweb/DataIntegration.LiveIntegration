@@ -19,7 +19,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         [Obsolete("Use Context.Current.Items[\"IsWebServiceConnectionAvailable\"] instead")]
         public static bool IsWebServiceConnectionAvailable()
         {
-            return Connector.IsWebServiceConnectionAvailable(SettingsManager.GetSettingsByShop(Global.CurrentShopId));
+            return Connector.IsWebServiceConnectionAvailable(SettingsManager.GetSettingsByShop(Global.CurrentShopId), SubmitType.Live);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return Products.ProductManager.FetchProductInfos(
                 new List<Prices.PriceProductSelection>(){ productSelection },
                 context,
-                settings, new Logging.Logger(settings), false, updateCache);
+                settings, new Logging.Logger(settings), false, SubmitType.Live, updateCache);
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             get
             {
                 var settings = SettingsManager.GetSettingsByShop(Global.CurrentShopId);
-                return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings)
+                return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
                     && (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null)
                     && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled)
                     && settings.LazyLoadProductInfo;

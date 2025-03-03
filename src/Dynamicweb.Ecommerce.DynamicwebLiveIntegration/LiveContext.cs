@@ -15,7 +15,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
         public Shop Shop { get; }
 
-        public PriceContext PriceContext { get; set; }
+        public PriceContext PriceContext { get; set; }        
 
         public LiveContext(Currency currency, User user, Shop shop)
         {
@@ -34,7 +34,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             Country = priceContext.Country;
         }
 
-        private Country GetCountry(User user)
+        private static Country GetCountry(User user)
         {
             Country country = null;
             if (user != null && !string.IsNullOrEmpty(user.CountryCode))
@@ -58,6 +58,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 country = new Country();
             }
             return country;
+        }
+
+        public static bool IsBackEnd(SubmitType submitType)
+        {
+            return submitType switch
+            {
+                SubmitType.Live or SubmitType.LiveOrderOrCart or SubmitType.FromTemplates => false,
+                _ => true,
+            };
         }
     }
 }

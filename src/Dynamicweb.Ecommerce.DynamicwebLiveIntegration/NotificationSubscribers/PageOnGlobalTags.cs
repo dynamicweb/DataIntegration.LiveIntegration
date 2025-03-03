@@ -22,14 +22,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
             if (pageviewNotificationArgs != null)
             {                
                 var settings = SettingsManager.GetSettingsByShop(Global.GetShopId(pageviewNotificationArgs.Pageview));
-                if (settings != null && EnabledAndActive(settings))
+                if (settings != null && EnabledAndActive(settings, SubmitType.Live))
                 {
                     string globalTagName = settings.WebServiceConnectionStatusGlobalTagName;
                     if (!string.IsNullOrEmpty(globalTagName))
                     {
                         if (pageviewNotificationArgs.Template.TagExists(globalTagName))
                         {
-                            pageviewNotificationArgs.Template.SetTag(globalTagName, Connector.IsWebServiceConnectionAvailable(settings).ToString().ToLower());
+                            pageviewNotificationArgs.Template.SetTag(globalTagName, Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live).ToString().ToLower());
                             pageviewNotificationArgs.Template.SetTag("Global:LiveIntegration.IsLazyLoadingForProductInfoEnabled", Global.IsLazyLoadingForProductInfoEnabled(settings).ToString().ToLower());
                         }
                     }
