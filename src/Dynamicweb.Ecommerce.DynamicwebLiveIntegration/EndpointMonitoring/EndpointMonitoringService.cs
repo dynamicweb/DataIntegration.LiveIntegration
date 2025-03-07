@@ -143,11 +143,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.EndpointMonitoring
             }
         }
 
+        private static (Settings Settings, SubmitType SubmitType) GetStateInfo(object stateInfo)
+        {
+            var state = (Tuple<Settings, SubmitType>)stateInfo;
+            return (state.Item1, state.Item2);
+        }
+
         private void Ping(object stateInfo)
         {
-            Tuple<Settings, SubmitType> state = (Tuple<Settings, SubmitType>)stateInfo;
-            Settings settings = state.Item1;
-            SubmitType submitType = state.Item2;
+            var state = GetStateInfo(stateInfo);
+            Settings settings = state.Settings;
+            SubmitType submitType = state.SubmitType;
 
             var logger = new Logger(settings);
             ConnectorBase currentConnector = null;

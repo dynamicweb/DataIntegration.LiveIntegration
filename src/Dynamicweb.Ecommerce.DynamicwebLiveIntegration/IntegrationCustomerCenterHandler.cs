@@ -202,7 +202,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     bool isTotalCountAttributePresent = itemsNode != null && itemsNode.Attributes["totalCount"] != null;
                     if (isTotalCountAttributePresent)
                     {
-                        int.TryParse(itemsNode.Attributes["totalCount"].Value, out totalItemsCount);
+                        totalItemsCount = Converter.ToInt32(itemsNode.Attributes["totalCount"].Value);                        
                     }
                     if (totalItemsCount <= 0)
                     {
