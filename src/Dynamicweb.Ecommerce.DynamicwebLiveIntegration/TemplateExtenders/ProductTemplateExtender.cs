@@ -149,7 +149,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
                 Diagnostics.ExecutionTable.Current.Add($"ProductTemplateExtender FetchProductInfos product[id='{product?.Id}' variantId='{product.VariantId}'] START");
                 var products = new List<PriceProductSelection>() { productSelection };                
                 var context = new LiveContext(Helpers.GetCurrentCurrency(), user, Services.Shops.GetShop(Global.CurrentShopId));
-                if (ProductManager.FetchProductInfos(products, context, settings, new Logger(settings), false))
+                if (ProductManager.FetchProductInfos(products, context, settings, new Logger(settings), false, SubmitType.Live))
                 {
                     productInfo = ProductManager.GetProductInfo(product, settings, user, context, productSelection.UnitId);
                 }
@@ -158,7 +158,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
             return productInfo;
         }
 
-        private Price GetBaseUOMPrice(Settings settings, ProductInfo productInfo, List<Price> prices)
+        private static Price GetBaseUOMPrice(Settings settings, ProductInfo productInfo, List<Price> prices)
         {
             Price price = null;
             if (settings.UseUnitPrices && prices != null && productInfo["ProductDefaultUnitId"] != null)
@@ -172,7 +172,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.TemplateExtenders
             return price;
         }
 
-        private double GetStockFromBaseUOM(double baseUOMquantity, double baseStock, double uomQuantity)
+        private static double GetStockFromBaseUOM(double baseUOMquantity, double baseStock, double uomQuantity)
         {
             if (uomQuantity != 0)
             {

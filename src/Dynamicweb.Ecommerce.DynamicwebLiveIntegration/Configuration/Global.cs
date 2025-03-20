@@ -44,23 +44,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         {
             string enableCartCommunication = settings.CartCommunicationType;
 
-            switch (enableCartCommunication)
+            return enableCartCommunication switch
             {
-                case Constants.CartCommunicationType.None:
-                    return false;
-
-                case Constants.CartCommunicationType.Full:
-                    return true;
-
-                case Constants.CartCommunicationType.OnlyOnOrderComplete:
-                    return orderComplete;
-
-                case Constants.CartCommunicationType.CartOnly:
-                    return !orderComplete;
-
-                default:
-                    return false;
-            }
+                Constants.CartCommunicationType.None => false,
+                Constants.CartCommunicationType.Full => true,
+                Constants.CartCommunicationType.OnlyOnOrderComplete => orderComplete,
+                Constants.CartCommunicationType.CartOnly => !orderComplete,
+                _ => false,
+            };
         }
 
         /// <summary>
@@ -112,7 +103,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 
         public static bool IsLazyLoadingForProductInfoEnabled(Settings settings)
         {
-            return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings)
+            return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
                        && (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null)
                        && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled)
                        && settings.LazyLoadProductInfo;

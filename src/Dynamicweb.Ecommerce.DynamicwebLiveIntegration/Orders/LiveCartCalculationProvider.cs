@@ -15,9 +15,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Orders
                 !(cart.Complete && cart.IsExported))
             {                
                 var settings = SettingsManager.GetSettingsByShop(cart.ShopId);
+                SubmitType submitType = SubmitType.LiveOrderOrCart;
 
                 if (Global.IsIntegrationActive(settings) &&                    
-                    Connector.IsWebServiceConnectionAvailable(settings))
+                    Connector.IsWebServiceConnectionAvailable(settings, submitType))
                 {                    
                     if (Global.EnableCartCommunication(settings, cart.Complete))
                     {
@@ -26,7 +27,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Orders
                         {                            
                             Services.Orders.ForcePriceRecalculation(cart);                            
                         }                                                   
-                        bool? result = OrderHandler.UpdateOrder(settings, cart, SubmitType.LiveOrderOrCart);
+                        bool? result = OrderHandler.UpdateOrder(settings, cart, submitType);
                         return result.HasValue ? result.Value : false;
                     }
                 }

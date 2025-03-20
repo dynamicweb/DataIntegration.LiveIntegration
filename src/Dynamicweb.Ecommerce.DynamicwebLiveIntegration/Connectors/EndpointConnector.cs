@@ -12,12 +12,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     /// <summary>
     /// Endpoint Connector
     /// </summary>
-    internal class EndpointConnector : ConnectorBase
+    internal class EndpointConnector(Settings settings, Logger logger, SubmitType submitType, Order order = null) : ConnectorBase(settings, logger, order, submitType)
     {
-        public EndpointConnector(Settings settings, Logger logger, Order order = null) : base(settings, logger, order)
-        {
-        }
-
         internal override EndpointInfo GetEndpoint()
         {
             return new EndpointInfo(GetEndpoint(Settings.Endpoint, Logger));
@@ -27,7 +23,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         {
             if (!string.IsNullOrEmpty(multipleUrlsText))
             {
-                var endpoint = UrlHandler.Instance.GetEndpoint(multipleUrlsText, false, logger, Order);
+                var endpoint = UrlHandler.Instance.GetEndpoint(multipleUrlsText, false, logger, Order, SubmitType);
                 return endpoint ?? throw new ArgumentException("Cannot find appropriate endpoint. Check Endpoint settings.");
             }
             else
@@ -36,7 +32,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             }
         }
 
-        internal EndpointInfo GetEndpointInfo(Endpoint endpoint)
+        internal static EndpointInfo GetEndpointInfo(Endpoint endpoint)
         {
             return new EndpointInfo(endpoint);
         }
@@ -72,18 +68,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
         internal override string Execute(string request)
         {
-            return Execute(GetEndpointInfo(UrlHandler.Instance.GetEndpoint(Settings, Logger, Order)), request);
+            return Execute(GetEndpointInfo(UrlHandler.Instance.GetEndpoint(Settings, Logger, Order, SubmitType)), request);
         }
 
         internal override IEnumerable<string> GetUrls(string multipleUrlsText)
         {
-            return UrlHandler.Instance.GetEndpointUrls(multipleUrlsText);
+            return UrlHandler.GetEndpointUrls(multipleUrlsText);
         }
 
         internal override bool IsConnectionAvailableFromBackend(string endpointId, out string error)
         {
             error = null;
-            var endpoint = UrlHandler.Instance.GetEndpoint(endpointId, false, Logger, Order);
+            var endpoint = UrlHandler.Instance.GetEndpoint(endpointId, false, Logger, Order, SubmitType);
             if (endpoint != null)
             {
                 var key = $"IsConnectionAvailableFromBackend{endpointId}";

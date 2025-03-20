@@ -205,7 +205,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 // get the relevant data from the DB
                 var ordersToSync = ReadOrders();
 
-                if (ordersToSync != null && ordersToSync.Count() > 0)
+                if (ordersToSync != null && ordersToSync.Count > 0)
                 {
                     ProcessOrders(ordersToSync);
                 }
@@ -337,7 +337,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
             {
                 var settings = GetSettings(order.ShopId);
                 // save capture changes and try to update ERP
-                if (settings != null && settings.IsLiveIntegrationEnabled && Connector.IsWebServiceConnectionAvailable(settings))
+                if (settings != null && settings.IsLiveIntegrationEnabled && Connector.IsWebServiceConnectionAvailable(settings, SubmitType.ScheduledTask))
                 {
                     var result = OrderHandler.UpdateOrder(settings, order, SubmitType.ScheduledTask);
                     if (result == null || !result.Value)

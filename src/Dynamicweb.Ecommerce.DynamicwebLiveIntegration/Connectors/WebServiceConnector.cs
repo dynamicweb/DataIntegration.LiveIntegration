@@ -14,13 +14,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     /// <summary>
     /// Web service connector
     /// </summary>
-    internal class WebServiceConnector : ConnectorBase
+    internal class WebServiceConnector(Settings settings, Logger logger, SubmitType submitType, Order order = null) : ConnectorBase(settings, logger, order, submitType)
     {
         private static readonly ILogger LegacyLogger = LogManager.System.GetLogger(LogCategory.DataIntegration, "ERPIntegration");
-
-        public WebServiceConnector(Settings settings, Logger logger, Order order = null) : base(settings, logger, order)
-        {
-        }
 
         /// <summary>
         /// Gets the URL.
@@ -35,7 +31,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         {
             get
             {
-                string url = UrlHandler.Instance.GetWebServiceUrl(Settings, Order);
+                string url = UrlHandler.Instance.GetWebServiceUrl(Settings, Order, SubmitType);
                 if (!string.IsNullOrEmpty(url))
                 {
                     return url;
@@ -57,7 +53,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             return new EndpointInfo(WebServiceUrl);
         }
 
-        internal EndpointInfo GetEndpointInfo(string url)
+        internal static EndpointInfo GetEndpointInfo(string url)
         {
             return new EndpointInfo(url);
         }
@@ -76,7 +72,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
         internal override string Execute(string request)
         {
-            return Execute(GetEndpointInfo(UrlHandler.Instance.GetWebServiceUrl(Settings, Order)), request);
+            return Execute(GetEndpointInfo(UrlHandler.Instance.GetWebServiceUrl(Settings, Order, SubmitType)), request);
         }
 
         internal override string Execute(EndpointInfo endpoint, string request, TimeSpan responseTimeout)
@@ -88,7 +84,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
         internal override IEnumerable<string> GetUrls(string multipleUrlsText)
         {
-            return UrlHandler.Instance.GetWebServiceUrls(multipleUrlsText).Select(u => UrlHandler.Instance.GetUrl(u)).Distinct();
+            return UrlHandler.GetWebServiceUrls(multipleUrlsText).Select(u => UrlHandler.GetUrl(u)).Distinct();
         }
 
         internal override bool IsConnectionAvailableFromBackend(string url, out string error)

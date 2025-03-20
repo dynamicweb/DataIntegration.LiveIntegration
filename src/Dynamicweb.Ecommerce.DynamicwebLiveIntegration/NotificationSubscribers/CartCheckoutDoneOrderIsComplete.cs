@@ -26,8 +26,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 }
                 
                 Settings settings = SettingsManager.GetSettingsByShop(myArgs.Order.ShopId);
+                var submitType = SubmitType.LiveOrderOrCart;
 
-                if (!EnabledAndActive(settings))
+                if (!EnabledAndActive(settings, submitType))
                 {
                     return;
                 }
@@ -47,7 +48,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                         return;
                     }
 
-                    bool? result = OrderHandler.UpdateOrder(settings, myArgs.Order, SubmitType.LiveOrderOrCart);
+                    bool? result = OrderHandler.UpdateOrder(settings, myArgs.Order, submitType);
 
                     // clear cached prices to update stock if order is completed with success
                     if (result.HasValue && result.Value)

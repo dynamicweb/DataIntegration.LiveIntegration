@@ -23,7 +23,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
         private readonly Dictionary<string, CheckoutHandler> _paymentHandlers = new Dictionary<string, CheckoutHandler>();
         private string _processError;
         private OrderInvoiceType _orderInvoiceTypeValue;
-        private static string _leaveUnchangedValue = "Leave unchanged";
+        private static readonly string _leaveUnchangedValue = "Leave unchanged";
 
         private enum OrderInvoiceType
         {
@@ -181,9 +181,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 //get the relevant data from the DB
                 var ordersToSync = ReadOrders();
 
-                if (ordersToSync != null && ordersToSync.Count() > 0)
+                if (ordersToSync != null && ordersToSync.Count > 0)
                 {
-                    if (CommunicateBackToErp && !Connector.IsWebServiceConnectionAvailable(settings))
+                    if (CommunicateBackToErp && !Connector.IsWebServiceConnectionAvailable(settings, SubmitType.CaptureTask))
                     {
                         var msg = "The ERP connection is currently unavailable, but 'Update order to ERP after capture' is enabled. Wait to retry when the ERP is back online.";
                         Logger.Log(msg);

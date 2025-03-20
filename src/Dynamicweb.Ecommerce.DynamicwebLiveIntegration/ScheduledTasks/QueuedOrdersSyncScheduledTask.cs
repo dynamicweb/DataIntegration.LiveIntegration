@@ -136,7 +136,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                 }
 
                 var ordersToSync = Services.Orders.GetOrdersBySearch(filter);
-
+                
                 if (ordersToSync != null && ordersToSync.GetResultOrders() != null && ordersToSync.GetResultOrders().Any())
                 {
                     Settings shopSettings = SettingsManager.GetSettingsByShop(ShopId);

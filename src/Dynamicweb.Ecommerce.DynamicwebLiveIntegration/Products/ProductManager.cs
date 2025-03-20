@@ -118,7 +118,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="user">The user.</param>
         /// <param name="updateCache">Update cache with products information retrieved.</param>
         /// <returns><c>true</c> if product information was fetched, <c>false</c> otherwise.</returns>
-        internal static bool FetchProductInfos(List<PriceProductSelection> products, LiveContext context, Settings settings, Logger logger, bool doCurrencyCheck, bool updateCache = true)
+        internal static bool FetchProductInfos(List<PriceProductSelection> products, LiveContext context, Settings settings, Logger logger, bool doCurrencyCheck, SubmitType submitType, bool updateCache = true)
         {
             if (products == null || products.Count == 0)
             {
@@ -137,7 +137,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 return false;
             }
 
-            if (!Connector.IsWebServiceConnectionAvailable(settings, logger))
+            if (!Connector.IsWebServiceConnectionAvailable(settings, logger, submitType))
             {
                 logger.Log(ErrorLevel.DebugInfo, "Live Prices are unavailable");
                 return false;
@@ -222,10 +222,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             // Cache prices
                             foreach (string productKey in prices.Keys)
                             {
-                                if (cachedProductInfos.ContainsKey(productKey))
-                                {
-                                    cachedProductInfos.Remove(productKey);
-                                }
+                                cachedProductInfos.Remove(productKey);
                                 cachedProductInfos.Add(productKey, prices[productKey]);
                             }
                         }
@@ -320,10 +317,25 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             }
                         }
                     }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(product.VariantId) && !string.IsNullOrEmpty(product.DefaultVariantComboId) && !string.Equals(product.VariantId, product.DefaultVariantComboId)
+                            && GetFilteredVariants(new List<Product>() { product }).Count != 0)
+                        {
+                            productIdentifier = ProductProvider.GetProductIdentifier(settings, product, productWithQuantity.UnitId);                            
+                            if (!ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User, doCurrencyCheck ? context.Currency : null))
+                            {                                                                
+                                if (ProductProvider.IsLivePriceEnabledForProduct(product) && product.HasIdentifier(settings))
+                                {
+                                    productsForRequest.Add(product.GetPriceProductSelection(productWithQuantity.Quantity, productWithQuantity.UnitId));
+                                }
+                            }                            
+                        }
+                    }
 
                     product = ProductProvider.GetProductFromVariantComboId(product, logger);
 
-                    if (string.IsNullOrEmpty(product.VariantId) || GetFilteredVariants(new List<Product>() { product }).Any())
+                    if (string.IsNullOrEmpty(product.VariantId) || GetFilteredVariants(new List<Product>() { product }).Count != 0)
                     {
                         productIdentifier = ProductProvider.GetProductIdentifier(settings, product, productWithQuantity.UnitId);                        
                         isProductCached = ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User,
@@ -442,10 +454,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                         }
 
                         // avoid exception to duplicate products in XML
-                        if (!infos.ContainsKey(productIdentifier))
-                        {
-                            infos.Add(productIdentifier, productInfo);
-                        }
+                        infos.TryAdd(productIdentifier, productInfo);
                     }
                 }
 
