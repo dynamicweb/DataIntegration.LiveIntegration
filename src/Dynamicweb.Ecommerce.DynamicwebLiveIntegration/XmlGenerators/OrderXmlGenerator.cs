@@ -82,9 +82,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// <param name="orderNode">The order node.</param>
         /// <param name="order">The order.</param>
         private void AddOrderDeliveryInformation(OrderXmlGeneratorSettings settings, XmlElement orderNode, Order order, User user)
-        {            
-            AddChildXmlNode(orderNode, "OrderDeliveryName",
-                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : !string.IsNullOrWhiteSpace(user?.Name) ? user.Name : order.DeliveryName);
+        {
+            UserAddress deliveryAddress = null;
+            if (settings.CreateOrder && order.DeliveryAddressId > 0)
+            {
+                deliveryAddress = UserManagementServices.UserAddresses.GetAddressById(order.DeliveryAddressId);                
+            }
+            string deliveryName = (deliveryAddress is object && !string.IsNullOrEmpty(order.DeliveryName)) ? order.DeliveryName :
+                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : user.Name;                
+
+            AddChildXmlNode(orderNode, "OrderDeliveryName", deliveryName);
             AddChildXmlNode(orderNode, "OrderDeliveryAddress", order.DeliveryAddress);
             AddChildXmlNode(orderNode, "OrderDeliveryAddress2", order.DeliveryAddress2);
             AddChildXmlNode(orderNode, "OrderDeliveryCity", order.DeliveryCity);
@@ -95,14 +102,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(orderNode, "OrderDeliveryPhone", order.DeliveryPhone);
             AddChildXmlNode(orderNode, "OrderDeliveryFax", order.DeliveryFax);
             AddChildXmlNode(orderNode, "OrderDeliveryCompany", order.DeliveryCompany);
-            if (settings.CreateOrder && order.DeliveryAddressId > 0)
+            if (deliveryAddress is object)
             {
-                var address = UserManagementServices.UserAddresses.GetAddressById(order.DeliveryAddressId);
-                if (address is object)
-                {
-                    AddChildXmlNode(orderNode, "OrderDeliveryAddressId", !string.IsNullOrEmpty(address.ExternalID) ? address.ExternalID : address.UniqueIdentifier);
-                }
-            }            
+                AddChildXmlNode(orderNode, "OrderDeliveryAddressId", !string.IsNullOrEmpty(deliveryAddress.ExternalID) ? deliveryAddress.ExternalID : deliveryAddress.UniqueIdentifier);
+            }
         }
 
         /// <summary>
