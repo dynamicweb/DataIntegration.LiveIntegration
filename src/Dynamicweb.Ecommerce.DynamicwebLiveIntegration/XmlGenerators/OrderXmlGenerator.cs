@@ -131,8 +131,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         private XmlNode BuildOrderLineFieldsXml(XmlDocument xmlDocument, Order order)
         {
             var orderLineFields = CreateTableNode(xmlDocument, "EcomOrderLineFields");
-
-            foreach (var orderLine in order.OrderLines.Where(x => x.OrderLineFieldValues.Any()))
+            var orderLines = order.OrderLines.Where(x => x.OrderLineFieldValues.Any()).ToList();
+            foreach (var orderLine in orderLines)
             {
                 foreach (var field in orderLine.OrderLineFieldValues)
                 {
@@ -159,7 +159,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             var tableNode = CreateTableNode(xmlDocument, "EcomOrderLines");
 
             // Order lines (products, taxes)
-            foreach (var orderLine in order.OrderLines.Where(ol => !ol.IsDiscount()))
+            var orderLines = order.OrderLines.Where(ol => !ol.IsDiscount()).ToList();
+            foreach (var orderLine in orderLines)
             {
                 CreateOrderLineXml(currentSettings, tableNode, orderLine, settings, logger);
             }
@@ -167,7 +168,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             if (!settings.GenerateXmlForHash || !settings.ErpControlsDiscount)
             {
                 // Order lines (order discounts, and product discounts)                
-                foreach (var orderLine in order.OrderLines.Where(ol => ol.IsDiscount()))
+                orderLines = order.OrderLines.Where(ol => ol.IsDiscount()).ToList();
+                foreach (var orderLine in orderLines)
                 {
                     if (!string.IsNullOrEmpty(orderLine.GiftCardCode))
                     {
@@ -379,7 +381,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         private double GetOrderPriceWithoutVat(Order order)
         {
             var orderPriceWithoutVat = 0d;
-            foreach (var ol in order.OrderLines.Where(ol => !(ol.HasType(OrderLineType.Discount) && !string.IsNullOrEmpty(ol.GiftCardCode))))
+            var orderLines = order.OrderLines.Where(ol => !(ol.HasType(OrderLineType.Discount) && !string.IsNullOrEmpty(ol.GiftCardCode))).ToList();
+            foreach (var ol in orderLines)
                 orderPriceWithoutVat += ol.Price.PriceWithoutVAT;
             return orderPriceWithoutVat;
         }
