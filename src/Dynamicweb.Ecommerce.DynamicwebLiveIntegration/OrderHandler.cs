@@ -1302,7 +1302,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         private static void SetTotalOrderDiscount(Order order)
         {
             PriceInfo totalDiscount = new PriceInfo(order.Currency); ;
-            foreach (var line in order.OrderLines.Where(x => x.HasType(new[] { OrderLineType.Discount, OrderLineType.ProductDiscount })))
+            var orderLines = order.OrderLines.Where(x => x.HasType(new[] { OrderLineType.Discount, OrderLineType.ProductDiscount })).ToList();
+            foreach (var line in orderLines)
             {
                 totalDiscount = totalDiscount.Add(line.Price);
             }
