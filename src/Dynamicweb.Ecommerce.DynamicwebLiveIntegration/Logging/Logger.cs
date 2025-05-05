@@ -16,7 +16,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
     /// </summary>
     public class Logger
     {
-        private static readonly string DateTimeFormat = "MM/dd/yyyy hh:mm:ss.fff tt";
+        private static readonly string DateTimeFormat = "yyyy-MM-dd HH:mm:ss.ffff";
 
         /// <summary>
         /// The synchronize lock.
