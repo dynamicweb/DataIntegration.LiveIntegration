@@ -89,7 +89,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 deliveryAddress = UserManagementServices.UserAddresses.GetAddressById(order.DeliveryAddressId);                
             }
             string deliveryName = (deliveryAddress is object && !string.IsNullOrEmpty(order.DeliveryName)) ? order.DeliveryName :
-                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : user.Name;                
+                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : user?.Name ?? "";                
 
             AddChildXmlNode(orderNode, "OrderDeliveryName", deliveryName);
             AddChildXmlNode(orderNode, "OrderDeliveryAddress", order.DeliveryAddress);
