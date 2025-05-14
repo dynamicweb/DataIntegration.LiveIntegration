@@ -120,6 +120,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             string lastHash = GetLastOrderHash(settings);
 
             if (liveIntegrationSubmitType != SubmitType.ScheduledTask && liveIntegrationSubmitType != SubmitType.CaptureTask &&
+                liveIntegrationSubmitType != SubmitType.ManualSubmit &&
                 !string.IsNullOrEmpty(lastHash) && lastHash == currentHash)
             {
                 // no changes to order
