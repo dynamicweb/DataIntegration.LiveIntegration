@@ -281,6 +281,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             // Check for existence of the given products in the Cache
             List<PriceProductSelection> productsForRequest = new List<PriceProductSelection>();
             bool getProductInformationForAllVariants = settings.GetProductInformationForAllVariants;
+            bool showVariantDefault = SystemConfiguration.Instance.GetBoolean("/Globalsettings/Ecom/Product/ShowVariantDefault");
 
             foreach (var productWithQuantity in products)
             {
@@ -317,23 +318,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             }
                         }
                     }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(product.VariantId) && !string.IsNullOrEmpty(product.DefaultVariantComboId) && !string.Equals(product.VariantId, product.DefaultVariantComboId)
-                            && GetFilteredVariants(new List<Product>() { product }).Count != 0)
-                        {
-                            productIdentifier = ProductProvider.GetProductIdentifier(settings, product, productWithQuantity.UnitId);                            
-                            if (!ResponseCache.IsProductInCache(productCacheLevel, productIdentifier, context.User, doCurrencyCheck ? context.Currency : null))
-                            {                                                                
-                                if (ProductProvider.IsLivePriceEnabledForProduct(product) && product.HasIdentifier(settings))
-                                {
-                                    productsForRequest.Add(product.GetPriceProductSelection(productWithQuantity.Quantity, productWithQuantity.UnitId));
-                                }
-                            }                            
-                        }
-                    }
 
-                    product = ProductProvider.GetProductFromVariantComboId(product, logger);
+                    if (showVariantDefault)
+                    {
+                        product = ProductProvider.GetProductFromVariantComboId(product, logger);
+                    }
 
                     if (string.IsNullOrEmpty(product.VariantId) || GetFilteredVariants(new List<Product>() { product }).Count != 0)
                     {

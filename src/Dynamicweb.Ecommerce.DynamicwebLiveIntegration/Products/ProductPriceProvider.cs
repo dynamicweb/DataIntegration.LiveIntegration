@@ -1,4 +1,5 @@
-﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
+﻿using Dynamicweb.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
@@ -30,10 +31,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 
                 List<PriceProductSelection> products = new List<PriceProductSelection>();
 
-                Product changedProduct = ProductManager.ProductProvider.GetProductFromVariantComboId(product.Product, logger);
-                products.Add(changedProduct.GetPriceProductSelection(product.Quantity, product.UnitId));
+                bool showVariantDefault = SystemConfiguration.Instance.GetBoolean("/Globalsettings/Ecom/Product/ShowVariantDefault");
+
+                Product productForRequest = showVariantDefault ? ProductManager.ProductProvider.GetProductFromVariantComboId(product.Product, logger) : product.Product;
+                products.Add(productForRequest.GetPriceProductSelection(product.Quantity, product.UnitId));
                 // After GetProductFromVariantComboId the variantId is empty or other product is returned so new identifier must be generated
-                productIdentifier = ProductManager.ProductProvider.GetProductIdentifier(settings, changedProduct, product.UnitId);
+                productIdentifier = ProductManager.ProductProvider.GetProductIdentifier(settings, productForRequest, product.UnitId);
 
                 bool fetchedProductInfo = ProductManager.FetchProductInfos(products, context, settings, logger, true, SubmitType.Live);
                 if (fetchedProductInfo &&
