@@ -47,11 +47,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
             var status = GetStatus(endpoint);
             if (status == null || status.Expired)
             {
-                if (!Helpers.ParseResponseToXml(response, logger, out XmlDocument doc))
-                {
-                    logger.Log(ErrorLevel.DebugInfo, $"License Response is not valid XML");
-                }
-                else
+                if (Helpers.ParseResponseToXml(response, logger, out XmlDocument doc))                
                 {
                     ValidateLicense(doc, endpoint, status, logger);
                 }
