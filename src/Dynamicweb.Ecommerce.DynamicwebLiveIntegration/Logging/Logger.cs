@@ -4,6 +4,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Mailing;
 using Dynamicweb.Rendering;
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -19,16 +20,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         private static readonly string DateTimeFormat = "yyyy-MM-dd HH:mm:ss.ffff";
 
         /// <summary>
-        /// The synchronize lock.
-        /// </summary>
-        private static readonly object SyncLock = new();
-
-        /// <summary>
         /// The log file
         /// </summary>
         private readonly string _logFile;
 
         private readonly Settings _settings;
+        private readonly TimeSpan _waitTimeout;
+        private readonly NotificationFrequency _notificationFrequency;
+        private static readonly ConcurrentDictionary<string, ConcurrentQueue<string>> _lastLogMessages = new();
+        private readonly int _lastLogMessagesLimit = 100;
 
         /// <summary>
         /// Prevents a default instance of the <see cref="Logger"/> class from being created.
@@ -36,13 +36,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         public Logger(Settings settings)
         {
             _settings = settings;
-            if (settings != null)
-            {
-                if (string.IsNullOrEmpty(_logFile))
-                {
-                    _logFile = SystemInformation.MapPath($"/Files/System/Log/LiveIntegration/{settings.InstanceName}.log");
-                }
-            }
+
+            _logFile = SystemInformation.MapPath($"/Files/System/Log/LiveIntegration/{settings.InstanceName}.log");
+            _waitTimeout = TimeSpan.FromSeconds(settings.AutoPingInterval < Constants.MinPingInterval ? Constants.MinPingInterval : settings.AutoPingInterval);
+            _notificationFrequency = Helpers.GetEnumValueFromString(_settings.NotificationSendingFrequency, NotificationFrequency.Never);
         }
 
         /// <summary>
@@ -70,73 +67,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         private bool LogResponseErrors => _settings.LogResponseErrors;
 
         /// <summary>
-        /// Sends an mail with error information according to configuration.
-        /// </summary>
-        /// <param name="message">The error/success message to send.</param>
-        /// <returns><c>true</c> if email was sent, <c>false</c> otherwise.</returns>
-        public bool SendMail(string message)
-        {
-            string notificationTemplate = _settings.NotificationTemplate;
-            if (string.IsNullOrEmpty(message) || string.IsNullOrEmpty(notificationTemplate))
-                return false;
-
-            var recipients = _settings.NotificationRecipients;
-            if (recipients is null || !recipients.Any())
-                return false;
-
-            Template templateInstance = new($"/DataIntegration/Notifications/{notificationTemplate}");
-            templateInstance.SetTag("Ecom:LiveIntegration.AddInName", Constants.AddInName);
-            templateInstance.SetTag("Ecom:LiveIntegration.ErrorMessage", message);
-
-            string notificationEmailSubject = _settings.NotificationEmailSubject;
-            string notificationEmailSenderEmail = _settings.NotificationEmailSenderEmail;
-            string notificationEmailSenderName = _settings.NotificationEmailSenderName;
-
-            using var mail = new System.Net.Mail.MailMessage();
-            mail.IsBodyHtml = true;
-            mail.Subject = notificationEmailSubject;
-            mail.SubjectEncoding = System.Text.Encoding.UTF8;
-            mail.From = new(notificationEmailSenderEmail, notificationEmailSenderName, System.Text.Encoding.UTF8);
-
-            // Set parameters for MailMessage
-            foreach (var email in recipients)
-                mail.To.Add(email);
-            mail.BodyEncoding = System.Text.Encoding.UTF8;
-
-            // Render Template and set as Body
-            mail.Body = templateInstance.Output();
-
-            // Send mail            
-            return EmailHandler.Send(mail);
-        }
-
-        /// <summary>
         /// Gets the error messages sine the last email was sent.
         /// </summary>
-        /// <returns>Log data</returns>
+        /// <returns>Log data</returns>        
         public string GetLastLogData()
         {
             string result = string.Empty;
 
-            lock (SyncLock)
+            if (_lastLogMessages.TryGetValue(_logFile, out var queue))
             {
-                foreach (var line in File.ReadLines(_logFile, System.Text.Encoding.UTF8).Reverse())
+                var lines = queue.ToList();
+                foreach (var line in lines)
                 {
-                    if (line.Contains(ErrorLevel.DebugInfo.ToString()))
-                    {
-                        // ignore debug info
-                    }
-                    else if (!line.Contains(ErrorLevel.EmailSend.ToString()))
-                    {
-                        result += line + "<br>";
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    result += line + "<br>";
                 }
             }
-
             return result;
         }
 
@@ -147,18 +92,22 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         /// <param name="logline">The log line.</param>
         public void Log(ErrorLevel errorLevel, string logline)
         {
-            if (!string.IsNullOrEmpty(_logFile))
+            bool isAllowedAddToLog = IsAllowedAddToLog(errorLevel);
+            if (isAllowedAddToLog)
             {
-                bool isAllowedAddToLog = IsAllowedAddToLog(errorLevel);
-                lock (SyncLock)
-                {
-                    if (isAllowedAddToLog)
-                    {
-                        KeepOrTruncateFile();
-                        logline = $"{DateTime.Now.ToString(DateTimeFormat)}: {errorLevel}: {logline}{System.Environment.NewLine}";
+                logline = $"{DateTime.Now.ToString(DateTimeFormat)}: {errorLevel}: {logline}{System.Environment.NewLine}";
 
+                TryAddLogLineToQueue(errorLevel, logline);
+
+                using (var mutex = new Mutex(false, _logFile.Replace("\\", "")))
+                {
+                    var hasHandle = false;
+                    try
+                    {
+                        hasHandle = mutex.WaitOne(_waitTimeout, false);
+                        KeepOrTruncateFile();                        
                         try
-                        {
+                        {                            
                             TextFileHelper.WriteTextFile(logline, _logFile, true, System.Text.Encoding.UTF8);
                         }
                         catch (IOException)
@@ -173,12 +122,39 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
                             TextFileHelper.WriteTextFile(logline, fileName, false, System.Text.Encoding.UTF8);
                         }
                     }
+                    catch (Exception)
+                    {
+                        throw;
+                    }
+                    finally
+                    {
+                        if (hasHandle)
+                            mutex.ReleaseMutex();
+                    }
                 }
+            }
 
-                if (errorLevel != ErrorLevel.DebugInfo && errorLevel != ErrorLevel.EmailSend)
+            if (errorLevel != ErrorLevel.DebugInfo && errorLevel != ErrorLevel.EmailSend)
+            {
+                SendLog(logline, isAllowedAddToLog);
+            }
+        }
+
+        private void TryAddLogLineToQueue(ErrorLevel errorLevel, string logline)
+        {
+            if (errorLevel != ErrorLevel.DebugInfo && errorLevel != ErrorLevel.EmailSend && _notificationFrequency != NotificationFrequency.Never)
+            {
+                _lastLogMessages.AddOrUpdate(_logFile,
+                    new ConcurrentQueue<string>([logline]),
+                (k, q) =>
                 {
-                    SendLog(logline, isAllowedAddToLog);
-                }
+                    q.Enqueue(logline);
+                    if (q.Count > _lastLogMessagesLimit)
+                    {
+                        q.TryDequeue(out _);
+                    }
+                    return q;
+                });
             }
         }
 
@@ -275,40 +251,33 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         /// <param name="isLastErrorInLog">if set to <c>true</c> [is last error in log].</param>
         private void SendLog(string lastError, bool isLastErrorInLog)
         {
-            string frequencySettings = _settings.NotificationSendingFrequency;
-            if (string.IsNullOrEmpty(frequencySettings))
-            {
-                return;
-            }
-
-            var frequency = Helpers.GetEnumValueFromString(frequencySettings, NotificationFrequency.Never);
-            if (frequency == NotificationFrequency.Never)
+            if (_notificationFrequency == NotificationFrequency.Never)
             {
                 return;
             }
 
             // Get last time when the email was sent
-            DateTime lastTimeSend = Settings.LastNotificationEmailSent;                        
+            DateTime lastTimeSend = Settings.LastNotificationEmailSent;
             bool emailSent = false;
             if (lastTimeSend == DateTime.MinValue)
             {
                 // used for getting the last errors appeared for the future email
                 Settings.LastNotificationEmailSent = DateTime.Now;
-                emailSent = SendMail(lastError);
+                emailSent = SendMail(lastError, false);
             }
             else
             {
                 // send email if the frequency interval already passed
-                if (DateTime.Now.Subtract(lastTimeSend) >= TimeSpan.FromMinutes((double)frequency))
+                if (DateTime.Now.Subtract(lastTimeSend) >= TimeSpan.FromMinutes((double)_notificationFrequency))
                 {
                     Settings.LastNotificationEmailSent = DateTime.Now;
                     if (!isLastErrorInLog)
                     {
-                        emailSent = SendMail(GetLastLogData() + lastError);
+                        emailSent = SendMail(lastError, true);
                     }
                     else
                     {
-                        emailSent = SendMail(GetLastLogData());
+                        emailSent = SendMail(null, true);
                     }
                 }
             }
@@ -316,11 +285,71 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
             if (emailSent)
             {
                 Log(ErrorLevel.EmailSend, "Send e-mail with errors");
+                _lastLogMessages.TryRemove(_logFile, out _);
             }
             else
-            {                
+            {
                 Settings.LastNotificationEmailSent = lastTimeSend;
             }
+        }
+
+        [Obsolete("Use SendMail(string message, bool getLastLogData) instead")]
+        public bool SendMail(string message)
+        {
+            return SendMail(message, true);
+        }
+
+        /// <summary>
+        /// Sends an mail with error information according to configuration.
+        /// </summary>
+        /// <param name="message">The error/success message to send.</param>
+        /// <returns><c>true</c> if email was sent, <c>false</c> otherwise.</returns>
+        public bool SendMail(string message, bool getLastLogData)
+        {
+            string notificationTemplate = _settings.NotificationTemplate;
+            if (string.IsNullOrEmpty(notificationTemplate))
+                return false;
+
+            var recipients = _settings.NotificationRecipients;
+            if (recipients is null || recipients.Count == 0)
+                return false;
+
+            Template templateInstance = new($"/DataIntegration/Notifications/{notificationTemplate}");
+            templateInstance.SetTag("Ecom:LiveIntegration.AddInName", Constants.AddInName);
+            bool logMsgTagExists = templateInstance.TagExists("Ecom:LiveIntegration.ErrorMessage");
+            if (logMsgTagExists)
+            {
+                if (getLastLogData)
+                {
+                    message = GetLastLogData() + message;
+                }
+                templateInstance.SetTag("Ecom:LiveIntegration.ErrorMessage", message);
+            }
+
+            string notificationEmailSubject = _settings.NotificationEmailSubject;
+            string notificationEmailSenderEmail = _settings.NotificationEmailSenderEmail;
+            if (!StringHelper.IsValidEmailAddress(notificationEmailSenderEmail))
+            {
+                notificationEmailSenderEmail = EmailHandler.SystemMailFromAddress();
+            }
+            string notificationEmailSenderName = _settings.NotificationEmailSenderName;
+
+            using var mail = new System.Net.Mail.MailMessage();
+            mail.IsBodyHtml = true;
+            mail.Subject = notificationEmailSubject;
+            mail.SubjectEncoding = System.Text.Encoding.UTF8;
+            mail.From = new(notificationEmailSenderEmail, notificationEmailSenderName, System.Text.Encoding.UTF8);
+
+            // Set parameters for MailMessage
+            foreach (var email in recipients)
+                mail.To.Add(email);
+            mail.BodyEncoding = System.Text.Encoding.UTF8;
+
+            // Render Template and set as Body
+            mail.Body = templateInstance.Output();
+
+            // Send mail            
+            return EmailHandler.Send(mail);
         }
 
         /// <summary>
@@ -374,6 +403,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
                 string logLine = DateTime.Now.ToString(DateTimeFormat) + ": " + ErrorLevel.Error + ": Cannot truncate log file." + System.Environment.NewLine;
                 TextFileHelper.WriteTextFile(logLine, _logFile, true, System.Text.Encoding.UTF8);
             }
+        }
+
+        internal static void ClearLogMessages(Settings settings)
+        {
+            var logFile = SystemInformation.MapPath($"/Files/System/Log/LiveIntegration/{settings.InstanceName}.log");
+            _lastLogMessages.TryRemove(logFile, out _);
         }
     }
 }
