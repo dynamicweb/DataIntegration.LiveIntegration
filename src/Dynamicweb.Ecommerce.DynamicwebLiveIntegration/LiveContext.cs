@@ -22,7 +22,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             Currency = currency;
             User = user;
             Shop = shop;
-            Country = GetCountry(user);
+            Country = Common.Context.Country ?? GetCountry(user);
         }
 
         public LiveContext(PriceContext priceContext)
