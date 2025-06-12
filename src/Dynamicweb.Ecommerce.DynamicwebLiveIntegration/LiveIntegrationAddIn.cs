@@ -816,6 +816,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             Licensing.LicenseService.SaveSettings(settings);
             SaveTranslations(settings);
             Connector.ClearCache();
+            Logger.ClearLogMessages(settings);
         }
 
         /// <summary>

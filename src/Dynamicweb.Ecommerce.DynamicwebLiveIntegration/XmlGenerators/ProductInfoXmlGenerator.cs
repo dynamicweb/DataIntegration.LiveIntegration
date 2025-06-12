@@ -34,7 +34,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
 
             xmlRoot.SetAttribute("ExternalUserId", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
             xmlRoot.SetAttribute("AccessUserCustomerNumber", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
-            xmlRoot.SetAttribute("VatCountryCode", !string.IsNullOrWhiteSpace(settings?.Context?.PriceContext?.Country?.Code2) ? settings.Context.PriceContext.Country.Code2 : Services.Countries.GetCountries().FirstOrDefault().Code2);
+            xmlRoot.SetAttribute("VatCountryCode", !string.IsNullOrWhiteSpace(settings?.Context?.PriceContext?.Country?.Code2) ? settings.Context.PriceContext.Country.Code2 :
+                !string.IsNullOrWhiteSpace(settings?.Context?.Country?.Code2) ? settings?.Context?.Country?.Code2 :                
+                Services.Countries.GetCountries().FirstOrDefault().Code2);
             xmlRoot.SetAttribute("VatPostingGroup", !string.IsNullOrWhiteSpace(settings?.Context?.PriceContext?.Country?.VatPostingGroup) ? settings.Context.PriceContext.Country.VatPostingGroup : Services.Countries.GetCountries().FirstOrDefault().VatPostingGroup);
 
             var tablesNode = xmlDocument.CreateElement("tables");

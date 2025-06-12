@@ -15,15 +15,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
     /// </summary>
     public class UrlHandler
     {
-        /// <summary>
-        /// The synchronize root
-        /// </summary>
-        private static readonly object SyncRoot = new object();
+        private static readonly UrlHandler _instance = new UrlHandler();
 
-        /// <summary>
-        /// The instance
-        /// </summary>
-        private static UrlHandler _instance;
+        // Explicit static constructor to tell C# compiler
+        // not to mark type as beforefieldinit
+        static UrlHandler()
+        {
+        }
 
         /// <summary>
         /// Prevents a default instance of the <see cref="UrlHandler"/> class from being created.
@@ -38,21 +36,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <value>The instance.</value>
         public static UrlHandler Instance
         {
-            get
-            {
-                if (_instance == null)
-                {
-                    lock (SyncRoot)
-                    {
-                        if (_instance == null)
-                        {
-                            _instance = new UrlHandler();
-                        }
-                    }
-                }
-
-                return _instance;
-            }
+            get => _instance;            
         }
 
         /// <summary>
