@@ -3,6 +3,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Prices;
+using Dynamicweb.Extensibility;
 using Dynamicweb.Extensibility.AddIns;
 using System;
 using System.Linq;
@@ -69,7 +70,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <returns>Shipping.</returns>
         private static Shipping GetShipping()
         {            
-            return Services.Shippings.GetShippingsWithoutRegions(false).FirstOrDefault(s => !string.IsNullOrEmpty(s.ServiceSystemName) && string.Compare(s.ServiceSystemName, typeof(LiveShippingFeeProvider).FullName, StringComparison.OrdinalIgnoreCase) == 0);
+            return Services.Shippings.GetShippingsWithoutRegions(false).FirstOrDefault(s => !string.IsNullOrEmpty(s.ServiceSystemName) && 
+                (string.Equals(typeof(LiveShippingFeeProvider).GetTypeNameWithAssembly(), s.ServiceSystemName) ||
+                string.Equals(s.ServiceSystemName, typeof(LiveShippingFeeProvider).FullName, StringComparison.OrdinalIgnoreCase)));
         }
 
         private static void ProcessLiveIntegrationShipping(Settings settings, Order order, XmlNode orderNode, Logger logger)
