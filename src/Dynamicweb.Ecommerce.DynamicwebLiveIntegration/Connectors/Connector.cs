@@ -243,7 +243,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                         if (!Helpers.ParseResponseToXml(erpXmlResponse, logger, out result))
                         {
                             result = null;
-                            exception = new Exception("Response is not valid XML");
+                            exception = new Exception($"Response is not valid XML: {erpXmlResponse}");
                         }
                         if (result != null && !LicenseService.ValidateLicense(url, result, logger))
                         {
