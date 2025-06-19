@@ -130,7 +130,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             // save this hash for next calls
             SaveOrderHash(settings, currentHash);
-
+            
             XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
@@ -143,8 +143,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 // error occurred                
                 if (createOrder && (!requestCancelled.HasValue || !requestCancelled.Value))
                 {
-                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);
-                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with null response returned.", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);                    
                 }
 
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
@@ -268,7 +267,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
         {
             XmlDocument response = null;
-            requestCancelled = null;
+            requestCancelled = null;            
 
             string orderIdentifier = Helpers.OrderIdentifier(order);
 
@@ -289,7 +288,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 if (createOrder && error != null)
                 {
-                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {error}", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                    string msg = !string.IsNullOrEmpty(error.Message) ? error.Message : error.ToString();
+                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {msg}", OrderErpCallFailed, DebuggingInfoType.Undefined);
                 }
 
                 NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));

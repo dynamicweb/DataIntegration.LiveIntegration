@@ -34,7 +34,7 @@ public sealed class TransferOrderToErpCommand : CommandBase
         bool result = OrderHandler.UpdateOrder(settings, order, SubmitType.ManualSubmit) ?? false;
         return new CommandResult
         {
-            Message = result ? "Order successfully transferred to ERP" : "Error creating order in ERP. Check the LiveIntegration log for details",
+            Message = result ? "Order successfully transferred to ERP" : "Error creating order in ERP. Check the Order log and LiveIntegration log for details",
             Status = result ? CommandResult.ResultType.Ok : CommandResult.ResultType.Error
         };
     }

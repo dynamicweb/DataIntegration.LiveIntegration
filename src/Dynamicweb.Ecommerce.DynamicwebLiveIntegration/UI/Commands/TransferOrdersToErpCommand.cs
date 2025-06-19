@@ -89,12 +89,12 @@ public sealed class TransferOrdersToErpCommand : OrderBulkActionCommand
                 output += $"Orders with IDs [{string.Join(",", orders
                     .Where(o => !(exportedOrders.Contains(o.Id) ||
                         alreadyExportedOrders.Contains(o.Id)))
-                    .Select(o => o.Id).Distinct().ToArray())}] were not transferred to ERP. Check the LiveIntegration log for details";
+                    .Select(o => o.Id).Distinct().ToArray())}] were not transferred to ERP. Check the Order logs and LiveIntegration log for details";
             }
         }
         else
         {
-            output = "None of the selected orders were transferred to ERP. Check the LiveIntegration log for details.";
+            output = "None of the selected orders were transferred to ERP. Check the Order logs and LiveIntegration log for details.";
         }
 
         return output;
