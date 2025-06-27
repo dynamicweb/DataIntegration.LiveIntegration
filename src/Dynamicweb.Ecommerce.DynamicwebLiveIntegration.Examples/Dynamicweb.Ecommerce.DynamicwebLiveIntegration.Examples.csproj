@@ -18,15 +18,15 @@
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		<ContinuousIntegrationBuild >true</ContinuousIntegrationBuild>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Dynamicweb" Version="10.4.0" />
-		<PackageReference Include="Dynamicweb.Core" Version="10.4.0" />
-		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.4.0" />
-		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.4.0" />
+		<PackageReference Include="Dynamicweb" Version="10.16.5" />
+		<PackageReference Include="Dynamicweb.Core" Version="10.16.5" />
+		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.16.5" />
+		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.16.5" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.csproj" />
