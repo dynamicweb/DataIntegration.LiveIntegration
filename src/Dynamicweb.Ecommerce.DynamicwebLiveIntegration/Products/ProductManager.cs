@@ -212,7 +212,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 // Parse the response
                 Dictionary<string, ProductInfo> prices = ProcessResponse(settings, response, logger, context);
 
-                if (prices != null && prices.Count > 0)
+                if (prices != null)
                 {
                     if (updateCache)
                     {
@@ -225,7 +225,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                                 cachedProductInfos.Remove(productKey);
                                 cachedProductInfos.Add(productKey, prices[productKey]);
                             }
-                        }
+                            // Cache empty values for products that were in the request but were not returned in the response
+
+                            foreach (var priceProductSelection in productsForRequest)
+                            {
+                                var productIdentifier = ProductProvider.GetProductIdentifier(settings, priceProductSelection.Product, priceProductSelection.UnitId);                                
+                                cachedProductInfos.TryAdd(productIdentifier, null);                                
+                            }
+                        }                        
                     }
                 }
                 else
