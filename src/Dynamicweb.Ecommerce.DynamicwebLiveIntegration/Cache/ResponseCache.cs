@@ -205,6 +205,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache
 
                 if (cachedProductInfo.TryGetValue(productIdentifier, out var productInfo))
                 {
+                    if (productInfo is null) return true;
                     return Equals(currency.Code, productInfo["CurrencyCode"]);
                 }
             }
