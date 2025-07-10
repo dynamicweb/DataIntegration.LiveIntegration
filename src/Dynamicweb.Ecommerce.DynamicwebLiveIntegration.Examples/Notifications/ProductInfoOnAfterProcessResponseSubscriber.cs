@@ -7,7 +7,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples.Notifications
     /// Class ProductInfoOnAfterProcessResponseSubscriber.
     /// </summary>
     /// <seealso cref="NotificationSubscriber" />
-    [Subscribe(ProductInfo.OnAfterGenerateProductInfoXml)]
+    [Subscribe(ProductInfo.OnAfterProductInfoProcessResponse)]
     public class ProductInfoOnAfterProcessResponseSubscriber : NotificationSubscriber
     {
         /// <summary>
