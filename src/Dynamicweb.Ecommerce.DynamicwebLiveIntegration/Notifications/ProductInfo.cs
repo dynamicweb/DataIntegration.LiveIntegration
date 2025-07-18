@@ -32,6 +32,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
         /// </example>
         public const string OnAfterGenerateProductInfoXml = "Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications.LiveIntegration.OnAfterGenerateProductInfoXml";
 
+        /// <summary>
+        /// Occurs after the response from ERP is returned before the product info object is stored. This enables you to change or analyze the product info object before it's added to cache.
+        /// </summary>
+        public const string OnAfterProductInfoProcessResponse = "Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications.LiveIntegration.OnAfterProductInfoProcessResponse";
+
         private static List<PriceProductSelection> GetProductSelectionsFromProducts(Dictionary<Product, double> products)
         {
             var productSelections = new List<PriceProductSelection>();
@@ -157,6 +162,46 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications
             /// </summary>
             /// <value>The XML document.</value>
             public XmlDocument XmlDocument { get; }
+
+            /// <summary>
+            /// Settings
+            /// </summary>
+            public Settings Settings { get; }
+
+            /// <summary>
+            /// Logger
+            /// </summary>
+            public Logger Logger { get; }
+        }
+
+        /// <summary>
+        /// Arguments class for the OnAfterProductInfoProcessResponse subscriber.
+        /// </summary>
+        /// <seealso cref="NotificationArgs" />
+        public class OnAfterProductInfoProcessResponseArgs : NotificationArgs
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="OnAfterProductInfoProcessResponseArgs"/> class.
+            /// </summary>            
+            public OnAfterProductInfoProcessResponseArgs(Products.ProductInfo productInfo, XmlDocument responseXml, Settings liveIntegrationSettings, Logger logger)
+            {
+                ProductInfo = productInfo;
+                ResponseXml = responseXml;                
+                Settings = liveIntegrationSettings;
+                Logger = logger;
+            }
+
+            /// <summary>
+            /// Gets the product info object.
+            /// </summary>
+            /// <value>The products.</value>
+            public Products.ProductInfo ProductInfo { get; }            
+
+            /// <summary>
+            /// Gets the response XML document.
+            /// </summary>
+            /// <value>The XML document.</value>
+            public XmlDocument ResponseXml { get; }
 
             /// <summary>
             /// Settings

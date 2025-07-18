@@ -449,6 +449,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                             productInfo["ProductDefaultUnitId"] = item.SelectSingleNode("column [@columnName='ProductDefaultUnitId']")?.InnerText;
                         }
 
+                        Dynamicweb.Extensibility.Notifications.NotificationManager.Notify(Notifications.ProductInfo.OnAfterProductInfoProcessResponse,
+                            new Notifications.ProductInfo.OnAfterProductInfoProcessResponseArgs(productInfo, response, settings, logger));
+
                         // avoid exception to duplicate products in XML
                         infos.TryAdd(productIdentifier, productInfo);
                     }
