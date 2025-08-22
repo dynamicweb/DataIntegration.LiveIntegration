@@ -638,6 +638,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 bool keepDiscountOrderLines = !settings.ErpControlsDiscount && order.Complete;
                 // Remove deleted OrderLines
+                List<OrderLine> linesToRemove = new List<OrderLine>();
                 for (int i = order.OrderLines.Count - 1; i >= 0; i--)
                 {
                     var orderLine = order.OrderLines[i];
@@ -650,6 +651,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     {
                         continue;
                     }
+                    linesToRemove.Add(orderLine);                    
+                }
+                foreach (var orderLine in linesToRemove)
+                {
                     order.OrderLines.Remove(orderLine);
                     Services.OrderLines.Delete(orderLine.Id);
                 }
