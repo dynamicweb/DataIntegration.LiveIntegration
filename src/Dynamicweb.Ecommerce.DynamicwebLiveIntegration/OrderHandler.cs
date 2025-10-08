@@ -1,4 +1,5 @@
-﻿using Dynamicweb.Core;
+﻿using Dynamicweb.Caching;
+using Dynamicweb.Core;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
@@ -1374,5 +1375,24 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         }
 
         #endregion Hash helper methods
+
+        private static string OrderCacheKey(Order order) => $"OrderHandlerSentOrder{order.Id}";
+
+        internal static void SetCurrentlyProcessingOrder(Order order)
+        {
+            string key = OrderCacheKey(order);
+            if (!Caching.Cache.Current.Contains(key))
+            {
+                Caching.Cache.Current.Set(key, key, new CacheItemPolicy() { SlidingExpiration = TimeSpan.FromMinutes(30) });
+            }
+        }
+
+        internal static bool IsOrderCurrentlyProcessing(Order order) => Caching.Cache.Current.Contains(OrderCacheKey(order));
+
+        internal static void RemoveCurrentlyProcessingOrder(Order order)
+        {
+            string key = $"OrderHandlerSentOrder{order.Id}";
+            Caching.Cache.Current.Remove(key);
+        }
     }
 }

@@ -277,6 +277,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
 
             foreach (var order in ordersToSync)
             {
+                if (OrderHandler.IsOrderCurrentlyProcessing(order))
+                {
+                    Logger.Log($"Skipping order: {order.Id} as it is currently processing");
+                    continue;
+                }
+
                 var erpUpdated = SendToErp(order);
                 if (!SkipCustomFieldUpdateOnErpFailure || erpUpdated)
                     UpdateOrderCustomField(order);
