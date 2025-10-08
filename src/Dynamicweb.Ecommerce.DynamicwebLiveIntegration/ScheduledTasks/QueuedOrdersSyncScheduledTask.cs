@@ -142,6 +142,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
                     Settings shopSettings = SettingsManager.GetSettingsByShop(ShopId);
                     foreach (var order in ordersToSync.GetResultOrders())
                     {
+                        if (OrderHandler.IsOrderCurrentlyProcessing(order))
+                        {
+                            Logger.Log($"Skipping order: {order.Id} as it is currently processing");
+                            continue;
+                        }
                         Settings settings = shopSettings;
                         if (settings == null)
                         {

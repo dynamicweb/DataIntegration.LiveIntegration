@@ -85,6 +85,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
             try
             {
+                if (createOrder)
+                {
+                    OrderHandler.SetCurrentlyProcessingOrder(order);
+                }
+
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.CalculateOrder START");
                 // only retry if is not create order, for create order schedule task will send later
                 document = Communicate(settings, orderXml, $"CalculateOrder (ID: {order.Id}, CreateOrder: {createOrder})", logger, submitType, !createOrder, true, order);
@@ -95,6 +100,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                 logger.Log(ErrorLevel.ConnectionError,
                     $"Error CalculateOrder Order Id:'{order.Id}' CreateOrder:'{createOrder}' Message:'{ex.Message}'.");
                 error = ex;
+            }
+            finally
+            {
+                if (createOrder)
+                {
+                    OrderHandler.RemoveCurrentlyProcessingOrder(order);
+                }
             }
 
             if (EnableThrowExceptions && error != null)

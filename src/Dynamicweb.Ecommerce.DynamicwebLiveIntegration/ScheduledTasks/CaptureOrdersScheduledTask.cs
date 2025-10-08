@@ -347,6 +347,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.ScheduledTasks
 
             foreach (var order in ordersToSync)
             {
+                if (OrderHandler.IsOrderCurrentlyProcessing(order))
+                {
+                    Logger.Log($"Skipping order: {order.Id} as it is currently processing");
+                    continue;
+                }
+
                 Settings orderSettings = shopSettings;
                 if (orderSettings == null)
                 {
