@@ -482,7 +482,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <returns></returns>
         public static ProductInfo GetProductInfo(Product product, Settings settings, User user)
         {
-            return GetProductInfo(product, settings, user, null, null);
+            return GetProductInfo(product, settings, user, null, settings.UseUnitPrices ? product.DefaultUnitId : null);
         }
 
         /// <summary>
