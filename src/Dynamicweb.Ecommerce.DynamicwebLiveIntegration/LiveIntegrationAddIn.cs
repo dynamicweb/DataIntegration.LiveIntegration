@@ -109,7 +109,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The Endpoint id.</value>        
         [AddInParameter("Endpoint")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "multiple=true;none=true;InfoBar=true;Tooltip=Only works with a web service exposed by a plug-in unit from Dynamicweb. This option takes precedence")]
+        [AddInParameterEditor(typeof(SelectionBoxParameterEditor), "multiple=true;none=true;InfoBar=true;explanation=Select one or more endpoints exposing a plug-in unit from Dynamicweb")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(20)]
         public string Endpoint { get; set; }
