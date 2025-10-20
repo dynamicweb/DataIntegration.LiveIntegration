@@ -1,4 +1,7 @@
-﻿namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
+﻿using Dynamicweb.Extensibility.AddIns;
+using Dynamicweb.Extensibility.Editors;
+
+namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 {
     /// <summary>
     /// Interface to define settings for the Live Integration.
@@ -327,5 +330,11 @@
         /// Gets or sets a value that determines the max number of products on each live request.
         /// </summary>
         int MaxProductsPerRequest { get; set; }
+
+        /// <summary>
+        /// When enabled anonymous users will receive discounts calculated by DynamicWeb instead of retrieving them from the ERP via Live Integration
+        /// </summary>
+        /// <value><c>true</c> if [disable ERP discounts calculation for anonymous users]; otherwise, <c>false</c>.</value>        
+        public bool DisableErpDiscountsForAnonymousUsers { get; set; }
     }
 }

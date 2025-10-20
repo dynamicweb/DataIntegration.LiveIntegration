@@ -4,6 +4,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators;
 using Dynamicweb.Ecommerce.Orders;
+using Dynamicweb.Security.UserManagement;
 using System.IO;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.UI.Commands;
@@ -66,6 +67,10 @@ public sealed class DownloadOrderXmlCommand : CommandBase
     private static string GetOrderCurrentXml(Settings settings, Order order)
     {
         var logger = new Logger(settings);
+
+        var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
+        bool isUserErpDiscountAllowed = OrderHandler.IsUserErpDiscountAllowed(settings, user);
+
         var xmlGeneratorSettings = new OrderXmlGeneratorSettings
         {
             AddOrderLineFieldsToRequest = settings.AddOrderLineFieldsToRequest,
@@ -74,7 +79,7 @@ public sealed class DownloadOrderXmlCommand : CommandBase
             Beautify = true,
             LiveIntegrationSubmitType = SubmitType.DownloadedFromBackEnd,
             ReferenceName = "OrdersPut",
-            ErpControlsDiscount = settings.ErpControlsDiscount,
+            ErpControlsDiscount = isUserErpDiscountAllowed,
             ErpControlsShipping = settings.ErpControlsShipping,
             ErpShippingItemKey = settings.ErpShippingItemKey,
             ErpShippingItemType = settings.ErpShippingItemType,
