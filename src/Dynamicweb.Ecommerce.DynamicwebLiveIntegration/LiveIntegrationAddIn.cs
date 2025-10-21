@@ -109,7 +109,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The Endpoint id.</value>        
         [AddInParameter("Endpoint")]
-        [AddInParameterEditor(typeof(SelectionBoxParameterEditor), "multiple=true;none=true;InfoBar=true;explanation=Select one or more endpoints exposing a plug-in unit from Dynamicweb")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=true;InfoBar=true;explanation=Select endpoint exposing a plug-in unit from Dynamicweb")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(20)]
         public string Endpoint { get; set; }
@@ -184,7 +184,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [enable live prices]; otherwise, <c>false</c>.</value>
         [AddInParameter("Enable live prices")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "reloadonchange=true;")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(63)]
         public bool EnableLivePrices { get; set; } = true;
@@ -741,7 +741,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return options;
         }
 
-        IEnumerable<string> IParameterVisibility.GetHiddenParameterNames(string parameterName, object? parameterValue)
+        IEnumerable<string> IParameterVisibility.GetHiddenParameterNames(string parameterName, object parameterValue)
         {
             var result = new List<string>();
             var parameterValueStr = Converter.ToString(parameterValue);
@@ -758,6 +758,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         result.Add("Endpoint");
                     }
                     break;
+                case "Enable live prices":
+                    if (Converter.ToBoolean(parameterValue) is false)
+                    {
+                        result.Add("Lazy load product info (&getproductinfo=true)");
+                        result.Add("Include product custom fields in request");
+                        result.Add("Product information cache level");
+                        result.Add("Use product number in price calculation");
+                        result.Add("Use unit prices");
+                        result.Add("Retry request for the product information");
+                        result.Add("Include variants in the product information request");
+                        result.Add("Max products per request");
+                    }
+                    break;                
             }
             return result;
         }
