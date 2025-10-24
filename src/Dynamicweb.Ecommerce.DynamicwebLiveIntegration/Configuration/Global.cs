@@ -1,5 +1,6 @@
 ﻿using Dynamicweb.Core;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Frontend;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
@@ -105,7 +106,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         {
             return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
                        && (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null)
-                       && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled)
+                       && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLiveIntegrationPricesDisabled())
                        && settings.LazyLoadProductInfo;
         }
     }

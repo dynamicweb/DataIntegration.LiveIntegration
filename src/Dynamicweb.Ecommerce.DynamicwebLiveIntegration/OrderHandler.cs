@@ -88,6 +88,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 return null;
             }
 
+            bool erpControlsDiscount = IsUserErpDiscountAllowed(settings, user);
+
             // default states
             successOrderStateId ??= settings.OrderStateAfterExportSucceeded;
 
@@ -99,11 +101,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 CreateOrder = createOrder,
                 LiveIntegrationSubmitType = liveIntegrationSubmitType,
                 ReferenceName = "OrdersPut",
-                ErpControlsDiscount = settings.ErpControlsDiscount,
+                ErpControlsDiscount = erpControlsDiscount,
                 ErpControlsShipping = settings.ErpControlsShipping,
                 ErpShippingItemKey = settings.ErpShippingItemKey,
                 ErpShippingItemType = settings.ErpShippingItemType,
-                CalculateOrderUsingProductNumber = settings.CalculateOrderUsingProductNumber
+                CalculateOrderUsingProductNumber = settings.CalculateOrderUsingProductNumber,                
             };
             var requestXml = new OrderXmlGenerator().GenerateOrderXml(settings, order, xmlGeneratorSettings, logger);
             xmlGeneratorSettings.GenerateXmlForHash = true;
@@ -135,7 +137,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
-                bool processResponseResult = ProcessResponse(settings, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
+                bool processResponseResult = ProcessResponse(settings, response, order, createOrder, successOrderStateId, failedOrderStateId, logger, erpControlsDiscount);
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
                 return processResponseResult;
             }
@@ -465,7 +467,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="discountOrderLines">The discount order lines.</param>
         /// <param name="orderLineNode">The order line node.</param>
         /// <param name="orderLineType">Type of the order line.</param>
-        private static void ProcessDiscountOrderLine(Settings settings, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds, OrderLineFieldCollection allOrderLineFields)
+        private static void ProcessDiscountOrderLine(Settings settings, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds, OrderLineFieldCollection allOrderLineFields,
+            bool erpControlsDiscount)
         {
             string orderLineId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineId']")?.InnerText;
 
@@ -476,7 +479,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     OrderLineType = Services.OrderLines.GetOrderLineType(orderLineType)
                 };
 
-                if (!settings.ErpControlsDiscount)
+                if (erpControlsDiscount)
                 {
                     orderLine.DiscountId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineDiscountId']")?.InnerText;
                 }
@@ -538,7 +541,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
 
                 orderLine.ProductName = DiscountTranslation.GetDiscountName(settings, orderLineNode, orderLine);
-                if (settings.ErpControlsDiscount)
+                if (erpControlsDiscount)
                 {
                     orderLine.AllowOverridePrices = true;
                 }
@@ -598,7 +601,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="response">The response.</param>
         /// <param name="order">The order.</param>
         /// <param name="discountOrderLines">The discount order lines.</param>        
-        private static void ProcessOrderLines(Settings settings, XmlDocument response, Order order, OrderLineCollection discountOrderLines, Logger logger)
+        private static void ProcessOrderLines(Settings settings, XmlDocument response, Order order, OrderLineCollection discountOrderLines, Logger logger, bool erpControlsDiscount)
         {
             XmlNodeList orderLinesNodes = response.SelectNodes("//item [@table='EcomOrderLines']");
 
@@ -612,7 +615,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     allOrderLineFields = Services.OrderLineFields.GetOrderLineFields();
                 }
-                bool processDiscounts = (settings.ErpControlsDiscount || !order.Complete);
+                bool processDiscounts = erpControlsDiscount || !order.Complete;
                 Dictionary<string, OrderLine> responseIdOrderLineDictionary = new Dictionary<string, OrderLine>();
 
                 foreach (XmlNode orderLineNode in orderLinesNodes)
@@ -627,7 +630,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     // 1=order discount, 3=Product Discount                    
                     if (processDiscounts && (orderLineType == "1" || orderLineType == "3"))
                     {
-                        ProcessDiscountOrderLine(settings, order, discountOrderLines, orderLineNode, orderLineType, logger, orderLineIds, allOrderLineFields);
+                        ProcessDiscountOrderLine(settings, order, discountOrderLines, orderLineNode, orderLineType, logger, orderLineIds, allOrderLineFields, erpControlsDiscount);
                     }
 
                     // 4=Product Tax                    
@@ -637,7 +640,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
 
-                bool keepDiscountOrderLines = !settings.ErpControlsDiscount && order.Complete;
+                bool keepDiscountOrderLines = !erpControlsDiscount && order.Complete;
                 // Remove deleted OrderLines
                 List<OrderLine> linesToRemove = new List<OrderLine>();
                 for (int i = order.OrderLines.Count - 1; i >= 0; i--)
@@ -659,7 +662,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     order.OrderLines.Remove(orderLine);
                     Services.OrderLines.Delete(orderLine.Id);
                 }
-                MergeOrderLines(settings, order);
+                MergeOrderLines(settings, order, erpControlsDiscount);
             }
         }
 
@@ -879,7 +882,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="successState">State of the success.</param>
         /// <param name="failedState">State of the failed.</param>
         /// <returns><c>true</c> if response was processed successfully, <c>false</c> otherwise.</returns>
-        private static bool ProcessResponse(Settings settings, XmlDocument response, Order order, bool createOrder, string successState, string failedState, Logger logger)
+        private static bool ProcessResponse(Settings settings, XmlDocument response, Order order, bool createOrder, string successState, string failedState, Logger logger, bool erpControlsDiscount)
         {
             var orderId = order == null ? "is null" : order.Id ?? "ID is null";
             if (response == null || order == null)
@@ -903,7 +906,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     shippingFeeSentInRequest = order.ShippingFee;
                 }
-                if (!createOrder && settings.ErpControlsDiscount)
+                if (!createOrder && erpControlsDiscount)
                     order.IsPriceCalculatedByProvider = true;
 
                 SetCustomOrderFields(settings, order, orderNode);
@@ -914,16 +917,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                 if (enableCartCommunication)
                 {
-                    ProcessOrderLines(settings, response, order, discountOrderLines, logger);
+                    ProcessOrderLines(settings, response, order, discountOrderLines, logger, erpControlsDiscount);
 
-                    if (!order.Complete || settings.ErpControlsDiscount)
+                    if (!order.Complete || erpControlsDiscount)
                     {
-                        if (settings.ErpControlsDiscount)
+                        if (erpControlsDiscount)
                         {
                             foreach (var discountLine in discountOrderLines)
                                 order.OrderLines.Add(discountLine, false);
 
-                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice, erpControlsDiscount);
                             SetTotalOrderDiscount(order);
 
                             // When GetCart DwApi request is executed and ERP controls discounts:
@@ -938,23 +941,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         }
                         else if (!order.Complete)
                         {
-                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice, erpControlsDiscount);
                             Services.Orders.CalculateDiscounts(order);
                         }
                         else
                         {
-                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                            SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice, erpControlsDiscount);
                         }
                     }
                     else
                     {
-                        SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                        SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice, erpControlsDiscount);
                     }
                     LiveShippingFeeProvider.ProcessShipping(settings, order, orderNode, logger);
                 }
                 else
                 {
-                    SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                    SetOrderPrices(order, orderNode, settings, logger, orderId, out updatePriceBeforeFeesFromOrderPrice, erpControlsDiscount);
                 }
 
                 if (createOrder)
@@ -1003,12 +1006,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return true;
         }
 
-        private static void SetOrderPrices(Order order, XmlNode orderNode, Settings settings, Logger logger, string orderId, out bool updatePriceBeforeFeesFromOrderPrice)
+        private static void SetOrderPrices(Order order, XmlNode orderNode, Settings settings, Logger logger, string orderId, out bool updatePriceBeforeFeesFromOrderPrice, bool erpControlsDiscount)
         {
             updatePriceBeforeFeesFromOrderPrice = false;
             // Set Order prices
-            order.AllowOverridePrices = settings.ErpControlsDiscount;
-            order.DisableDiscountCalculation = settings.ErpControlsDiscount;
+            order.AllowOverridePrices = erpControlsDiscount;
+            order.DisableDiscountCalculation = erpControlsDiscount;
             try
             {
                 SetPrices(settings, order, orderNode, logger, out updatePriceBeforeFeesFromOrderPrice);
@@ -1233,9 +1236,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return orderLine;
         }
 
-        private static void MergeOrderLines(Settings settings, Order order)
+        private static void MergeOrderLines(Settings settings, Order order, bool erpControlsDiscount)
         {
-            if (order.Complete || !settings.AddOrderLineFieldsToRequest || settings.ErpControlsDiscount || order.OrderLines.Count <= 1)
+            if (order.Complete || !settings.AddOrderLineFieldsToRequest || erpControlsDiscount || order.OrderLines.Count <= 1)
             {
                 return;
             }
@@ -1393,6 +1396,26 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         {
             string key = $"OrderHandlerSentOrder{order.Id}";
             Caching.Cache.Current.Remove(key);
+        }
+
+        internal static bool IsUserErpDiscountAllowed(Settings settings, User user)
+        {
+            if(!settings.ErpControlsDiscount)
+                return false;
+
+            if (user is null)
+            {
+                return !settings.DisableErpDiscountsForAnonymousUsers;
+            }
+
+            if(user.IsLiveDiscountsDisabled)
+                return false;
+
+            var groups = user.GetAncestorGroups();
+            if (groups.Any(g => g.IsLiveDiscountsDisabled))
+                return false;
+
+            return true;
         }
     }
 }

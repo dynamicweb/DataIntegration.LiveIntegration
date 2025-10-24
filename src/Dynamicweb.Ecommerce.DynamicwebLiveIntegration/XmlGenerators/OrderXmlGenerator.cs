@@ -280,7 +280,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 NotificationManager.Notify(Notifications.OrderLine.OnBeforeGenerateOrderLineXml,
                 new Notifications.OrderLine.OnBeforeGenerateOrderLineXmlArgs(orderline, settings, currentSettings, logger));
             }
-            else if (currentSettings.ErpControlsDiscount && orderline.IsDiscount())
+            else if (settings.ErpControlsDiscount && orderline.IsDiscount())
             {
                 return;
             }

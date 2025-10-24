@@ -1,4 +1,5 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Products;
 using Dynamicweb.Extensibility.Notifications;
@@ -50,7 +51,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
         {
            return EnabledAndActive(settings, SubmitType.Live) && settings.EnableLivePrices && 
                 (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null) && 
-                (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled) && 
+                (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLiveIntegrationPricesDisabled()) && 
                 !Global.IsProductLazyLoad(settings); 
         }
     }

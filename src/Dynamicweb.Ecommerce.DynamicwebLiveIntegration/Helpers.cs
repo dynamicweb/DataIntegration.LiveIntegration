@@ -304,7 +304,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
               || !settings.EnableLivePrices
               || Global.IsProductLazyLoad(settings)
               || (user == null && !settings.LiveProductInfoForAnonymousUsers)
-              || (user != null && user.IsLivePricesDisabled)
+              || (user != null && user.IsLiveIntegrationPricesDisabled())
               || !Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
               || product == null
               || string.IsNullOrEmpty(product.Id)
