@@ -66,7 +66,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
 
                     if (settings.EnableLivePrices &&
                         (settings.LiveProductInfoForAnonymousUsers || context.Customer != null) &&
-                        (context.Customer == null || !context.Customer.IsLivePricesDisabled)
+                        (context.Customer == null || !context.Customer.IsLiveIntegrationPricesDisabled())
                         && Global.IsIntegrationActive(settings)
                         && (string.IsNullOrWhiteSpace(settings.ShopId) || settings.ShopId == context.Shop?.Id)
                         && !Global.IsProductLazyLoad(settings)

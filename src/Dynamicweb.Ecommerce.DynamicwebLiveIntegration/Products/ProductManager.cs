@@ -149,7 +149,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 return false;
             }
 
-            if (context.User != null && context.User.IsLivePricesDisabled)
+            if (context.User != null && context.User.IsLiveIntegrationPricesDisabled())
             {
                 logger.Log(ErrorLevel.DebugInfo, $"Calculated prices are not allowed for the user '{context.User.UserName}'.");
                 return false;
