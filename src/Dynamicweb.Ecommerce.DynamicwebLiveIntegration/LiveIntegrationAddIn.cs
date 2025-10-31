@@ -1,4 +1,5 @@
 ﻿using Dynamicweb.Content;
+using Dynamicweb.Core;
 using Dynamicweb.DataIntegration.EndpointManagement;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
@@ -11,7 +12,6 @@ using Dynamicweb.Extensibility.Editors;
 using Dynamicweb.Rendering;
 using Dynamicweb.Security.UserManagement;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -29,7 +29,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
     [AddInIgnore(false)]
     [AddInUseParameterGrouping(true)]
     [AddInUseParameterOrdering(true)]
-    public class LiveIntegrationAddIn : BaseLiveIntegrationAddIn, IDropDownOptions, ISettings
+    public class LiveIntegrationAddIn : BaseLiveIntegrationAddIn, IParameterOptions, ISettings, IParameterVisibility
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LiveIntegrationAddIn"/> class.
@@ -77,12 +77,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         [AddInParameterOrder(6)]
         public string InstanceLabel { get; set; }
 
+        [AddInParameterGroup("General")]
+        [AddInParameter("ConnectionToType")]
+        [AddInLabel("Connect to")]
+        [AddInParameterEditor(typeof(RadioParameterEditor), "")]
+        [AddInParameterOrder(9)]
+        public string ConnectionToType { get; set; } = nameof(ConnectionType.Endpoint);
+
         /// <summary>
         /// The web service Uri
         /// </summary>
         /// <value>The web service URI.</value>
         [AddInParameter("Web service URL")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "TextArea=True")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "TextArea=True;")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(10)]
         public override string WebServiceURI { get; set; }
@@ -92,7 +99,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The security key.</value>
         [AddInParameter("Security key")]
-        [AddInParameterEditor(typeof(TextParameterEditor), "password=true")]
+        [AddInParameterEditor(typeof(TextParameterEditor), "password=true;")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(20)]
         public override string SecurityKey { get; set; }
@@ -102,7 +109,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The Endpoint id.</value>        
         [AddInParameter("Endpoint")]
-        [AddInParameterEditor(typeof(DropDownParameterEditor), "multiple=true;none=true;InfoBar=true;Tooltip=Only works with a web service exposed by a plug-in unit from Dynamicweb. This option takes precedence")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=true;InfoBar=true;explanation=Select endpoint exposing a plug-in unit from Dynamicweb")]
         [AddInParameterGroup("General")]
         [AddInParameterOrder(20)]
         public string Endpoint { get; set; }
@@ -177,7 +184,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value><c>true</c> if [enable live prices]; otherwise, <c>false</c>.</value>
         [AddInParameter("Enable live prices")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "reloadonchange=true;")]
         [AddInParameterGroup("Products")]
         [AddInParameterOrder(63)]
         public bool EnableLivePrices { get; set; } = true;
@@ -494,7 +501,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <value>The notification email.</value>
         [AddInParameter("Notification recipient groups")]
-        [AddInParameterEditor(typeof(UserGroupParameterEditor), "Multiple=true;")]        
+        [AddInParameterEditor(typeof(UserGroupParameterEditor), "Multiple=true;")]
         [AddInParameterGroup("Notifications")]
         [AddInParameterOrder(235)]
         public string RecipientGroups { get; set; }
@@ -621,58 +628,58 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         /// <param name="dropdownName">Name of the dropdown.</param>
         /// <returns>Hashtable.</returns>
-        public Hashtable GetOptions(string dropdownName)
+        IEnumerable<ParameterOption> IParameterOptions.GetParameterOptions(string dropdownName)
         {
-            var options = new Hashtable();
+            var options = new List<ParameterOption>();
 
             switch (dropdownName)
             {
                 case "Notification sending frequency":
                     foreach (NotificationFrequency frequencyLevel in Enum.GetValues(typeof(NotificationFrequency)))
                     {
-                        options.Add(((int)frequencyLevel).ToString(), GetNotificationFrequencyText(frequencyLevel));
+                        options.Add(new(GetNotificationFrequencyText(frequencyLevel), ((int)frequencyLevel).ToString()));
                     }
                     break;
 
                 case "Order state after export succeeded":
                 case "Order state after export failed":
-                    options.Add(string.Empty, "Leave unchanged");
+                    options.Add(new("Leave unchanged", string.Empty));
                     foreach (var state in Services.OrderStates.GetStatesByOrderType(OrderType.Order))
                     {
                         if (state.IsDeleted)
                             continue;
 
-                        options.Add(state.Id, state.GetName(Services.Languages.GetDefaultLanguageId()));
+                        options.Add(new(state.GetName(Services.Languages.GetDefaultLanguageId()), state.Id));
                     }
                     break;
 
                 case "Shop":
-                    options.Add(string.Empty, "Any");
+                    options.Add(new("Any", string.Empty));
                     var shops = Services.Shops.GetShops();
                     foreach (var shop in shops)
                     {
-                        options.Add(shop.Id, shop.Name);
+                        options.Add(new(shop.Name, shop.Id));
                     }
                     break;
                 case "Website":
                     foreach (var area in new AreaService().GetAreas())
                     {
-                        options.Add(area.ID, area.Name);
+                        options.Add(new(area.Name, area.ID));
                     }
                     break;
                 case "Cart communication type":
-                    options.Add(Constants.CartCommunicationType.None, Constants.CartCommunicationType.None);
-                    options.Add(Constants.CartCommunicationType.Full, Constants.CartCommunicationType.Full);
-                    options.Add(Constants.CartCommunicationType.OnlyOnOrderComplete, Constants.CartCommunicationType.OnlyOnOrderComplete);
-                    options.Add(Constants.CartCommunicationType.CartOnly, Constants.CartCommunicationType.CartOnly);
+                    options.Add(new(Constants.CartCommunicationType.None, Constants.CartCommunicationType.None));
+                    options.Add(new(Constants.CartCommunicationType.Full, Constants.CartCommunicationType.Full));
+                    options.Add(new(Constants.CartCommunicationType.OnlyOnOrderComplete, Constants.CartCommunicationType.OnlyOnOrderComplete));
+                    options.Add(new(Constants.CartCommunicationType.CartOnly, Constants.CartCommunicationType.CartOnly));
                     break;
 
                 case "Number format culture":
                     foreach (CultureInfo culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
                     {
-                        if (!string.IsNullOrEmpty(culture.Name) && !culture.IsNeutralCulture && !options.ContainsKey(culture.Name))
+                        if (!string.IsNullOrEmpty(culture.Name) && !culture.IsNeutralCulture && !options.Any(o => string.Equals(o.Value.ToString(), culture.Name, StringComparison.OrdinalIgnoreCase)))
                         {
-                            options.Add(culture.Name, $"{culture.Name} - {culture.EnglishName}");
+                            options.Add(new($"{culture.Name} - {culture.EnglishName}", culture.Name));
                         }
                     }
                     break;
@@ -680,7 +687,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 case "Product information cache level":
                     foreach (var cacheLevel in Enum.GetNames(typeof(Cache.ResponseCacheLevel)))
                     {
-                        options.Add(cacheLevel, cacheLevel);
+                        options.Add(new(cacheLevel, cacheLevel));
                     }
                     break;
                 case "Endpoint":
@@ -708,26 +715,64 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         if (endpointFilters.ContainsKey(endpoint.Id))
                         {
                             string str = endpointFilters[endpoint.Id];
-                            options.Add(str, endpoint.Name + str.Substring(str.IndexOf(";")));
+                            options.Add(new(endpoint.Name + str.Substring(str.IndexOf(";")), str));
                         }
                         else
                         {
-                            options.Add(endpoint.Id.ToString(), endpoint.Name);
+                            options.Add(new(endpoint.Name, endpoint.Id.ToString()));
                         }
                     }
                     break;
                 case "ERP shipping item type":
-                    options.Add(Constants.OrderConfiguration.DefaultShippingItemType, "Item Charge");
-                    options.Add("Account", "G/L Account");
-                    options.Add("Item", "Item");
-                    options.Add("FixedAsset", "Fixed Asset");
-                    options.Add("Resource", "Resource");
+                    options.Add(new("Item Charge", Constants.OrderConfiguration.DefaultShippingItemType));
+                    options.Add(new("G/L Account", "Account"));
+                    options.Add(new("Item", "Item"));
+                    options.Add(new("Fixed Asset", "FixedAsset"));
+                    options.Add(new("Resource", "Resource"));
+                    break;
+                case "ConnectionToType":
+                    options.Add(new(nameof(ConnectionType.Endpoint), ConnectionType.Endpoint));
+                    options.Add(new("Dynamicweb connector web service", ConnectionType.WebService));
                     break;
                 default:
                     throw new ArgumentException($"Unsupported dropdown: {dropdownName}", nameof(dropdownName));
             }
 
             return options;
+        }
+
+        IEnumerable<string> IParameterVisibility.GetHiddenParameterNames(string parameterName, object parameterValue)
+        {
+            var result = new List<string>();
+            var parameterValueStr = Converter.ToString(parameterValue);
+            switch (parameterName)
+            {
+                case nameof(ConnectionToType):
+                    if (nameof(ConnectionType.Endpoint).Equals(parameterValueStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.Add("Web service URL");
+                        result.Add("Security key");
+                    }
+                    else
+                    {
+                        result.Add("Endpoint");
+                    }
+                    break;
+                case "Enable live prices":
+                    if (Converter.ToBoolean(parameterValue) is false)
+                    {
+                        result.Add("Lazy load product info (&getproductinfo=true)");
+                        result.Add("Include product custom fields in request");
+                        result.Add("Product information cache level");
+                        result.Add("Use product number in price calculation");
+                        result.Add("Use unit prices");
+                        result.Add("Retry request for the product information");
+                        result.Add("Include variants in the product information request");
+                        result.Add("Max products per request");
+                    }
+                    break;                
+            }
+            return result;
         }
 
         private Settings GetCurrentSettings()
@@ -781,6 +826,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             Settings settings = GetCurrentSettings();
             Settings.UpdateFrom(settings, this);
 
+            if (string.IsNullOrEmpty(Endpoint) && !string.IsNullOrEmpty(WebServiceURI))
+            {
+                ConnectionToType = nameof(ConnectionType.WebService);
+            }
+
             var xml = GetParametersToXml(false);
 
             return xml;
@@ -792,6 +842,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         public override void SaveSettings()
         {
             Settings settings = GetCurrentSettings();
+            // Do not allow Endpoint and WebService to be selected at the same time
+            if (!string.IsNullOrEmpty(Endpoint) && !string.IsNullOrEmpty(WebServiceURI)
+                && Enum.TryParse<ConnectionType>(ConnectionToType, out var connectionType) && connectionType == ConnectionType.WebService)
+            {
+                Endpoint = "";
+            }
+
             Settings.UpdateFrom(this, settings);
             if (string.IsNullOrEmpty(settings.InstanceId))
             {
@@ -807,7 +864,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 AutoPingInterval = Constants.MinPingInterval;
             }
-            if(ConnectionTimeout < Constants.DefaultConnectionTimeout)
+            if (ConnectionTimeout < Constants.DefaultConnectionTimeout)
             {
                 ConnectionTimeout = Constants.DefaultConnectionTimeout;
             }
@@ -929,6 +986,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         {
             Helpers.SaveTranslation(Constants.OrderConfiguration.OrderDiscountText, settings.OrderDiscountText);
             Helpers.SaveTranslation(Constants.OrderConfiguration.ProductDiscountText, settings.ProductDiscountText);
+        }
+
+        private enum ConnectionType
+        {
+            Endpoint,
+            WebService,
         }
     }
 }
