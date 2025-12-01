@@ -156,6 +156,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         public int AreaId { get; set; }
 
         /// <summary>
+        /// Gets or sets LCY Currency
+        /// </summary>
+        /// <value>The LCY currency identifier.</value>
+        [AddInParameter("ERP Local Currency")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=true;explanation=When DynamicWeb currency is selected the integration will send an empty string for the Currency Code in the Live Integration requests, allowing ERP apply its default local currency behavior automatically")]
+        [AddInParameterGroup("General")]
+        [AddInParameterOrder(45)]
+        public string LcyCurrency { get; set; }
+
+        /// <summary>
         /// Number format culture
         /// </summary>
         /// <value>The number format culture.</value>
@@ -733,6 +743,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 case "ConnectionToType":
                     options.Add(new(nameof(ConnectionType.Endpoint), ConnectionType.Endpoint));
                     options.Add(new("Dynamicweb connector web service", ConnectionType.WebService));
+                    break;
+                case "ERP Local Currency":                                        
+                    foreach (var currency in Services.Currencies.GetAllCurrencies())
+                    {
+                        options.Add(new($"{currency.GetName(Services.Languages.GetDefaultLanguageId())} - {currency.Code}", currency.Code));
+                    }
                     break;
                 default:
                     throw new ArgumentException($"Unsupported dropdown: {dropdownName}", nameof(dropdownName));
