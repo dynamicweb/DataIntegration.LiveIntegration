@@ -230,6 +230,12 @@
         int AreaId { get; set; }
 
         /// <summary>
+        /// Gets or sets LCY Currency
+        /// </summary>
+        /// <value>The LCY currency identifier.</value>        
+        string LcyCurrency { get; set; }
+
+        /// <summary>
         /// Gets or sets the text for product discounts.
         /// </summary>
         /// <value>The text for product discounts.</value>

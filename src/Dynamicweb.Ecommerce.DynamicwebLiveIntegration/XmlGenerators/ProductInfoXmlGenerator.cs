@@ -70,6 +70,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             }
 
             var currencyCode = settings.Context?.Currency?.Code;
+            if(string.Equals(currentSettings.LcyCurrency, currencyCode, StringComparison.OrdinalIgnoreCase))
+            {
+                currencyCode = "";
+            }
 
             var tableNode = xmlDocument.CreateElement("Products");
             tableNode.SetAttribute("type", "filter");

@@ -5,6 +5,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Extensibility.Notifications;
 using Dynamicweb.Security.UserManagement;
+using System;
 using System.Linq;
 using System.Xml;
 
@@ -201,6 +202,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             var tableNode = CreateTableNode(xmlDocument, "EcomOrders");
             var itemNode = CreateAndAppendItemNode(tableNode, "EcomOrders");
             var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
+            var currencyCode = order.CurrencyCode;
+            if (string.Equals(currentSettings.LcyCurrency, currencyCode, StringComparison.OrdinalIgnoreCase))
+            {
+                currencyCode = "";
+            }
 
             AddCustomerInformation(currentSettings, itemNode, order, user);
             AddOrderDeliveryInformation(settings, itemNode, order, user);
@@ -210,7 +216,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(itemNode, "OrderId", order.Id);
             AddChildXmlNode(itemNode, "OrderAutoId", order.AutoId.ToString());
             AddChildXmlNode(itemNode, "OrderIntegrationOrderId", order.IntegrationOrderId);
-            AddChildXmlNode(itemNode, "OrderCurrencyCode", order.CurrencyCode);
+            AddChildXmlNode(itemNode, "OrderCurrencyCode", currencyCode);
             AddChildXmlNode(itemNode, "OrderDate", order.Date.ToIntegrationString());
             if (!settings.GenerateXmlForHash)
             {
