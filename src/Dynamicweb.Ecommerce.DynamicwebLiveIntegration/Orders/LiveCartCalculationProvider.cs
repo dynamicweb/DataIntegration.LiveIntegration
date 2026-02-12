@@ -17,10 +17,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Orders
                 var settings = SettingsManager.GetSettingsByShop(cart.ShopId);
                 SubmitType submitType = SubmitType.LiveOrderOrCart;
 
-                if (Global.IsIntegrationActive(settings) &&                    
-                    Connector.IsWebServiceConnectionAvailable(settings, submitType))
+                if (Global.IsIntegrationActive(settings))
                 {                    
-                    if (Global.EnableCartCommunication(settings, cart.Complete))
+                    if (Global.EnableCartCommunication(settings, cart.Complete) &&
+                        Connector.IsWebServiceConnectionAvailable(settings, submitType))
                     {
                         var contextCurrency = Context.Current?.Request?.GetString("CurrencyCode");
                         if (!string.IsNullOrEmpty(contextCurrency) && !string.Equals(cart.CurrencyCode, contextCurrency, System.StringComparison.OrdinalIgnoreCase))

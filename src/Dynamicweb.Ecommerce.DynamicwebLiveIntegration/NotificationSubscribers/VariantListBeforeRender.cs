@@ -48,7 +48,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
 
         private static bool CanCheckPrice(Settings settings)
         {
-           return EnabledAndActive(settings, SubmitType.Live) && settings.EnableLivePrices && 
+           return settings.EnableLivePrices && EnabledAndActive(settings, SubmitType.Live) &&
                 (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null) && 
                 (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled) && 
                 !Global.IsProductLazyLoad(settings); 
