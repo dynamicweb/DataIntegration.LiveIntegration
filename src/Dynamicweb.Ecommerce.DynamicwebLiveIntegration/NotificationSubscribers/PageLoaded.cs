@@ -1,7 +1,6 @@
 ﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Extensibility.Notifications;
-using Dynamicweb.Frontend;
 using System;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
@@ -30,7 +29,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                     var settings = SettingsManager.GetSettingsByShop(Global.GetShopId(loadedArgs.PageViewInstance));
                     if (settings != null && Global.IsIntegrationActive(settings))
                     {
-                        isWebServiceConnectionAvailable = Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live);
+                        if (settings.EnableLivePrices || settings.CartCommunicationType != Constants.CartCommunicationType.None || !string.IsNullOrEmpty(settings.WebServiceConnectionStatusGlobalTagName))
+                        {
+                            isWebServiceConnectionAvailable = Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live);
+                        }
                         isLazyLoadingForProductInfoEnabled = Global.IsLazyLoadingForProductInfoEnabled(settings);
 
                         if (Context.Current.Session != null && Convert.ToBoolean(Context.Current.Session["DynamicwebLiveIntegration.OrderExportFailed"]))
@@ -46,6 +48,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
                 Context.Current.Items["IsWebServiceConnectionAvailable"] = isWebServiceConnectionAvailable;
                 Context.Current.Items["IsLazyLoadingForProductInfoEnabled"] = isLazyLoadingForProductInfoEnabled;
             }
-        }        
+        }
     }
 }
