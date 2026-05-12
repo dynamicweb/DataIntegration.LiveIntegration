@@ -4,6 +4,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.Prices;
 using Dynamicweb.Ecommerce.Products;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -19,6 +20,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
     /// </example>
     public class ProductProviderBase
     {
+        private static readonly ConcurrentDictionary<Type, bool> _legacyGetPriceInfoOverrideCache = new();
+
         /// <summary>
         /// Creates a unique product identifier by concatenating the product ID or number (depends on the CalculatePriceUsingProductNumber setting), the variant ID and the language ID.
         /// Override to build up your own unique identifier.
@@ -117,17 +120,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </example>
         public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity, Product product)
         {
-            // If a subclass has overridden the legacy 3-parameter overload, honor that override
-            // so existing customizations are not silently bypassed when internal callers use the new overload.
-            if (GetType() != typeof(ProductProviderBase))
+            // Honor legacy 3-parameter overrides in subclasses so existing customizations are not silently
+            // bypassed when internal callers use this new overload. Result is cached per provider type.
+            bool hasLegacyOverride = _legacyGetPriceInfoOverrideCache.GetOrAdd(GetType(), static t =>
             {
-                var legacyOverride = GetType().GetMethod(nameof(GetPriceInfo), [typeof(LiveContext), typeof(ProductInfo), typeof(double)]);
-                if (legacyOverride?.DeclaringType != typeof(ProductProviderBase))
-                {
+                var method = t.GetMethod(nameof(GetPriceInfo), [typeof(LiveContext), typeof(ProductInfo), typeof(double)]);
+                return method?.DeclaringType != typeof(ProductProviderBase);
+            });
+
+            if (hasLegacyOverride)
+            {
 #pragma warning disable CS0618
-                    return GetPriceInfo(context, productInfo, quantity);
+                return GetPriceInfo(context, productInfo, quantity);
 #pragma warning restore CS0618
-                }
             }
 
             return GetPriceInfoCore(context, productInfo, quantity, product);

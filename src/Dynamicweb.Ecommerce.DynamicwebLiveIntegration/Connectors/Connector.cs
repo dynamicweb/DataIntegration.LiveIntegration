@@ -373,7 +373,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 
             if (string.IsNullOrEmpty(requestString))
             {
-                throw new ArgumentException("Value cannot be null or empty.", nameof(requestString));
+                throw new ArgumentException("RequestString value cannot be null or empty.", nameof(requestString));
             }
 
             Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.RetrievePDF START");
