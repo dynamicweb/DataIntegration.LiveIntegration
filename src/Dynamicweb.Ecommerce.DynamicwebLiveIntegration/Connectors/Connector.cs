@@ -9,8 +9,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
-using System.Net.Mail;
-using System.Runtime.ExceptionServices;
 using System.Xml;
 using static Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications.Communication;
 
@@ -19,7 +17,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
     /// <summary>
     /// Main class to interact with a remote ERP.
     /// </summary>
-    internal static class Connector
+    public static class Connector
     {
         /// <summary>
         /// The maximum retry count
@@ -40,7 +38,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             {
                 return Core.Converter.ToBoolean(Context.Current?.Items?["DynamicwebLiveIntegrationAddInThrowExceptions"]);
             }
-            set
+            internal set
             {
                 if (Context.Current?.Items != null)
                 {
@@ -68,7 +66,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             {
                 return new EndpointConnector(settings, logger, submitType, order);
             }
-        }        
+        }
 
         /// <summary>
         /// Calculates the order.
@@ -278,7 +276,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
                     logger.Log(ErrorLevel.ConnectionError, $"An error occurred while calling {referenceName} from Web Service: '{ex.Message}'.");
                     Diagnostics.ExecutionTable.Current.Add($"DynamicwebLiveIntegration: An error occurred while calling {referenceName} from Web Service: '{ex.Message}'.");
 
-                    HandleException(connector, settings, endpoint, ex, out httpStatusCode, ref retry);                    
+                    HandleException(connector, settings, endpoint, ex, out httpStatusCode, ref retry);
 
                     NotificationManager.Notify(OnAfterErpException, new OnAfterErpExceptionArgs(request, erpXmlResponse, referenceName, ex, settings, logger));
                 }
@@ -357,7 +355,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             }
         }
 
-        internal static string RetrievePDF(Settings settings, string requestString, SubmitType submitType)
+        public static string RetrievePDF(Settings settings, string requestString, SubmitType submitType)
         {
             Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.RetrievePDF START");
             string base64EncodedPDF;

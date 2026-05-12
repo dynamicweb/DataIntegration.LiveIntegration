@@ -132,7 +132,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     ? productInfo
                     : null;
 
-                return productInfo != null ? productProvider.GetPriceInfo(liveContext, productInfo, selection.Quantity) : null;
+                return productInfo != null ? productProvider.GetPriceInfo(liveContext, productInfo, selection.Quantity, selection.Product) : null;
             }
             catch (Exception e)
             {
@@ -161,7 +161,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                         Quantity = unitPrice.Quantity ?? 0,
                         UnitId = unitPrice.UnitId,
                     },
-                    ProductProviderBase.GetPriceInfo(context, unitPrice.Amount, unitPrice.AmountWithVat)
+                    ProductProviderBase.GetPriceInfo(context, unitPrice.Amount, unitPrice.AmountWithVat, product)
                 ));
             }
             return result;
