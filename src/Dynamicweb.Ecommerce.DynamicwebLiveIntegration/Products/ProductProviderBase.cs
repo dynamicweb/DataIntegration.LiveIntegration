@@ -309,7 +309,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     Price = result.PriceWithoutVAT,
                     Currency = priceContext.Currency
                 };
-                var calculated = PriceCalculated.Create(priceContext, price, product);
+                var calculated = product == null
+                    ? PriceCalculated.Create(priceContext, price)
+                    : PriceCalculated.Create(priceContext, price, product);
                 if (calculated != null)
                 {
                     calculated.Calculate();
