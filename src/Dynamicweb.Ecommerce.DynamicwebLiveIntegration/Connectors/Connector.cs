@@ -366,6 +366,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         /// <returns>A Base64-encoded string representing the retrieved PDF document.</returns>
         public static string RetrievePDF(Settings settings, string requestString, SubmitType submitType)
         {
+            if (settings is null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (string.IsNullOrEmpty(requestString))
+            {
+                throw new ArgumentException("Value cannot be null or empty.", nameof(requestString));
+            }
+
             Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.RetrievePDF START");
             string base64EncodedPDF;
             var logger = new Logger(settings);
