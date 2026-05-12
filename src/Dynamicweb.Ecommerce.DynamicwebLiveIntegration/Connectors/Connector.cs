@@ -355,6 +355,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             }
         }
 
+        /// <summary>
+        /// Retrieves a PDF document as a Base64-encoded string based on the specified request and submission type.
+        /// </summary>
+        /// <remarks>The returned string can be decoded to obtain the original PDF file. Ensure that the
+        /// provided settings and request string are valid to avoid exceptions during execution.</remarks>
+        /// <param name="settings">The settings used to configure the connector and logging behavior. Cannot be null.</param>
+        /// <param name="requestString">The request data to be sent to the connector for PDF retrieval. Cannot be null or empty.</param>
+        /// <param name="submitType">The type of submission to use when executing the request.</param>
+        /// <returns>A Base64-encoded string representing the retrieved PDF document.</returns>
         public static string RetrievePDF(Settings settings, string requestString, SubmitType submitType)
         {
             Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.Connector.RetrievePDF START");
