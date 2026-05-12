@@ -93,10 +93,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <summary>
         /// Gets the price.
         /// </summary>
-        /// <param name="productInfo">The product.</param>
+        /// <param name="productInfo">The product info.</param>
         /// <param name="quantity">The quantity.</param>
         /// <returns>PriceInfo</returns>
-        /// <exception cref="ArgumentNullException">product</exception>
+        /// <exception cref="ArgumentNullException">productInfo</exception>
         /// <example>
         /// <code description="Overriding example" source="..\..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples\CustomProductProvider.cs" lang="CS"></code>
         /// </example>
@@ -111,7 +111,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="quantity">The quantity.</param>
         /// <param name="product">The product.</param>
         /// <returns>PriceInfo</returns>
-        /// <exception cref="ArgumentNullException">product</exception>
+        /// <exception cref="ArgumentNullException">productInfo</exception>
         /// <example>
         /// <code description="Overriding example" source="..\..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples\CustomProductProvider.cs" lang="CS"></code>
         /// </example>
