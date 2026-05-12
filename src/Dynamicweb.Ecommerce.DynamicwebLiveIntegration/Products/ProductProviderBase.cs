@@ -102,7 +102,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </example>
         [Obsolete("Use GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity, Product product) instead")]
         public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity) =>
-            GetPriceInfo(context, productInfo, quantity, null);
+            GetPriceInfoCore(context, productInfo, quantity, null);
 
         /// <summary>
         /// Gets the price.
@@ -117,10 +117,25 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// </example>
         public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity, Product product)
         {
-            if (productInfo == null)
+            // If a subclass has overridden the legacy 3-parameter overload, honor that override
+            // so existing customizations are not silently bypassed when internal callers use the new overload.
+            if (GetType() != typeof(ProductProviderBase))
             {
-                throw new ArgumentNullException(nameof(productInfo));
+                var legacyOverride = GetType().GetMethod(nameof(GetPriceInfo), [typeof(LiveContext), typeof(ProductInfo), typeof(double)]);
+                if (legacyOverride?.DeclaringType != typeof(ProductProviderBase))
+                {
+#pragma warning disable CS0618
+                    return GetPriceInfo(context, productInfo, quantity);
+#pragma warning restore CS0618
+                }
             }
+
+            return GetPriceInfoCore(context, productInfo, quantity, product);
+        }
+
+        private static PriceInfo GetPriceInfoCore(LiveContext context, ProductInfo productInfo, double quantity, Product product)
+        {
+            ArgumentNullException.ThrowIfNull(productInfo);
 
             double? priceWithoutVat = (double?)productInfo["TotalPrice"];
             double? priceWithVat = (double?)productInfo["TotalPriceWithVat"];
@@ -141,8 +156,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 priceWithVat = erpPriceResponse?.AmountWithVat;
             }
 
-            PriceInfo result = GetPriceInfo(context.PriceContext != null ? context.PriceContext : new PriceContext(context.Currency, context.Country), priceWithoutVat, priceWithVat, product);
-            return result;
+            return GetPriceInfo(context.PriceContext ?? new PriceContext(context.Currency, context.Country), priceWithoutVat, priceWithVat, product);
         }
 
         /// <summary>
