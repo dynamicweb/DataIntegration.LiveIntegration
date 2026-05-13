@@ -55,7 +55,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             }
             if (country is null)
             {
-                country = new Country();
+                country = new Country() { Code2 = "" };
             }
             return country;
         }
