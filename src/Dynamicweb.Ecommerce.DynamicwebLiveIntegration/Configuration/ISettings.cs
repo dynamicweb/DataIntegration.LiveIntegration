@@ -1,7 +1,4 @@
-﻿using Dynamicweb.Extensibility.AddIns;
-using Dynamicweb.Extensibility.Editors;
-
-namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
+﻿namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 {
     /// <summary>
     /// Interface to define settings for the Live Integration.

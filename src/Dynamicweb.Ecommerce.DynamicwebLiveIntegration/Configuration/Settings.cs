@@ -1,9 +1,6 @@
 ﻿using Dynamicweb.Core;
 using Dynamicweb.Core.Helpers;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
-using Dynamicweb.Extensibility.AddIns;
-using Dynamicweb.Extensibility.Editors;
-using Dynamicweb.Security.UserManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
