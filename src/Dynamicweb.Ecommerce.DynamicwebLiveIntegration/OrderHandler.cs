@@ -479,7 +479,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     OrderLineType = Services.OrderLines.GetOrderLineType(orderLineType)
                 };
 
-                if (erpControlsDiscount)
+                if (!erpControlsDiscount)
                 {
                     orderLine.DiscountId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineDiscountId']")?.InnerText;
                 }
