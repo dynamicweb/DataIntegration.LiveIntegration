@@ -50,6 +50,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                         if (!ReferenceEquals(addIn, typeof(ProductProviderBase)))
                         {
                             provider = (ProductProviderBase)AddInManager.GetInstance(addIn);
+                            // Honor legacy 3-parameter overrides in subclasses so existing customizations are not silently
+                            // bypassed when internal callers use the new overload with 4-parameters.
+                            var method = addIn.GetMethod(nameof(ProductProviderBase.GetPriceInfo), [typeof(LiveContext), typeof(ProductInfo), typeof(double)]);
+                            provider.HasLegacyGetPriceInfoOverride = method is not null;
                             break;
                         }
                     }
@@ -302,8 +306,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     // setting to request all variants in request
                     if (getProductInformationForAllVariants)
                     {
-                        var variants = Services.VariantCombinations.GetVariantCombinations(product.Id)?.Select(vc => Services.Products.GetProductById(vc.ProductId, vc.VariantId, false)).ToList();
-                        if (variants != null)
+                        var variants = Services.VariantCombinations.GetVariantCombinations(product.Id)?.Select(vc => Services.Products.GetProductById(vc.ProductId, vc.VariantId, false))
+                            .Where(v => v is not null).ToList();
+
+                        if (variants.Count > 0)
                         {
                             variants = GetFilteredVariants(variants);
                             foreach (var variant in variants)
@@ -362,6 +368,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 List<Product> result = new List<Product>();
                 foreach (var variant in variants)
                 {
+                    if (variant is null)
+                    {
+                        continue;
+                    }
                     if (!variant.Active && (hideInactiveVariants || inactiveVariantsNotSet && hideInactiveProducts))
                     {
                         continue;

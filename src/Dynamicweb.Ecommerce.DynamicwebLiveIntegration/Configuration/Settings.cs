@@ -50,7 +50,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             CalculateOrderUsingProductNumber = true;
             AutoPingInterval = Constants.DefaultPingInterval;
             ConnectionTimeout = Constants.DefaultConnectionTimeout;
-            CartCommunicationType = Constants.CartCommunicationType.Full;            
+            CartCommunicationType = Constants.CartCommunicationType.Full;
         }
 
         /// <summary>
@@ -119,6 +119,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// </summary>
         /// <value>The website identifier.</value>
         public int AreaId { get; set; }
+
+        /// <summary>
+        /// Gets or sets LCY Currency
+        /// </summary>
+        /// <value>The LCY currency identifier.</value>        
+        public string LcyCurrency { get; set; }
 
         /// <summary>
         /// Global tag for connection availability
@@ -440,6 +446,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 target.Endpoint = source.Endpoint;
                 target.ShopId = source.ShopId;
                 target.AreaId = source.AreaId;
+                target.LcyCurrency = source.LcyCurrency;
                 target.SecurityKey = source.SecurityKey;
                 target.ConnectionTimeout = source.ConnectionTimeout;
                 target.AutoPingInterval = source.AutoPingInterval < Constants.MinPingInterval ? Constants.MinPingInterval : source.AutoPingInterval;
@@ -503,8 +510,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 }
                 target.InstanceId = source.InstanceId;
                 target.InstanceLabel = source.InstanceLabel;
-                target.SettingsFile = source.SettingsFile;                
-                if(source is Settings sourceSettings)
+                target.SettingsFile = source.SettingsFile;
+                if (source is Settings sourceSettings)
                 {
                     sourceSettings._notificationRecipients = null;
                 }
@@ -535,12 +542,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         }
 
         private List<string> GetNotificationRecipients()
-        {            
+        {
             var recipients = new List<string>();
             if (!string.IsNullOrEmpty(NotificationEmail) && StringHelper.IsValidEmailAddress(NotificationEmail))
                 recipients.Add(NotificationEmail);
             if (!string.IsNullOrEmpty(RecipientGroups))
-            {               
+            {
                 recipients.AddRange(GetRecipients(RecipientGroups.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(id => Converter.ToInt32(id))));
             }
             return recipients.Distinct().ToList();
@@ -579,6 +586,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 result.Add(user.Email);
             }
             return result;
-        }        
+        }
     }
 }

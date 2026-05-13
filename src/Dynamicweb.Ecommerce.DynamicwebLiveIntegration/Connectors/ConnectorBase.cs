@@ -7,6 +7,7 @@ using Dynamicweb.Extensibility.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using static Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications.Communication;
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
 {
@@ -117,7 +118,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             }
             if (!result && urls?.Count() > 1 && errorsList.Count > 0)
             {
-                throw new Exception(string.Join(System.Environment.NewLine, errorsList));
+                throw new HttpRequestException(string.Join(System.Environment.NewLine, errorsList));
             }
             return result;
         }
