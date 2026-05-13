@@ -19,6 +19,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
     /// </example>
     public class ProductProviderBase
     {
+        internal bool HasLegacyGetPriceInfoOverride { get; set; }
+
         /// <summary>
         /// Creates a unique product identifier by concatenating the product ID or number (depends on the CalculatePriceUsingProductNumber setting), the variant ID and the language ID.
         /// Override to build up your own unique identifier.
@@ -93,22 +95,46 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <summary>
         /// Gets the price.
         /// </summary>
-        /// <param name="product">The product.</param>
+        /// <param name="productInfo">The product info.</param>
         /// <param name="quantity">The quantity.</param>
         /// <returns>PriceInfo</returns>
-        /// <exception cref="ArgumentNullException">product</exception>
+        /// <exception cref="ArgumentNullException">productInfo</exception>
         /// <example>
         /// <code description="Overriding example" source="..\..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples\CustomProductProvider.cs" lang="CS"></code>
         /// </example>
-        public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo product, double quantity)
+        [Obsolete("Use GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity, Product product) instead")]
+        public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity) =>
+            GetPriceInfoCore(context, productInfo, quantity, null);
+
+        /// <summary>
+        /// Gets the price.
+        /// </summary>
+        /// <param name="productInfo">The product info.</param>
+        /// <param name="quantity">The quantity.</param>
+        /// <param name="product">The product.</param>
+        /// <returns>PriceInfo</returns>
+        /// <exception cref="ArgumentNullException">productInfo</exception>
+        /// <example>
+        /// <code description="Overriding example" source="..\..\Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples\CustomProductProvider.cs" lang="CS"></code>
+        /// </example>
+        public virtual PriceInfo GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity, Product product)
         {
-            if (product == null)
+            if (HasLegacyGetPriceInfoOverride)
             {
-                throw new ArgumentNullException(nameof(product));
+#pragma warning disable CS0618
+                return GetPriceInfo(context, productInfo, quantity);
+#pragma warning restore CS0618
             }
 
-            double? priceWithoutVat = (double?)product["TotalPrice"];
-            double? priceWithVat = (double?)product["TotalPriceWithVat"];
+            return GetPriceInfoCore(context, productInfo, quantity, product);
+        }
+
+        private static PriceInfo GetPriceInfoCore(LiveContext context, ProductInfo productInfo, double quantity, Product product)
+        {
+            ArgumentNullException.ThrowIfNull(productInfo);
+
+            double? priceWithoutVat = (double?)productInfo["TotalPrice"];
+            double? priceWithVat = (double?)productInfo["TotalPriceWithVat"];
 
             if (!priceWithoutVat.HasValue)
             {
@@ -117,7 +143,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     quantity = 1;
                 }
 
-                var erpPriceResponse = ((IList<ProductPrice>)product["Prices"] ?? Enumerable.Empty<ProductPrice>())
+                var erpPriceResponse = ((IList<ProductPrice>)productInfo["Prices"] ?? Enumerable.Empty<ProductPrice>())
                        .Where(p => quantity >= p.Quantity.GetValueOrDefault(1))
                        .OrderByDescending(p => p.Quantity.GetValueOrDefault(1))
                        .FirstOrDefault();
@@ -126,8 +152,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                 priceWithVat = erpPriceResponse?.AmountWithVat;
             }
 
-            PriceInfo result = GetPriceInfo(context.PriceContext != null ? context.PriceContext : new PriceContext(context.Currency, context.Country), priceWithoutVat, priceWithVat);
-            return result;
+            return GetPriceInfo(context.PriceContext ?? new PriceContext(context.Currency, context.Country), priceWithoutVat, priceWithVat, product);
         }
 
         /// <summary>
@@ -138,7 +163,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
         /// <param name="quantity">The quantity.</param>
         public virtual void FillProductValues(ProductInfo productInfo, Product product, Settings settings, double quantity, LiveContext context)
         {
-            var price = GetPriceInfo(context, productInfo, quantity);            
+            var price = GetPriceInfo(context, productInfo, quantity, product);
             PriceInfo productPrice = PriceManager.GetPrice(context.PriceContext ?? new PriceContext(context.Currency, context.Country), product);
             productPrice.PriceWithoutVAT = price.PriceWithoutVAT;
             productPrice.PriceWithVAT = price.PriceWithVAT;
@@ -274,7 +299,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             }
         }
 
-        internal static PriceInfo GetPriceInfo(PriceContext priceContext, double? priceWithoutVat, double? priceWithVat)
+        internal static PriceInfo GetPriceInfo(PriceContext priceContext, double? priceWithoutVat, double? priceWithVat, Product product)
         {
             PriceInfo result = new PriceInfo(priceContext.Currency);
             result.PriceWithoutVAT = priceWithoutVat != null ? priceWithoutVat.Value : 0;
@@ -294,7 +319,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                     Price = result.PriceWithoutVAT,
                     Currency = priceContext.Currency
                 };
-                var calculated = PriceCalculated.Create(priceContext, price);
+                var calculated = product == null
+                    ? PriceCalculated.Create(priceContext, price)
+                    : PriceCalculated.Create(priceContext, price, product);
                 if (calculated != null)
                 {
                     calculated.Calculate();

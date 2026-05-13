@@ -50,6 +50,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
                         if (!ReferenceEquals(addIn, typeof(ProductProviderBase)))
                         {
                             provider = (ProductProviderBase)AddInManager.GetInstance(addIn);
+                            // Honor legacy 3-parameter overrides in subclasses so existing customizations are not silently
+                            // bypassed when internal callers use the new overload with 4-parameters.
+                            var method = addIn.GetMethod(nameof(ProductProviderBase.GetPriceInfo), [typeof(LiveContext), typeof(ProductInfo), typeof(double)]);
+                            provider.HasLegacyGetPriceInfoOverride = method is not null;
                             break;
                         }
                     }

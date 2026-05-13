@@ -27,15 +27,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples
         /// <summary>
         /// Gets the price.
         /// </summary>
-        /// <param name="product">The product.</param>
+        /// <param name="productInfo">The product info.</param>
         /// <param name="quantity">The quantity.</param>
+        /// <param name="product">The product.</param>
         /// <returns>PriceInfo.</returns>
-        public override PriceInfo GetPriceInfo(LiveContext context, ProductInfo product, double quantity)
+        public override PriceInfo GetPriceInfo(LiveContext context, ProductInfo productInfo, double quantity, Product product)
         {
             // Example: if we have a price per kilogram - we need to multiply it by quantity
-            if (double.TryParse(product["TotalPrice"].ToString(), out double unitPriceWithoutVat))
+            if (double.TryParse(productInfo["TotalPrice"].ToString(), out double unitPriceWithoutVat))
             {
-                double? unitPriceWithVat = (double?)product["TotalPriceWithVat"];
+                double? unitPriceWithVat = (double?)productInfo["TotalPriceWithVat"];
 
                 var currency = Common.Context.Currency;
                 if (currency is null)
@@ -47,7 +48,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples
             }
             else
             {
-                return base.GetPriceInfo(context, product, quantity);
+                return base.GetPriceInfo(context, productInfo, quantity, product);
             }
         }
     }
