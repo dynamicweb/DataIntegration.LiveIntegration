@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>10.21.0</Version>		
+		<Version>10.21.5</Version>		
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
 		<Title>Live Integration</Title>
 		<Description>Live Integration</Description>
@@ -24,10 +24,10 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Dynamicweb.Core" Version="10.21.5" />
-		<PackageReference Include="Dynamicweb.CoreUI" Version="10.4.0" />
-		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.4.0" />
-		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.4.0" />
-		<PackageReference Include="Dynamicweb.Ecommerce.UI" Version="10.4.0" />		
+		<PackageReference Include="Dynamicweb.CoreUI" Version="10.21.5" />
+		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.21.5" />
+		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.21.5" />
+		<PackageReference Include="Dynamicweb.Ecommerce.UI" Version="10.21.5" />		
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
 </Project>
