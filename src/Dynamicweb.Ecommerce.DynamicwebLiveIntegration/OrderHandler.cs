@@ -1,5 +1,6 @@
 ﻿using Dynamicweb.Caching;
 using Dynamicweb.Core;
+using Dynamicweb.Core.Helpers;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Cache;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
@@ -131,8 +132,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             // save this hash for next calls
             SaveOrderHash(settings, currentHash);
-            
-            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
+
+            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType, out var errorMessage);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
                 bool processResponseResult = ProcessResponse(settings, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
@@ -144,7 +145,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 // error occurred                
                 if (createOrder && (!requestCancelled.HasValue || !requestCancelled.Value))
                 {
-                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);                    
+                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger, errorMessage);
                 }
 
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
@@ -265,10 +266,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="order">The order.</param>
         /// <param name="createOrder">if set to <c>true</c> [create order].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
+        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType, out string? errorMessage)
         {
             XmlDocument response = null;
-            requestCancelled = null;            
+            requestCancelled = null;
+            errorMessage = null;
 
             string orderIdentifier = Helpers.OrderIdentifier(order);
 
@@ -287,10 +289,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 response = Connector.CalculateOrder(settings, requestXml, order, createOrder, out Exception error, logger, submitType);
 
-                if (createOrder && error != null)
+                if (error is not null)
                 {
-                    string msg = !string.IsNullOrEmpty(error.Message) ? error.Message : error.ToString();
-                    Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {msg}", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                    errorMessage = !string.IsNullOrEmpty(error.Message) ? error.Message : error.ToString();
+                    if (createOrder)
+                    {
+                        Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {errorMessage}", OrderErpCallFailed, DebuggingInfoType.Undefined);
+                    }
                 }
 
                 NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));
@@ -320,7 +325,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="failedState">State of the failed.</param>
         /// <param name="orderId">The order identifier.</param>
         /// <param name="discountOrderLines">The discount order lines.</param>
-        private static void HandleIntegrationFailure(Settings settings, Order order, string failedState, string orderId, OrderLineCollection discountOrderLines, Logger logger)
+        private static void HandleIntegrationFailure(Settings settings, Order order, string failedState, string orderId, OrderLineCollection discountOrderLines, Logger logger, string? errorMessage = null)
         {
             if (discountOrderLines != null && Global.EnableCartCommunication(settings, order.Complete))
             {
@@ -345,6 +350,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             if (!string.IsNullOrWhiteSpace(failedState))
             {
                 order.StateId = failedState;
+            }
+
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                order.Comment += $"{DateTime.Now.ToString(DateHelper.DateFormatStringShort)}: ERP response: {errorMessage}{System.Environment.NewLine}";
             }
 
             Services.Orders.Save(order);
@@ -652,7 +662,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     {
                         continue;
                     }
-                    linesToRemove.Add(orderLine);                    
+                    linesToRemove.Add(orderLine);
                 }
                 foreach (var orderLine in linesToRemove)
                 {
@@ -1177,7 +1187,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     var warning = node.InnerText;
                     if (!string.IsNullOrEmpty(warning))
                     {
-                        order.Comment = warning;
+                        order.Comment += $"{DateTime.Now.ToString(DateHelper.DateFormatStringShort)}: {warning}.{System.Environment.NewLine} ";
                     }
                 }
             }
