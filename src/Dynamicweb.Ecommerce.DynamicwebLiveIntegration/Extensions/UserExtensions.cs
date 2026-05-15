@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
 {
-    public static class UserExtensions
+    internal static class UserExtensions
     {
         internal static bool IsLiveIntegrationPricesDisabled(this User user)
         {

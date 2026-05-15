@@ -338,6 +338,6 @@
         /// When enabled anonymous users will receive discounts calculated by DynamicWeb instead of retrieving them from the ERP via Live Integration
         /// </summary>
         /// <value><c>true</c> if [disable ERP discounts calculation for anonymous users]; otherwise, <c>false</c>.</value>        
-        public bool DisableErpDiscountsForAnonymousUsers { get; set; }
+        bool DisableErpDiscountsForAnonymousUsers { get; set; }
     }
 }

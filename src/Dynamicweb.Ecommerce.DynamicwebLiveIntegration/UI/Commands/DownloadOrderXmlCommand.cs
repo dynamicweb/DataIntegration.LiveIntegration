@@ -68,7 +68,9 @@ public sealed class DownloadOrderXmlCommand : CommandBase
     {
         var logger = new Logger(settings);
 
-        var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
+        User user = order.CustomerAccessUserId > 0
+            ? UserManagementServices.Users.GetUserById(order.CustomerAccessUserId)
+            : null;
         bool isUserErpDiscountAllowed = OrderHandler.IsUserErpDiscountAllowed(settings, user);
 
         var xmlGeneratorSettings = new OrderXmlGeneratorSettings
