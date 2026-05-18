@@ -8,6 +8,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
     {
         internal static bool IsLiveIntegrationPricesDisabled(this User user)
         {
+            if (user is null)
+                return false;
+
             if (user.IsLivePricesDisabled)
                 return true;
 
