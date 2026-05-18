@@ -1,6 +1,7 @@
 ﻿using Dynamicweb.CoreUI.Data;
 using Dynamicweb.CoreUI.Data.Validation;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators;
 using Dynamicweb.Ecommerce.Orders;
@@ -68,8 +69,8 @@ public sealed class DownloadOrderXmlCommand : CommandBase
     {
         var logger = new Logger(settings);
 
-        User user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
-        bool isUserErpDiscountAllowed = OrderHandler.IsUserErpDiscountAllowed(settings, user);
+        var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
+        bool isUserErpDiscountAllowed = user.IsUserErpDiscountAllowed(settings);
 
         var xmlGeneratorSettings = new OrderXmlGeneratorSettings
         {

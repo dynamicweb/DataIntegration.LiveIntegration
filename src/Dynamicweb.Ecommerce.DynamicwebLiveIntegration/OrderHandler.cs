@@ -89,7 +89,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 return null;
             }
 
-            bool erpControlsDiscount = IsUserErpDiscountAllowed(settings, user);
+            bool erpControlsDiscount = user.IsUserErpDiscountAllowed(settings);
 
             // default states
             successOrderStateId ??= settings.OrderStateAfterExportSucceeded;
@@ -1397,19 +1397,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         internal static void RemoveCurrentlyProcessingOrder(Order order)
         {
             Caching.Cache.Current.Remove(OrderCacheKey(order));
-        }
-
-        internal static bool IsUserErpDiscountAllowed(Settings settings, User user)
-        {
-            if (!settings.ErpControlsDiscount)
-                return false;
-
-            if (user is null)
-            {
-                return !settings.DisableErpDiscountsForAnonymousUsers;
-            }
-
-            return !user.IsLiveIntegrationDiscountsDisabled();
-        }
+        }        
     }
 }

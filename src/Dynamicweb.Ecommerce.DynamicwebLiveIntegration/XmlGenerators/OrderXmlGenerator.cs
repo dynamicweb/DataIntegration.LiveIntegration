@@ -286,7 +286,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             {
                 NotificationManager.Notify(Notifications.OrderLine.OnBeforeGenerateOrderLineXml,
                 new Notifications.OrderLine.OnBeforeGenerateOrderLineXmlArgs(orderline, settings, currentSettings, logger));
-            }            
+            }
+            // This branch only runs when settings.GenerateXmlForHash is true,
             // discount lines are intentionally omitted here so the generated XML matches that effective behavior
             else if (settings.ErpControlsDiscount && orderline.IsDiscount())
             {
