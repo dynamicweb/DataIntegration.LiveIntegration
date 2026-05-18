@@ -49,10 +49,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.NotificationSubscribers
 
         private static bool CanCheckPrice(Settings settings)
         {
-           return settings.EnableLivePrices && EnabledAndActive(settings, SubmitType.Live) &&
-                (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null) && 
-                (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLiveIntegrationPricesDisabled()) && 
-                !Global.IsProductLazyLoad(settings); 
+            var user = Helpers.GetCurrentExtranetUser();
+            return settings.EnableLivePrices && EnabledAndActive(settings, SubmitType.Live) &&
+                (settings.LiveProductInfoForAnonymousUsers || user != null) &&
+                (user == null || !user.IsLiveIntegrationPricesDisabled()) &&
+                !Global.IsProductLazyLoad(settings);
         }
     }
 }

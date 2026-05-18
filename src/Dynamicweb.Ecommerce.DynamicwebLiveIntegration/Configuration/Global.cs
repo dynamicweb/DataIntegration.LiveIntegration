@@ -104,9 +104,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 
         public static bool IsLazyLoadingForProductInfoEnabled(Settings settings)
         {
+            var user = Helpers.GetCurrentExtranetUser();
             return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
-                       && (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null)
-                       && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLiveIntegrationPricesDisabled())
+                       && (settings.LiveProductInfoForAnonymousUsers || user != null)
+                       && (user == null || !user.IsLiveIntegrationPricesDisabled())
                        && settings.LazyLoadProductInfo;
         }
     }
