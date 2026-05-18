@@ -21,8 +21,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         /// </summary>
         /// <remarks>This method checks the user's direct setting and, if necessary, evaluates ancestor
         /// group flags. Results may be cached for performance.</remarks>
-        /// <param name="user">The user for whom to check if live integration prices are disabled. Cannot be null.</param>
-        /// <returns>true if live integration prices are disabled for the user or any of their ancestor groups; otherwise, false.</returns>
+        /// <param name="user">The user to check. Returns <c>false</c> when <c>null</c> (anonymous users have prices enabled).</param>
+        /// <returns><c>true</c> if live integration prices are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
         public static bool IsLiveIntegrationPricesDisabled(this User user)
         {
             if (user is null)
@@ -44,9 +44,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         /// </summary>
         /// <remarks>This method checks the user's own setting and, if necessary, evaluates ancestor group
         /// flags. Results may be cached for performance.</remarks>
-        /// <param name="user">The user for whom to check the live integration discounts status. Cannot be null.</param>
-        /// <returns>true if live integration discounts are disabled for the user or any of their ancestor groups; otherwise,
-        /// false.</returns>
+        /// <param name="user">The user to check. Returns <c>false</c> when <c>null</c> (anonymous users have discounts enabled).</param>
+        /// <returns><c>true</c> if live integration discounts are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
         public static bool IsLiveIntegrationDiscountsDisabled(this User user)
         {
             if (user is null)
