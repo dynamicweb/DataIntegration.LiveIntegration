@@ -4,7 +4,6 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Extensibility.Notifications;
-using Dynamicweb.Generation;
 using Dynamicweb.Security.UserManagement;
 using System;
 using System.Linq;
