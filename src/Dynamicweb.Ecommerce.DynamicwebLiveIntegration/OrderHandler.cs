@@ -149,7 +149,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             XmlDocument response = GetResponse(ctx, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
-            {                
+            {
                 bool processResponseResult = ProcessResponse(ctx, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
                 return processResponseResult;
@@ -159,7 +159,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 // error occurred                
                 if (createOrder && (!requestCancelled.HasValue || !requestCancelled.Value))
                 {
-                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);                    
+                    HandleIntegrationFailure(settings, order, failedOrderStateId, orderId, null, logger);
                 }
 
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
@@ -275,15 +275,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <summary>
         /// Gets the response.
         /// </summary>
-        /// <param name="OrderResponseContext">Order Response Context.</param> 
+        /// <param name="ctx">Order Response Context.</param> 
         /// <param name="requestXml">The request XML.</param>
         /// <param name="order">The order.</param>
         /// <param name="createOrder">if set to <c>true</c> [create order].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument GetResponse(OrderResponseContext ctx, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
+        private static XmlDocument GetResponse(in OrderResponseContext ctx, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
         {
             XmlDocument response = null;
-            requestCancelled = null;            
+            requestCancelled = null;
 
             string orderIdentifier = Helpers.OrderIdentifier(order, ctx.ErpControlsDiscount);
 
@@ -480,7 +480,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="discountOrderLines">The discount order lines.</param>
         /// <param name="orderLineNode">The order line node.</param>
         /// <param name="orderLineType">Type of the order line.</param>
-        private static void ProcessDiscountOrderLine(OrderResponseContext ctx, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds, OrderLineFieldCollection allOrderLineFields)
+        private static void ProcessDiscountOrderLine(in OrderResponseContext ctx, Order order, OrderLineCollection discountOrderLines, XmlNode orderLineNode, string orderLineType, Logger logger, List<string> orderLineIds, OrderLineFieldCollection allOrderLineFields)
         {
             string orderLineId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineId']")?.InnerText;
 
@@ -613,7 +613,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="response">The response.</param>
         /// <param name="order">The order.</param>
         /// <param name="discountOrderLines">The discount order lines.</param>        
-        private static void ProcessOrderLines(OrderResponseContext ctx, XmlDocument response, Order order, OrderLineCollection discountOrderLines, Logger logger)
+        private static void ProcessOrderLines(in OrderResponseContext ctx, XmlDocument response, Order order, OrderLineCollection discountOrderLines, Logger logger)
         {
             XmlNodeList orderLinesNodes = response.SelectNodes("//item [@table='EcomOrderLines']");
 
@@ -667,7 +667,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     {
                         continue;
                     }
-                    linesToRemove.Add(orderLine);                    
+                    linesToRemove.Add(orderLine);
                 }
                 foreach (var orderLine in linesToRemove)
                 {
@@ -894,7 +894,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="successState">State of the success.</param>
         /// <param name="failedState">State of the failed.</param>
         /// <returns><c>true</c> if response was processed successfully, <c>false</c> otherwise.</returns>
-        private static bool ProcessResponse(OrderResponseContext ctx, XmlDocument response, Order order, bool createOrder, string successState, string failedState, Logger logger)
+        private static bool ProcessResponse(in OrderResponseContext ctx, XmlDocument response, Order order, bool createOrder, string successState, string failedState, Logger logger)
         {
             var orderId = order == null ? "is null" : order.Id ?? "ID is null";
             if (response == null || order == null)
@@ -1018,7 +1018,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return true;
         }
 
-        private static void SetOrderPrices(Order order, XmlNode orderNode, OrderResponseContext ctx, Logger logger, string orderId, out bool updatePriceBeforeFeesFromOrderPrice)
+        private static void SetOrderPrices(Order order, XmlNode orderNode, in OrderResponseContext ctx, Logger logger, string orderId, out bool updatePriceBeforeFeesFromOrderPrice)
         {
             updatePriceBeforeFeesFromOrderPrice = false;
             // Set Order prices
@@ -1248,7 +1248,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             return orderLine;
         }
 
-        private static void MergeOrderLines(OrderResponseContext ctx, Order order)
+        private static void MergeOrderLines(in OrderResponseContext ctx, Order order)
         {
             if (order.Complete || !ctx.Settings.AddOrderLineFieldsToRequest || ctx.ErpControlsDiscount || order.OrderLines.Count <= 1)
             {
@@ -1408,11 +1408,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         {
             string key = $"OrderHandlerSentOrder{order.Id}";
             Caching.Cache.Current.Remove(key);
-        }        
+        }
 
         internal static bool IsUserErpDiscountAllowed(Settings settings, User user)
         {
-            if(!settings.ErpControlsDiscount)
+            if (!settings.ErpControlsDiscount)
                 return false;
 
             if (user is null)
@@ -1420,14 +1420,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 return !settings.DisableErpDiscountsForAnonymousUsers;
             }
 
-            if(user.IsLiveDiscountsDisabled)
-                return false;
-
-            var groups = user.GetAncestorGroups();
-            if (groups.Any(g => g.IsLiveDiscountsDisabled))
-                return false;
-
-            return true;
+            return !user.IsLiveIntegrationDiscountsDisabled();
         }
     }
 }

@@ -1,6 +1,5 @@
-﻿using Dynamicweb.Core;
+using Dynamicweb.Core;
 using Dynamicweb.Security.UserManagement;
-using System.Linq;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
 {
@@ -12,21 +11,41 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
                 return true;
 
             var key = $"DynamicwebLiveIntegrationIsLivePricesDisabled{user.ID}";
-            var cacheValue = Context.Current?.Items?[key];
-            if (cacheValue is not null)
+            if (Context.Current?.Items?[key] is { } cached)
+                return Converter.ToBoolean(cached);
+
+            return ComputeAndCacheAncestorGroupFlags(user).pricesDisabled;
+        }
+
+        internal static bool IsLiveIntegrationDiscountsDisabled(this User user)
+        {
+            if (user.IsLiveDiscountsDisabled)
+                return true;
+
+            var key = $"DynamicwebLiveIntegrationIsLiveDiscountsDisabled{user.ID}";
+            if (Context.Current?.Items?[key] is { } cached)
+                return Converter.ToBoolean(cached);
+
+            return ComputeAndCacheAncestorGroupFlags(user).discountsDisabled;
+        }
+
+        private static (bool pricesDisabled, bool discountsDisabled) ComputeAndCacheAncestorGroupFlags(User user)
+        {
+            bool pricesDisabled = false;
+            bool discountsDisabled = false;
+            foreach (var group in user.GetAncestorGroups())
             {
-                return Converter.ToBoolean(cacheValue);
+                pricesDisabled |= group.IsLivePricesDisabled;
+                discountsDisabled |= group.IsLiveDiscountsDisabled;
+                if (pricesDisabled && discountsDisabled)
+                    break;
             }
-            else
+            if (Context.Current?.Items is not null)
             {
-                var groups = user.GetAncestorGroups();
-                bool result = groups.Any(g => g.IsLivePricesDisabled);
-                if (Context.Current?.Items is not null)
-                {
-                    Context.Current.Items[key] = result;
-                }
-                return result;
+                Context.Current.Items[$"DynamicwebLiveIntegrationIsLivePricesDisabled{user.ID}"] = pricesDisabled;
+                Context.Current.Items[$"DynamicwebLiveIntegrationIsLiveDiscountsDisabled{user.ID}"] = discountsDisabled;
             }
+            return (pricesDisabled, discountsDisabled);
         }
     }
 }
