@@ -107,14 +107,20 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <returns>System.String.</returns>
         public static string OrderIdentifier(Order order, bool erpControlsDiscount)
         {
-            string ret = $"{order.Id}.{order.CurrencyCode}.{erpControlsDiscount}";
+            var sb = new StringBuilder();
+            sb.Append(order.Id).Append('.').Append(order.CurrencyCode).Append('.').Append(erpControlsDiscount);
 
             foreach (OrderLine ol in order.OrderLines)
             {
-                ret += $".{ol.Quantity}.{ol.ProductId}.{ol.ProductVariantId}.{ol.ProductNumber}.{ol.ProductName}.{ol.OrderLineType}";
+                sb.Append('.').Append(ol.Quantity)
+                  .Append('.').Append(ol.ProductId)
+                  .Append('.').Append(ol.ProductVariantId)
+                  .Append('.').Append(ol.ProductNumber)
+                  .Append('.').Append(ol.ProductName)
+                  .Append('.').Append(ol.OrderLineType);
             }
 
-            return ret;
+            return sb.ToString();
         }
 
         /// <summary>

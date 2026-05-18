@@ -33,17 +33,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         private static readonly string OrderXmlLogFolder = "/Files/System/Log/LiveIntegration/OrderXml";
 
-        private readonly struct OrderResponseContext
-        {
-            internal readonly Settings Settings;
-            internal readonly bool ErpControlsDiscount;
-
-            internal OrderResponseContext(Settings settings, bool erpControlsDiscount)
-            {
-                Settings = settings;
-                ErpControlsDiscount = erpControlsDiscount;
-            }
-        }
+        private readonly record struct OrderResponseContext(Settings Settings, bool ErpControlsDiscount);
 
         /// <summary>
         /// Gets the cache level for order information.
@@ -1406,8 +1396,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
         internal static void RemoveCurrentlyProcessingOrder(Order order)
         {
-            string key = $"OrderHandlerSentOrder{order.Id}";
-            Caching.Cache.Current.Remove(key);
+            Caching.Cache.Current.Remove(OrderCacheKey(order));
         }
 
         internal static bool IsUserErpDiscountAllowed(Settings settings, User user)
