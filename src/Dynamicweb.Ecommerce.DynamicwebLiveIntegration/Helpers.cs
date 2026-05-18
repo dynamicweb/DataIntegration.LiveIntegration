@@ -103,10 +103,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Orders the identifier.
         /// </summary>
         /// <param name="order">The order.</param>
+        /// <param name="erpControlsDiscount">if set to <c>true</c> [ERP controls discount].</param>
         /// <returns>System.String.</returns>
-        public static string OrderIdentifier(Order order)
+        public static string OrderIdentifier(Order order, bool erpControlsDiscount)
         {
-            string ret = $"{order.Id}.{order.CurrencyCode}";
+            string ret = $"{order.Id}.{order.CurrencyCode}.{erpControlsDiscount}";
 
             foreach (OrderLine ol in order.OrderLines)
             {

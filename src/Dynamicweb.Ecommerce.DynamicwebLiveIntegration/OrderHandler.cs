@@ -33,6 +33,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         private static readonly string OrderXmlLogFolder = "/Files/System/Log/LiveIntegration/OrderXml";
 
+        private readonly struct OrderResponseContext
+        {
+            internal readonly Settings Settings;
+            internal readonly bool ErpControlsDiscount;
+
+            internal OrderResponseContext(Settings settings, bool erpControlsDiscount)
+            {
+                Settings = settings;
+                ErpControlsDiscount = erpControlsDiscount;
+            }
+        }
 
         /// <summary>
         /// Gets the cache level for order information.
@@ -133,12 +144,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             // save this hash for next calls
             SaveOrderHash(settings, currentHash);
-            
-            XmlDocument response = GetResponse(settings, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
+
+            var ctx = new OrderResponseContext(settings, erpControlsDiscount);
+
+            XmlDocument response = GetResponse(ctx, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
-            {
-                var ctx = new OrderResponseContext(settings, erpControlsDiscount);
-            bool processResponseResult = ProcessResponse(ctx, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
+            {                
+                bool processResponseResult = ProcessResponse(ctx, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);
                 Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
                 return processResponseResult;
             }
@@ -263,32 +275,32 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <summary>
         /// Gets the response.
         /// </summary>
-        /// <param name="settings">Settings.</param> 
+        /// <param name="OrderResponseContext">Order Response Context.</param> 
         /// <param name="requestXml">The request XML.</param>
         /// <param name="order">The order.</param>
         /// <param name="createOrder">if set to <c>true</c> [create order].</param>
         /// <returns>XmlDocument.</returns>
-        private static XmlDocument GetResponse(Settings settings, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
+        private static XmlDocument GetResponse(OrderResponseContext ctx, string requestXml, Order order, bool createOrder, Logger logger, out bool? requestCancelled, SubmitType submitType)
         {
             XmlDocument response = null;
             requestCancelled = null;            
 
-            string orderIdentifier = Helpers.OrderIdentifier(order);
+            string orderIdentifier = Helpers.OrderIdentifier(order, ctx.ErpControlsDiscount);
 
-            Dictionary<string, XmlDocument> responsesCache = ResponseCache.GetWebOrdersConnectorResponses(GetOrderCacheLevel(settings));
+            Dictionary<string, XmlDocument> responsesCache = ResponseCache.GetWebOrdersConnectorResponses(GetOrderCacheLevel(ctx.Settings));
 
             if (!createOrder && responsesCache is not null && responsesCache.TryGetValue(orderIdentifier, out response))
             {
                 return response;
             }
 
-            Notifications.Order.OnBeforeSendingOrderToErpArgs onBeforeSendingOrderToErpArgs = new Notifications.Order.OnBeforeSendingOrderToErpArgs(order, createOrder, settings, logger);
+            Notifications.Order.OnBeforeSendingOrderToErpArgs onBeforeSendingOrderToErpArgs = new Notifications.Order.OnBeforeSendingOrderToErpArgs(order, createOrder, ctx.Settings, logger);
             NotificationManager.Notify(Notifications.Order.OnBeforeSendingOrderToErp, onBeforeSendingOrderToErpArgs);
             requestCancelled = onBeforeSendingOrderToErpArgs.Cancel;
 
             if (!onBeforeSendingOrderToErpArgs.Cancel)
             {
-                response = Connector.CalculateOrder(settings, requestXml, order, createOrder, out Exception error, logger, submitType);
+                response = Connector.CalculateOrder(ctx.Settings, requestXml, order, createOrder, out Exception error, logger, submitType);
 
                 if (createOrder && error != null)
                 {
@@ -296,7 +308,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     Services.OrderDebuggingInfos.Save(order, $"ERP communication failed with error: {msg}", OrderErpCallFailed, DebuggingInfoType.Undefined);
                 }
 
-                NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, settings, logger));
+                NotificationManager.Notify(Notifications.Order.OnAfterSendingOrderToErp, new Notifications.Order.OnAfterSendingOrderToErpArgs(order, createOrder, response, error, ctx.Settings, logger));
 
                 if (responsesCache is not null)
                 {
@@ -1396,19 +1408,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         {
             string key = $"OrderHandlerSentOrder{order.Id}";
             Caching.Cache.Current.Remove(key);
-        }
-
-        private readonly struct OrderResponseContext
-        {
-            internal readonly Settings Settings;
-            internal readonly bool ErpControlsDiscount;
-
-            internal OrderResponseContext(Settings settings, bool erpControlsDiscount)
-            {
-                Settings = settings;
-                ErpControlsDiscount = erpControlsDiscount;
-            }
-        }
+        }        
 
         internal static bool IsUserErpDiscountAllowed(Settings settings, User user)
         {
