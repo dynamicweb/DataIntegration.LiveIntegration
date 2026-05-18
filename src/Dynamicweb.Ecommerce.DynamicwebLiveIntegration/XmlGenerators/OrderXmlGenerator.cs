@@ -286,6 +286,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 NotificationManager.Notify(Notifications.OrderLine.OnBeforeGenerateOrderLineXml,
                 new Notifications.OrderLine.OnBeforeGenerateOrderLineXmlArgs(orderline, settings, currentSettings, logger));
             }
+            // settings.ErpControlsDiscount is the per-user-effective value computed earlier for this request,
+            // not just the raw configuration flag. When ERP controls discounts for the current user/context,
+            // discount lines are intentionally omitted here so the generated XML matches that effective behavior.
             else if (settings.ErpControlsDiscount && orderline.IsDiscount())
             {
                 return;
