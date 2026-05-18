@@ -79,6 +79,8 @@ public sealed class DownloadOrderXmlCommand : CommandBase
             Beautify = true,
             LiveIntegrationSubmitType = SubmitType.DownloadedFromBackEnd,
             ReferenceName = "OrdersPut",
+            //The downloaded XML will not necessarily match what was actually sent to the ERP when the order was placed (the user's group membership could have changed since),
+            //but we want to apply the same logic for discounts as when the order was placed, so we check the current user and their groups for ERP discount permissions.
             ErpControlsDiscount = isUserErpDiscountAllowed,
             ErpControlsShipping = settings.ErpControlsShipping,
             ErpShippingItemKey = settings.ErpShippingItemKey,

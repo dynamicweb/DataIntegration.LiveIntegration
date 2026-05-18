@@ -22,7 +22,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         /// <remarks>This method checks the user's direct setting and, if necessary, evaluates ancestor
         /// group flags. Results may be cached for performance.</remarks>
         /// <param name="user">The user to check. Returns <c>false</c> when <c>null</c> (anonymous users have prices enabled).</param>
-        /// <returns><c>true</c> if live integration prices are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
+        /// <returns><c>true</c> When user is not null and live integration prices are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
         public static bool IsLiveIntegrationPricesDisabled(this User user)
         {
             if (user is null)
@@ -32,7 +32,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
                 return true;
 
             var key = $"{PricesDisabledCacheKeyPrefix}{user.ID}";
-            if (Context.Current?.Items?[key] is bool cached)
+            if (Dynamicweb.Context.Current?.Items?[key] is bool cached)
                 return cached;
 
             return ComputeAndCacheAncestorGroupFlags(user).pricesDisabled;
@@ -45,7 +45,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         /// <remarks>This method checks the user's own setting and, if necessary, evaluates ancestor group
         /// flags. Results may be cached for performance.</remarks>
         /// <param name="user">The user to check. Returns <c>false</c> when <c>null</c> (anonymous users have discounts enabled).</param>
-        /// <returns><c>true</c> if live integration discounts are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
+        /// <returns><c>true</c> When user is not null and live integration discounts are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
         public static bool IsLiveIntegrationDiscountsDisabled(this User user)
         {
             if (user is null)
@@ -55,13 +55,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
                 return true;
 
             var key = $"{DiscountsDisabledCacheKeyPrefix}{user.ID}";
-            if (Context.Current?.Items?[key] is bool cached)
+            if (Dynamicweb.Context.Current?.Items?[key] is bool cached)
                 return cached;
 
             return ComputeAndCacheAncestorGroupFlags(user).discountsDisabled;
         }
 
-        // Iterates ancestor groups once to populate both cache entries, short-circuiting when both flags are found.
+        // Iterates ancestor groups once to populate both cache entries, short-circuiting when both flags are found. Represents only the cached ancestor portion
         private static (bool pricesDisabled, bool discountsDisabled) ComputeAndCacheAncestorGroupFlags(User user)
         {
             bool pricesDisabled = false;
@@ -73,10 +73,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
                 if (pricesDisabled && discountsDisabled)
                     break;
             }
-            if (Context.Current?.Items is not null)
+            if (Dynamicweb.Context.Current?.Items is not null)
             {
-                Context.Current.Items[$"{PricesDisabledCacheKeyPrefix}{user.ID}"] = pricesDisabled;
-                Context.Current.Items[$"{DiscountsDisabledCacheKeyPrefix}{user.ID}"] = discountsDisabled;
+                Dynamicweb.Context.Current.Items[$"{PricesDisabledCacheKeyPrefix}{user.ID}"] = pricesDisabled;
+                Dynamicweb.Context.Current.Items[$"{DiscountsDisabledCacheKeyPrefix}{user.ID}"] = discountsDisabled;
             }
             return (pricesDisabled, discountsDisabled);
         }

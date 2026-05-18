@@ -33,7 +33,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         private static readonly string OrderXmlLogFolder = "/Files/System/Log/LiveIntegration/OrderXml";
 
-        private readonly record struct OrderResponseContext(Settings Settings, bool ErpControlsDiscount);
+        private readonly record struct OrderResponseContext(Settings Settings, bool ErpControlsDiscountForUser);
 
         /// <summary>
         /// Gets the cache level for order information.
@@ -275,7 +275,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             XmlDocument response = null;
             requestCancelled = null;
 
-            string orderIdentifier = Helpers.OrderIdentifier(order, ctx.ErpControlsDiscount);
+            string orderIdentifier = Helpers.OrderIdentifier(order, ctx.ErpControlsDiscountForUser);
 
             Dictionary<string, XmlDocument> responsesCache = ResponseCache.GetWebOrdersConnectorResponses(GetOrderCacheLevel(ctx.Settings));
 
@@ -481,7 +481,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     OrderLineType = Services.OrderLines.GetOrderLineType(orderLineType)
                 };
 
-                if (!ctx.ErpControlsDiscount)
+                if (!ctx.ErpControlsDiscountForUser)
                 {
                     orderLine.DiscountId = orderLineNode.SelectSingleNode("column [@columnName='OrderLineDiscountId']")?.InnerText;
                 }
@@ -543,7 +543,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
 
                 orderLine.ProductName = DiscountTranslation.GetDiscountName(ctx.Settings, orderLineNode, orderLine);
-                if (ctx.ErpControlsDiscount)
+                if (ctx.ErpControlsDiscountForUser)
                 {
                     orderLine.AllowOverridePrices = true;
                 }
@@ -617,7 +617,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     allOrderLineFields = Services.OrderLineFields.GetOrderLineFields();
                 }
-                bool processDiscounts = ctx.ErpControlsDiscount || !order.Complete;
+                bool processDiscounts = ctx.ErpControlsDiscountForUser || !order.Complete;
                 Dictionary<string, OrderLine> responseIdOrderLineDictionary = new Dictionary<string, OrderLine>();
 
                 foreach (XmlNode orderLineNode in orderLinesNodes)
@@ -642,7 +642,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     }
                 }
 
-                bool keepDiscountOrderLines = !ctx.ErpControlsDiscount && order.Complete;
+                bool keepDiscountOrderLines = !ctx.ErpControlsDiscountForUser && order.Complete;
                 // Remove deleted OrderLines
                 List<OrderLine> linesToRemove = new List<OrderLine>();
                 for (int i = order.OrderLines.Count - 1; i >= 0; i--)
@@ -908,7 +908,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     shippingFeeSentInRequest = order.ShippingFee;
                 }
-                if (!createOrder && ctx.ErpControlsDiscount)
+                if (!createOrder && ctx.ErpControlsDiscountForUser)
                     order.IsPriceCalculatedByProvider = true;
 
                 SetCustomOrderFields(ctx.Settings, order, orderNode);
@@ -921,9 +921,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 {
                     ProcessOrderLines(ctx, response, order, discountOrderLines, logger);
 
-                    if (!order.Complete || ctx.ErpControlsDiscount)
+                    if (!order.Complete || ctx.ErpControlsDiscountForUser)
                     {
-                        if (ctx.ErpControlsDiscount)
+                        if (ctx.ErpControlsDiscountForUser)
                         {
                             foreach (var discountLine in discountOrderLines)
                                 order.OrderLines.Add(discountLine, false);
@@ -1012,8 +1012,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         {
             updatePriceBeforeFeesFromOrderPrice = false;
             // Set Order prices
-            order.AllowOverridePrices = ctx.ErpControlsDiscount;
-            order.DisableDiscountCalculation = ctx.ErpControlsDiscount;
+            order.AllowOverridePrices = ctx.ErpControlsDiscountForUser;
+            order.DisableDiscountCalculation = ctx.ErpControlsDiscountForUser;
             try
             {
                 SetPrices(ctx.Settings, order, orderNode, logger, out updatePriceBeforeFeesFromOrderPrice);
@@ -1240,7 +1240,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
         private static void MergeOrderLines(in OrderResponseContext ctx, Order order)
         {
-            if (order.Complete || !ctx.Settings.AddOrderLineFieldsToRequest || ctx.ErpControlsDiscount || order.OrderLines.Count <= 1)
+            if (order.Complete || !ctx.Settings.AddOrderLineFieldsToRequest || ctx.ErpControlsDiscountForUser || order.OrderLines.Count <= 1)
             {
                 return;
             }
