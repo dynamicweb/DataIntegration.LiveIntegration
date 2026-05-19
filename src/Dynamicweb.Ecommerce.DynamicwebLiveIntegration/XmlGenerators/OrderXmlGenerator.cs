@@ -286,8 +286,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 NotificationManager.Notify(Notifications.OrderLine.OnBeforeGenerateOrderLineXml,
                 new Notifications.OrderLine.OnBeforeGenerateOrderLineXmlArgs(orderline, settings, currentSettings, logger));
             }
-            else if (currentSettings.ErpControlsDiscount && orderline.IsDiscount())
+            else if (settings.ErpControlsDiscount && orderline.IsDiscount())
             {
+                // Reached only when GenerateXmlForHash is true (see the if above);
+                // discount lines are intentionally omitted here so the generated XML matches that effective behavior.
                 return;
             }
             if (orderline.Bom && !currentSettings.AddOrderLinePartsToRequest)

@@ -1,9 +1,11 @@
 ﻿using Dynamicweb.CoreUI.Data;
 using Dynamicweb.CoreUI.Data.Validation;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators;
 using Dynamicweb.Ecommerce.Orders;
+using Dynamicweb.Security.UserManagement;
 using System.IO;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.UI.Commands;
@@ -66,6 +68,10 @@ public sealed class DownloadOrderXmlCommand : CommandBase
     private static string GetOrderCurrentXml(Settings settings, Order order)
     {
         var logger = new Logger(settings);
+
+        var user = UserManagementServices.Users.GetUserById(order.CustomerAccessUserId);
+        bool isUserErpDiscountAllowed = user.IsUserErpDiscountAllowed(settings);
+
         var xmlGeneratorSettings = new OrderXmlGeneratorSettings
         {
             AddOrderLineFieldsToRequest = settings.AddOrderLineFieldsToRequest,
@@ -74,7 +80,11 @@ public sealed class DownloadOrderXmlCommand : CommandBase
             Beautify = true,
             LiveIntegrationSubmitType = SubmitType.DownloadedFromBackEnd,
             ReferenceName = "OrdersPut",
-            ErpControlsDiscount = settings.ErpControlsDiscount,
+            //The downloaded XML is regenerated from current configuration, so it may not match what was originally sent to the ERP.
+            //For registered users, ERP discount handling is re-evaluated against the user's current state and group membership.
+            //For anonymous orders, CustomerAccessUserId can be unset, GetUserById returns null, and IsUserErpDiscountAllowed falls back
+            //to the current anonymous-user setting. Therefore, ErpControlsDiscount here reflects current evaluation rather than historical checkout-time configuration.
+            ErpControlsDiscount = isUserErpDiscountAllowed,
             ErpControlsShipping = settings.ErpControlsShipping,
             ErpShippingItemKey = settings.ErpShippingItemKey,
             ErpShippingItemType = settings.ErpShippingItemType,

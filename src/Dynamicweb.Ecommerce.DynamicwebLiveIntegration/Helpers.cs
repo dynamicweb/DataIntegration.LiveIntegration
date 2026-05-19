@@ -103,17 +103,24 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Orders the identifier.
         /// </summary>
         /// <param name="order">The order.</param>
+        /// <param name="erpControlsDiscount">if set to <c>true</c> [ERP controls discount].</param>
         /// <returns>System.String.</returns>
-        public static string OrderIdentifier(Order order)
+        public static string OrderIdentifier(Order order, bool erpControlsDiscount)
         {
-            string ret = $"{order.Id}.{order.CurrencyCode}";
+            var sb = new StringBuilder();
+            sb.Append(order.Id).Append('.').Append(order.CurrencyCode).Append('.').Append(erpControlsDiscount);
 
             foreach (OrderLine ol in order.OrderLines)
             {
-                ret += $".{ol.Quantity}.{ol.ProductId}.{ol.ProductVariantId}.{ol.ProductNumber}.{ol.ProductName}.{ol.OrderLineType}";
+                sb.Append('.').Append(ol.Quantity)
+                  .Append('.').Append(ol.ProductId)
+                  .Append('.').Append(ol.ProductVariantId)
+                  .Append('.').Append(ol.ProductNumber)
+                  .Append('.').Append(ol.ProductName)
+                  .Append('.').Append(ol.OrderLineType);
             }
 
-            return ret;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -304,7 +311,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
               || !settings.EnableLivePrices
               || Global.IsProductLazyLoad(settings)
               || (user == null && !settings.LiveProductInfoForAnonymousUsers)
-              || (user != null && user.IsLivePricesDisabled)
+              || (user != null && user.IsLiveIntegrationPricesDisabled())
               || !Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
               || product == null
               || string.IsNullOrEmpty(product.Id)

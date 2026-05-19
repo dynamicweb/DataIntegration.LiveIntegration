@@ -1,0 +1,111 @@
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+using Dynamicweb.Security.UserManagement;
+using System;
+
+namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
+{
+    /// <summary>
+    /// Provides extension methods for the User type to determine whether live integration prices or discounts are
+    /// disabled for a user, including evaluation of ancestor group settings.
+    /// </summary>
+    /// <remarks>These extension methods evaluate both the user's own settings and those of any ancestor
+    /// groups to determine if live integration features are disabled. Results are cached per user within the current
+    /// context to improve performance when called repeatedly. Use these methods to check feature availability before
+    /// performing operations that depend on live integration prices or discounts.</remarks>
+    public static class UserExtensions
+    {
+        private const string PricesDisabledCacheKeyPrefix = "DynamicwebLiveIntegrationIsLivePricesDisabled";
+        private const string DiscountsDisabledCacheKeyPrefix = "DynamicwebLiveIntegrationIsLiveDiscountsDisabled";
+
+        /// <summary>
+        /// Determines whether live integration prices are disabled for the specified user, considering user and
+        /// ancestor group settings.
+        /// </summary>
+        /// <remarks>This method checks the user's direct setting and, if necessary, evaluates ancestor
+        /// group flags. Results may be cached for performance.</remarks>
+        /// <param name="user">The user to check.</param>
+        /// <returns><c>true</c> When user is not null and live integration prices are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
+        public static bool IsLiveIntegrationPricesDisabled(this User user)
+        {
+            if (user is null)
+                return false;
+
+            if (user.IsLivePricesDisabled)
+                return true;
+
+            var key = $"{PricesDisabledCacheKeyPrefix}{user.ID}";
+            if (Dynamicweb.Context.Current?.Items?[key] is bool cached)
+                return cached;
+
+            return ComputeAndCacheAncestorGroupFlags(user).pricesDisabled;
+        }
+
+        /// <summary>
+        /// Determines whether live integration discounts are disabled for the specified user, considering both user and
+        /// ancestor group settings.
+        /// </summary>
+        /// <remarks>This method checks the user's own setting and, if necessary, evaluates ancestor group
+        /// flags. Results may be cached for performance.</remarks>
+        /// <param name="user">The user to check. </param>
+        /// <returns><c>true</c> When user is not null and live integration discounts are disabled for the user or any of their ancestor groups; otherwise, <c>false</c>.</returns>
+        public static bool IsLiveIntegrationDiscountsDisabled(this User user)
+        {
+            if (user is null)
+                return false;
+
+            if (user.IsLiveDiscountsDisabled)
+                return true;
+
+            var key = $"{DiscountsDisabledCacheKeyPrefix}{user.ID}";
+            if (Dynamicweb.Context.Current?.Items?[key] is bool cached)
+                return cached;
+
+            return ComputeAndCacheAncestorGroupFlags(user).discountsDisabled;
+        }
+
+        /// <summary>
+        /// Determines whether ERP discounts are allowed for the specified user based on the provided settings.
+        /// </summary>
+        /// <remarks>If the user is null, the method evaluates eligibility for anonymous users based on
+        /// the settings. If ERP discount controls are disabled in the settings, the method always returns
+        /// false.</remarks>
+        /// <param name="user">The user for whom to check ERP discount eligibility. Can be <c>null</c> to represent an anonymous user.</param>
+        /// <param name="settings">The settings that control ERP discount behavior. Must not be <c>null</c>.</param>
+        /// <returns><c>true</c> if ERP discounts are allowed for the user; otherwise, <c>false</c>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="settings"/> is <c>null</c>.</exception>
+        public static bool IsUserErpDiscountAllowed(this User user, Settings settings)
+        {
+            ArgumentNullException.ThrowIfNull(settings);
+
+            if (!settings.ErpControlsDiscount)
+                return false;
+
+            if (user is null)
+            {
+                return !settings.DisableErpDiscountsForAnonymousUsers;
+            }
+
+            return !user.IsLiveIntegrationDiscountsDisabled();
+        }
+
+        // Iterates ancestor groups once to populate both cache entries, short-circuiting when both flags are found. Represents only the cached ancestor portion
+        private static (bool pricesDisabled, bool discountsDisabled) ComputeAndCacheAncestorGroupFlags(User user)
+        {
+            bool pricesDisabled = false;
+            bool discountsDisabled = false;
+            foreach (var group in user.GetAncestorGroups())
+            {
+                pricesDisabled |= group.IsLivePricesDisabled;
+                discountsDisabled |= group.IsLiveDiscountsDisabled;
+                if (pricesDisabled && discountsDisabled)
+                    break;
+            }
+            if (Dynamicweb.Context.Current?.Items is not null)
+            {
+                Dynamicweb.Context.Current.Items[$"{PricesDisabledCacheKeyPrefix}{user.ID}"] = pricesDisabled;
+                Dynamicweb.Context.Current.Items[$"{DiscountsDisabledCacheKeyPrefix}{user.ID}"] = discountsDisabled;
+            }
+            return (pricesDisabled, discountsDisabled);
+        }
+    }
+}

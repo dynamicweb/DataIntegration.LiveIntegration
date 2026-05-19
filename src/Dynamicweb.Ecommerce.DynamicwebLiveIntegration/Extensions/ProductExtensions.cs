@@ -24,7 +24,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         public static bool IsUnitUpdateNeeded(this Product product, string unitId)
         {            
             if (string.IsNullOrEmpty(unitId) || product.DefaultUnitId == unitId ||                
-                !new Stocks.UnitOfMeasureService().GetUnitOfMeasures(product.Id).Any(u => u.UnitId.Equals(unitId)))            
+                !Services.UnitOfMeasure.GetUnitOfMeasures(product.Id).Any(u => u.UnitId.Equals(unitId)))            
                 return false;            
             return true;
         }

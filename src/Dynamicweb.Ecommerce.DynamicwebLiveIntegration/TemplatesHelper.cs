@@ -116,9 +116,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             get
             {
                 var settings = SettingsManager.GetSettingsByShop(Global.CurrentShopId);
+                var user = Helpers.GetCurrentExtranetUser();
                 return Global.IsIntegrationActive(settings) && settings.EnableLivePrices && Connector.IsWebServiceConnectionAvailable(settings, SubmitType.Live)
-                    && (settings.LiveProductInfoForAnonymousUsers || Helpers.GetCurrentExtranetUser() != null)
-                    && (Helpers.GetCurrentExtranetUser() == null || !Helpers.GetCurrentExtranetUser().IsLivePricesDisabled)
+                    && (settings.LiveProductInfoForAnonymousUsers || user != null)
+                    && (user == null || !user.IsLiveIntegrationPricesDisabled())
                     && settings.LazyLoadProductInfo;
             }
         }        

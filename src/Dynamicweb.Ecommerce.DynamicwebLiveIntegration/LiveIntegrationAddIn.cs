@@ -483,6 +483,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         public bool EnableCartCommunicationForAnonymousUsers { get; set; }
 
         /// <summary>
+        /// When enabled anonymous users will receive discounts calculated by DynamicWeb instead of retrieving them from the ERP via Live Integration
+        /// </summary>
+        /// <value><c>true</c> to disable ERP discounts for anonymous users; otherwise <c>false</c>.</value>
+        [AddInParameter("Disable ERP discounts for anonymous users")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "explanation=When enabled anonymous users will receive discounts calculated by DynamicWeb instead of retrieving them from the ERP via Live Integration;")]
+        [AddInParameterGroup("Users")]
+        [AddInParameterOrder(220)]
+        public bool DisableErpDiscountsForAnonymousUsers { get; set; }
+
+        /// <summary>
         /// Gets or sets the customer name used in integration scenarios with anonymous users.
         /// </summary>
         /// <value>The anonymous user key.</value>
