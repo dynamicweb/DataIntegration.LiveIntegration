@@ -338,6 +338,10 @@
         /// When enabled anonymous users will receive discounts calculated by DynamicWeb instead of retrieving them from the ERP via Live Integration
         /// </summary>
         /// <value><c>true</c> to disable ERP discounts for anonymous users; otherwise <c>false</c>.</value>
+        /// <remarks>
+        /// The default interface implementation always returns <c>false</c> and discards writes.
+        /// Implementors that need this setting to round-trip (e.g. as a target in <see cref="Settings.UpdateFrom"/>) must override both accessors.
+        /// </remarks>
         bool DisableErpDiscountsForAnonymousUsers
         {
             get => false;

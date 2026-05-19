@@ -1,5 +1,6 @@
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Security.UserManagement;
+using System;
 
 namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
 {
@@ -68,11 +69,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions
         /// <remarks>If the user is null, the method evaluates eligibility for anonymous users based on
         /// the settings. If ERP discount controls are disabled in the settings, the method always returns
         /// false.</remarks>
-        /// <param name="user">The user for whom to check ERP discount eligibility. Can be null to represent an anonymous user.</param>
-        /// <param name="settings">The settings that control ERP discount behavior. Must not be null.</param>
-        /// <returns>true if ERP discounts are allowed for the user; otherwise, false.</returns>
+        /// <param name="user">The user for whom to check ERP discount eligibility. Can be <c>null</c> to represent an anonymous user.</param>
+        /// <param name="settings">The settings that control ERP discount behavior. Must not be <c>null</c>.</param>
+        /// <returns><c>true</c> if ERP discounts are allowed for the user; otherwise, <c>false</c>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="settings"/> is <c>null</c>.</exception>
         public static bool IsUserErpDiscountAllowed(this User user, Settings settings)
         {
+            ArgumentNullException.ThrowIfNull(settings);
+
             if (!settings.ErpControlsDiscount)
                 return false;
 
