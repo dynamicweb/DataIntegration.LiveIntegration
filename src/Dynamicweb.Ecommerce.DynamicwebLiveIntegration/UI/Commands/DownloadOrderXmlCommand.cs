@@ -80,8 +80,10 @@ public sealed class DownloadOrderXmlCommand : CommandBase
             Beautify = true,
             LiveIntegrationSubmitType = SubmitType.DownloadedFromBackEnd,
             ReferenceName = "OrdersPut",
-            //The downloaded XML will not necessarily match what was actually sent to the ERP when the order was placed (the user's group membership could have changed since),
-            //but we want to apply the same logic for discounts as when the order was placed, so we check the current user and their groups for ERP discount permissions.
+            //The downloaded XML is regenerated from current configuration, so it may not match what was originally sent to the ERP.
+            //For registered users, ERP discount handling is re-evaluated against the user's current state and group membership.
+            //For anonymous orders, CustomerAccessUserId can be unset, GetUserById returns null, and IsUserErpDiscountAllowed falls back
+            //to the current anonymous-user setting. Therefore, ErpControlsDiscount here reflects current evaluation rather than historical checkout-time configuration.
             ErpControlsDiscount = isUserErpDiscountAllowed,
             ErpControlsShipping = settings.ErpControlsShipping,
             ErpShippingItemKey = settings.ErpShippingItemKey,
