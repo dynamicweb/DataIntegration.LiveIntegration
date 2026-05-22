@@ -25,7 +25,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Examples.Notifications
             if (myArgs?.Document != null)
             {
                 var settings = SettingsManager.GetSettingsByShop(myArgs.Order.ShopId);
-                if (settings != null && !settings.ErpControlsShipping)
+                if (settings != null && settings.ShippingControlMode == Constants.ShippingControlMode.DynamicwebControlsShipping)
                 {
                     var order = myArgs.Order;
                     var shipping = Services.Shippings.GetShipping(order.ShippingMethodId);

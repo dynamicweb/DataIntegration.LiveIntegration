@@ -78,7 +78,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             public const string DefaultShippingItemType = "ItemCharge";
         }
 
-        internal static class ShippingControlMode
+        /// <summary>
+        /// Provides string constants that define the available modes for controlling shipping calculation and data
+        /// exchange between Dynamicweb and an ERP system.
+        /// </summary>
+        /// <remarks>Use these constants to specify how shipping fees and information are managed in
+        /// integrations between Dynamicweb and ERP systems. Each mode determines whether shipping is calculated by
+        /// Dynamicweb, by the ERP, or based on selections made in Dynamicweb and processed by the ERP.</remarks>
+        public static class ShippingControlMode
         {
             /// <summary>Dynamicweb calculates and sends the shipping fee to the ERP.</summary>
             public const string DynamicwebControlsShipping = "DynamicwebControlsShipping";
