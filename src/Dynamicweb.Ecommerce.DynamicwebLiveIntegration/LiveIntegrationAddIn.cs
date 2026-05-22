@@ -381,14 +381,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         public bool ErpControlsDiscount { get; set; }
 
         /// <summary>
-        /// Gets or sets if ERP controls shipping calculations
+        /// Gets or sets the shipping control mode.
         /// </summary>
-        /// <value><c>true</c> if [ERP controls shipping calculations]; otherwise, <c>false</c>.</value>
-        [AddInParameter("ERP controls shipping calculations")]
-        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
+        [AddInParameter("Shipping control")]
+        [AddInParameterEditor(typeof(DropDownParameterEditor), "none=false")]
         [AddInParameterGroup("Orders")]
         [AddInParameterOrder(157)]
-        public bool ErpControlsShipping { get; set; }
+        public string ShippingControlMode { get; set; }
 
         /// <summary>
         /// Gets or sets the key for shipping item type.
@@ -750,11 +749,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     options.Add(new("Fixed Asset", "FixedAsset"));
                     options.Add(new("Resource", "Resource"));
                     break;
+                case "Shipping control":
+                    options.Add(new("Dynamicweb controls shipping", Constants.ShippingControlMode.DynamicwebControlsShipping));
+                    options.Add(new("ERP controls shipping", Constants.ShippingControlMode.ErpControlsShipping));
+                    options.Add(new("ERP calculates shipping cost based on Dynamicweb selection", Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection));
+                    break;
                 case "ConnectionToType":
                     options.Add(new(nameof(ConnectionType.Endpoint), ConnectionType.Endpoint));
                     options.Add(new("Dynamicweb connector web service", ConnectionType.WebService));
                     break;
-                case "ERP Local Currency":                                        
+                case "ERP Local Currency":
                     foreach (var currency in Services.Currencies.GetAllCurrencies())
                     {
                         options.Add(new($"{currency.GetName(Services.Languages.GetDefaultLanguageId())} - {currency.Code}", currency.Code));
@@ -796,7 +800,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                         result.Add("Include variants in the product information request");
                         result.Add("Max products per request");
                     }
-                    break;                
+                    break;
             }
             return result;
         }

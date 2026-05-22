@@ -266,10 +266,9 @@
         string ErpShippingItemKey { get; set; }
 
         /// <summary>
-        /// Gets or sets if ERP controls shipping calculations
+        /// Gets or sets the shipping control mode.
         /// </summary>
-        /// <value><c>true</c> if [ERP controls shipping calculations]; otherwise, <c>false</c>.</value>
-        bool ErpControlsShipping { get; set; }
+        string ShippingControlMode { get; set; }
 
         /// <summary>
         /// Gets or sets if the orderline should be set to fixed when unitprice is set by the orderhandler

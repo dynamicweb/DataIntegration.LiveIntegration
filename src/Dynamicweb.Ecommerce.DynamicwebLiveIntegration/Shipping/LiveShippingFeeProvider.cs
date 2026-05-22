@@ -28,13 +28,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             PriceRaw rate = null;
 
             if (Context.Current != null && Context.Current.Items != null && Context.Current.Items["DynamicwebLiveShippingFeeProvider" + order.Id] != null)
-            {                
+            {
                 double shippingFee = (double)Context.Current.Items["DynamicwebLiveShippingFeeProvider" + order.Id];
                 rate = new PriceRaw(shippingFee, order.Currency);
-            }            
+            }
 
             return rate;
-        }        
+        }
 
         /// <summary>
         /// Processes the shipping.
@@ -43,12 +43,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="orderNode">The order node.</param>
         internal static void ProcessShipping(Settings settings, Order order, XmlNode orderNode, Logger logger)
         {
-            if (settings.ErpControlsShipping)
-            {
-                Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.LiveShippingFeeProvider.ProcessShipping START");
-                ProcessLiveIntegrationShipping(settings, order, orderNode, logger);
-                Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.LiveShippingFeeProvider.ProcessShipping END");
-            }
+            Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.LiveShippingFeeProvider.ProcessShipping START");
+            ProcessLiveIntegrationShipping(settings, order, orderNode, logger);
+            Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.LiveShippingFeeProvider.ProcessShipping END");
         }
 
         /// <summary>
@@ -68,9 +65,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// Gets the shipping.
         /// </summary>
         /// <returns>Shipping.</returns>
-        private static Shipping GetShipping()
-        {            
-            return Services.Shippings.GetShippingsWithoutRegions(false).FirstOrDefault(s => !string.IsNullOrEmpty(s.ServiceSystemName) && 
+        private static Ecommerce.Orders.Shipping GetShipping()
+        {
+            return Services.Shippings.GetShippingsWithoutRegions(false).FirstOrDefault(s => !string.IsNullOrEmpty(s.ServiceSystemName) &&
                 (string.Equals(typeof(LiveShippingFeeProvider).GetTypeNameWithAssembly(), s.ServiceSystemName) ||
                 string.Equals(s.ServiceSystemName, typeof(LiveShippingFeeProvider).FullName, StringComparison.OrdinalIgnoreCase)));
         }
@@ -80,7 +77,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             string shippingFee = orderNode.SelectSingleNode("column [@columnName='OrderShippingFee']")?.InnerText;
             if (!string.IsNullOrEmpty(shippingFee))
             {
-                Shipping liveIntegrationShipping = GetShipping();
+                var liveIntegrationShipping = GetShipping();
                 if (liveIntegrationShipping != null)
                 {
                     order.ShippingMethodId = liveIntegrationShipping.Id;
@@ -98,7 +95,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
                     if (!order.IsCart)
                     {
-                        order.ShippingFee.PriceWithVAT = fee;                        
+                        order.ShippingFee.PriceWithVAT = fee;
                     }
                     else
                     {

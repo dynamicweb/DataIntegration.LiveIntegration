@@ -77,5 +77,17 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
 
             public const string DefaultShippingItemType = "ItemCharge";
         }
+
+        internal static class ShippingControlMode
+        {
+            /// <summary>Dynamicweb calculates and sends the shipping fee to the ERP.</summary>
+            public const string DynamicwebControlsShipping = "DynamicwebControlsShipping";
+
+            /// <summary>ERP controls shipping entirely; no shipping data is sent from Dynamicweb.</summary>
+            public const string ErpControlsShipping = "ErpControlsShipping";
+
+            /// <summary>The customer selects a shipping method in Dynamicweb; the ERP calculates the freight cost based on the selected method's identity fields.</summary>
+            public const string ErpCalculatesBasedOnDwSelection = "ErpCalculatesBasedOnDwSelection";
+        }
     }
 }

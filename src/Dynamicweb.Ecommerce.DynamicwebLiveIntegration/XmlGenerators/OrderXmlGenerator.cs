@@ -57,7 +57,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
         /// <param name="orderNode">The order node.</param>
         /// <param name="order">The order.</param>
         private static void AddCustomerInformation(Settings currentSettings, XmlElement orderNode, Order order, User user)
-        {            
+        {
             AddChildXmlNode(orderNode, "OrderCustomerAccessUserExternalId", !string.IsNullOrWhiteSpace(user?.ExternalID) ? user.ExternalID : currentSettings.AnonymousUserKey);
             AddChildXmlNode(orderNode, "OrderCustomerNumber", !string.IsNullOrWhiteSpace(user?.CustomerNumber) ? user.CustomerNumber : currentSettings.AnonymousUserKey);
             AddChildXmlNode(orderNode, "OrderCustomerName", !string.IsNullOrWhiteSpace(user?.Name) ? user.Name : order.CustomerName);
@@ -87,10 +87,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             UserAddress deliveryAddress = null;
             if (settings.CreateOrder && order.DeliveryAddressId > 0)
             {
-                deliveryAddress = UserManagementServices.UserAddresses.GetAddressById(order.DeliveryAddressId);                
+                deliveryAddress = UserManagementServices.UserAddresses.GetAddressById(order.DeliveryAddressId);
             }
             string deliveryName = !string.IsNullOrEmpty(order.DeliveryName) ? order.DeliveryName :
-                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : user?.Name ?? "";                
+                !string.IsNullOrWhiteSpace(order.CustomerName) ? order.CustomerName : user?.Name ?? "";
 
             AddChildXmlNode(orderNode, "OrderDeliveryName", deliveryName);
             AddChildXmlNode(orderNode, "OrderDeliveryAddress", order.DeliveryAddress);
@@ -228,16 +228,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(itemNode, "OrderShippingDate", order.ShippingDate.HasValue ? order.ShippingDate.ToIntegrationString(currentSettings, logger) : string.Empty);
             AddChildXmlNode(itemNode, "OrderReference", order.Reference);
 
-            if (settings.ErpControlsShipping)
+            if (settings.ShippingControlMode == Constants.ShippingControlMode.DynamicwebControlsShipping)
             {
-                // AX handles shipping
-                AddChildXmlNode(itemNode, "OrderShippingMethodName", string.Empty, true);
-                AddChildXmlNode(itemNode, "OrderShippingMethodId", string.Empty);
-                AddChildXmlNode(itemNode, "OrderShippingFee", string.Empty);
-            }
-            else
-            {
-                // Dynamicweb handles shipping
+                // DW calculates and sends shipping fee
                 AddChildXmlNode(itemNode, "OrderShippingMethodName", order.ShippingMethod, true);
                 AddChildXmlNode(itemNode, "OrderShippingMethodId", order.ShippingMethodId);
                 if (!settings.GenerateXmlForHash)
@@ -250,6 +243,22 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 AddChildXmlNode(itemNode, "OrderShippingCode", order.ShippingMethodCode);
                 AddChildXmlNode(itemNode, "OrderShippingAgentCode", order.ShippingMethodAgentCode);
                 AddChildXmlNode(itemNode, "OrderShippingAgentServiceCode", order.ShippingMethodAgentServiceCode);
+            }
+            else if (settings.ShippingControlMode == Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection)
+            {
+                // DW selects the shipping method; ERP calculates the freight cost — send identity fields, no fee
+                AddChildXmlNode(itemNode, "OrderShippingMethodName", order.ShippingMethod, true);
+                AddChildXmlNode(itemNode, "OrderShippingMethodId", order.ShippingMethodId);
+                AddChildXmlNode(itemNode, "OrderShippingCode", order.ShippingMethodCode);
+                AddChildXmlNode(itemNode, "OrderShippingAgentCode", order.ShippingMethodAgentCode);
+                AddChildXmlNode(itemNode, "OrderShippingAgentServiceCode", order.ShippingMethodAgentServiceCode);
+            }
+            else
+            {
+                // ERP controls shipping entirely — send empty values
+                AddChildXmlNode(itemNode, "OrderShippingMethodName", string.Empty, true);
+                AddChildXmlNode(itemNode, "OrderShippingMethodId", string.Empty);
+                AddChildXmlNode(itemNode, "OrderShippingFee", string.Empty);
             }
 
             if (!settings.GenerateXmlForHash)
@@ -406,7 +415,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                     return unitPrice.PriceWithoutVAT;
                 }
                 else
-                {                    
+                {
                     var giftCardDiscount = _orderPriceWithoutVat.Value;
                     _orderPriceWithoutVat = 0d;
                     return giftCardDiscount > 0 ? giftCardDiscount * -1 : giftCardDiscount;

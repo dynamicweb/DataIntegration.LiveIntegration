@@ -31,10 +31,9 @@
         public bool ErpControlsDiscount { get; set; }
 
         /// <summary>
-        /// Gets or sets if ERP controls shipping
+        /// Gets or sets the shipping control mode.
         /// </summary>
-        /// <value><c>true</c> if [ERP controls shipping]; otherwise, <c>false</c>.</value>
-        public bool ErpControlsShipping { get; set; }
+        public string ShippingControlMode { get; set; }
         
         /// <summary>
         /// Gets or sets the key for shipping item type.
