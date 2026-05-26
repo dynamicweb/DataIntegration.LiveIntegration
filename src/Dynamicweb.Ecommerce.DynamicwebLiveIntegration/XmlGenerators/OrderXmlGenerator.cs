@@ -233,11 +233,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 // DW calculates and sends shipping fee
                 AddChildXmlNode(itemNode, "OrderShippingMethodName", order.ShippingMethod, true);
                 AddChildXmlNode(itemNode, "OrderShippingMethodId", order.ShippingMethodId);
-                if (!settings.GenerateXmlForHash)
-                {
-                    AddChildXmlNode(itemNode, "OrderShippingFee", order.ShippingFee.PriceWithVAT.ToIntegrationString(currentSettings, logger));
-                    AddChildXmlNode(itemNode, "OrderShippingFeeWithoutVat", order.ShippingFee.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
-                }
+                AddShippingFeeNodes(currentSettings, itemNode, order, settings, logger);
                 AddChildXmlNode(itemNode, "OrderShippingItemType", settings.ErpShippingItemType);
                 AddChildXmlNode(itemNode, "OrderShippingItemKey", settings.ErpShippingItemKey);
                 AddChildXmlNode(itemNode, "OrderShippingCode", order.ShippingMethodCode);
@@ -252,6 +248,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                 AddChildXmlNode(itemNode, "OrderShippingCode", order.ShippingMethodCode);
                 AddChildXmlNode(itemNode, "OrderShippingAgentCode", order.ShippingMethodAgentCode);
                 AddChildXmlNode(itemNode, "OrderShippingAgentServiceCode", order.ShippingMethodAgentServiceCode);
+                AddShippingFeeNodes(currentSettings, itemNode, order, settings, logger);
             }
             else
             {
@@ -280,6 +277,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             }
 
             return tableNode;
+        }
+
+        private static void AddShippingFeeNodes(Settings currentSettings, XmlElement itemNode, Order order, OrderXmlGeneratorSettings settings, Logger logger)
+        {
+            if (!settings.GenerateXmlForHash)
+            {
+                AddChildXmlNode(itemNode, "OrderShippingFee", order.ShippingFee.PriceWithVAT.ToIntegrationString(currentSettings, logger));
+                AddChildXmlNode(itemNode, "OrderShippingFeeWithoutVat", order.ShippingFee.PriceWithoutVAT.ToIntegrationString(currentSettings, logger));
+            }
         }
 
         /// <summary>

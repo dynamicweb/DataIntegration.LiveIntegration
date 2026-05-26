@@ -92,6 +92,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             bool erpControlsDiscount = user.IsUserErpDiscountAllowed(settings);
 
+            if (IsAllOrderLinesDiscounts(erpControlsDiscount, order, liveIntegrationSubmitType))
+            {                
+                Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
+                return null;
+            }
+
             // default states
             successOrderStateId ??= settings.OrderStateAfterExportSucceeded;
 
@@ -955,14 +961,14 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     else
                     {
                         SetOrderPrices(order, orderNode, ctx, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
-                    }                    
-                    if (ctx.Settings.ShippingControlMode == Constants.ShippingControlMode.ErpControlsShipping)
-                    {
-                        LiveShippingFeeProvider.ProcessShipping(ctx.Settings, order, orderNode, logger);
-                    }
-                    else if (ctx.Settings.ShippingControlMode == Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection)
+                    }                                        
+                    if (ctx.Settings.ShippingControlMode == Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection)
                     {
                         ErpShippingFeeProvider.ProcessShipping(ctx.Settings, order, orderNode, logger);
+                    }
+                    else if (ctx.Settings.ShippingControlMode != Constants.ShippingControlMode.DynamicwebControlsShipping)
+                    {
+                        LiveShippingFeeProvider.ProcessShipping(ctx.Settings, order, orderNode, logger);
                     }
                 }
                 else
@@ -1405,6 +1411,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         internal static void RemoveCurrentlyProcessingOrder(Order order)
         {
             Caching.Cache.Current.Remove(OrderCacheKey(order));
+        }
+
+        private static bool IsAllOrderLinesDiscounts(bool erpControlsDiscountForUser, Order order, SubmitType liveIntegrationSubmitType)
+        {
+            //If no product lines and all lines are discounts remove discount lines and recalculate order
+            if (!order.Complete && erpControlsDiscountForUser && liveIntegrationSubmitType == SubmitType.LiveOrderOrCart && order.OrderLines.All(ol => ol.IsDiscount()))
+            {
+                order.OrderLines.RemoveDiscounts();
+                order.AllowOverridePrices = false;
+                Services.Orders.ForcePriceRecalculation(order);
+                return true;
+            }
+            return false;
         }
     }
 }
