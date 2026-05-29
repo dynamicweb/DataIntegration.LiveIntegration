@@ -265,7 +265,21 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// <summary>
         /// Gets or sets the shipping control mode.
         /// </summary>
-        public string ShippingControlMode { get; set; }
+        public string ShippingControlMode
+        {
+            get => _shippingControlMode;
+            set => _shippingControlMode = NormalizeShippingControlMode(value);
+        }
+        private string _shippingControlMode;
+
+        private static string NormalizeShippingControlMode(string value)
+        {
+            if (string.Equals(value, Constants.ShippingControlMode.DynamicwebControlsShipping, StringComparison.OrdinalIgnoreCase))
+                return Constants.ShippingControlMode.DynamicwebControlsShipping;
+            if (string.Equals(value, Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection, StringComparison.OrdinalIgnoreCase))
+                return Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection;
+            return Constants.ShippingControlMode.ErpControlsShipping;
+        }
 
         /// <summary>
         /// Gets or sets the key for shipping item type.
