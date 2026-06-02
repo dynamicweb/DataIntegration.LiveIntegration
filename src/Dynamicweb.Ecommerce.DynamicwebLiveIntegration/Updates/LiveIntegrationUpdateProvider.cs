@@ -64,10 +64,6 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Updates
                     doc.Save(file);
                     updated = true;
                 }
-
-                    doc.Save(file);
-                    updated = true;
-                }
             }
 
             if (updated)
