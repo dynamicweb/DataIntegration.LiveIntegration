@@ -389,6 +389,16 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         [AddInParameterOrder(157)]
         public string ShippingControlMode { get; set; }
 
+        /// <inheritdoc/>
+        [Obsolete("Use ShippingControlMode instead.")]
+        public bool ErpControlsShipping
+        {
+            get => ShippingControlMode != Constants.ShippingControlMode.DynamicwebControlsShipping;
+            set => ShippingControlMode = value
+                ? Constants.ShippingControlMode.ErpControlsShipping
+                : Constants.ShippingControlMode.DynamicwebControlsShipping;
+        }
+
         /// <summary>
         /// Gets or sets the key for shipping item type.
         /// </summary>

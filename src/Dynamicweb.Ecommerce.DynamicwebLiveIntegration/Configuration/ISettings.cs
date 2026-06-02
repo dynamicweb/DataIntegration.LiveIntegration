@@ -271,6 +271,14 @@
         string ShippingControlMode { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the ERP controls shipping. Use <see cref="ShippingControlMode"/> instead.
+        /// Setting <c>false</c> switches to <see cref="Constants.ShippingControlMode.DynamicwebControlsShipping"/>;
+        /// setting <c>true</c> restores <see cref="Constants.ShippingControlMode.ErpControlsShipping"/>.
+        /// </summary>
+        [System.Obsolete("Use ShippingControlMode instead.")]
+        bool ErpControlsShipping { get; set; }
+
+        /// <summary>
         /// Gets or sets if the orderline should be set to fixed when unitprice is set by the orderhandler
         /// </summary>
         bool SetOrderlineFixed { get; set; }
