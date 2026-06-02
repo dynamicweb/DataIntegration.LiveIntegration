@@ -242,7 +242,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             }
             else if (settings.ShippingControlMode == Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection)
             {
-                // DW selects the shipping method; ERP calculates the freight cost — send identity fields, no fee
+                // DW selects the shipping method and sends the current fee; ERP may recalculate the freight cost based on the identity fields
                 AddChildXmlNode(itemNode, "OrderShippingMethodName", order.ShippingMethod, true);
                 AddChildXmlNode(itemNode, "OrderShippingMethodId", order.ShippingMethodId);
                 AddChildXmlNode(itemNode, "OrderShippingCode", order.ShippingMethodCode);

@@ -1,6 +1,5 @@
 ﻿using Dynamicweb.Core;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
-using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Shipping;
 using Dynamicweb.Updates;
 using System;
 using System.Collections.Generic;
@@ -28,12 +27,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Updates
                 if (!file.Contains(Constants.AddInName, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                string name = Path.GetFileNameWithoutExtension(file).Replace(".Setup", string.Empty, StringComparison.OrdinalIgnoreCase);
 
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(File.ReadAllText(file));
 
-                if (!string.IsNullOrEmpty(doc.SelectSingleNode("//Settings/ShippingControlMode")?.InnerText))
+                var shippingControlModeNode = doc.SelectSingleNode("//Settings/ShippingControlMode");
+                if (shippingControlModeNode != null && !string.IsNullOrEmpty(shippingControlModeNode.InnerText))
                     continue;
 
                 var erpControlsShippingNode = doc.SelectSingleNode("//Settings/ErpControlsShipping");
@@ -49,11 +48,22 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Updates
                 XmlNode settingsNode = doc.SelectSingleNode("//Settings");
                 if (settingsNode is not null)
                 {
-                    XmlElement shippingControlModeNode = doc.CreateElement("ShippingControlMode");
-                    shippingControlModeNode.InnerText = shippingControlMode;
-                    settingsNode.AppendChild(shippingControlModeNode);
+                    if (shippingControlModeNode != null)
+                    {
+                        shippingControlModeNode.InnerText = shippingControlMode;
+                    }
+                    else
+                    {
+                        XmlElement newShippingControlModeNode = doc.CreateElement("ShippingControlMode");
+                        newShippingControlModeNode.InnerText = shippingControlMode;
+                        settingsNode.AppendChild(newShippingControlModeNode);
+                    }
 
                     settingsNode.RemoveChild(erpControlsShippingNode);
+
+                    doc.Save(file);
+                    updated = true;
+                }
 
                     doc.Save(file);
                     updated = true;
