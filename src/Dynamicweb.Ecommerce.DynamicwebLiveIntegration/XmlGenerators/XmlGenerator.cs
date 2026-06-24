@@ -38,6 +38,26 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             parent.AppendChild(node);
         }
 
+        protected static void AddChildXmlNode(XmlElement parent, string nodeName, XmlNode nodeValue, bool isInformationalOnly = false, bool isCustomField = false)
+        {
+            if (parent.OwnerDocument == null)
+            {
+                throw new InvalidOperationException("Cannot call this method without an xml document associated with the parent element.");
+            }
+
+            var node = parent.OwnerDocument.CreateElement("column");
+            node.SetAttribute("columnName", nodeName);
+
+            Dictionary<string, string> attributes = BuildAttributes(isInformationalOnly, isCustomField);
+            foreach (var attribute in attributes)
+            {
+                node.SetAttribute(attribute.Key, attribute.Value);
+            }
+
+            node.AppendChild(parent.OwnerDocument.ImportNode(nodeValue, deep: true));
+            parent.AppendChild(node);
+        }
+
         /// <summary>
         /// Builds the XML document.
         /// </summary>
