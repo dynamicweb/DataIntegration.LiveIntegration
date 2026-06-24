@@ -336,13 +336,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
             AddChildXmlNode(itemNode, "OrderLineBomItemId", orderline.BomItemId);
             AddChildXmlNode(itemNode, "OrderLineGiftCardCode", orderline.GiftCardCode);
             AddChildXmlNode(itemNode, "OrderLineIsGiftCardDiscount", (!string.IsNullOrEmpty(orderline.GiftCardCode)).ToString(), isCustomField: true);
-            var fieldValuesNode = itemNode.OwnerDocument.CreateElement("column");
-            fieldValuesNode.SetAttribute("columnName", "OrderLineFieldValues");
-            fieldValuesNode.AppendChild(
-                itemNode.OwnerDocument.ImportNode(
-                    OrderLineFieldValuesToXml(orderline.OrderLineFieldValues).DocumentElement,
-                    deep: true));
-            itemNode.AppendChild(fieldValuesNode);
+            AddChildXmlNode(itemNode, "OrderLineFieldValues", OrderLineFieldValuesToXml(orderline.OrderLineFieldValues).DocumentElement);
             if (!settings.ErpControlsDiscount && orderline.IsDiscount())
             {
                 AddChildXmlNode(itemNode, "OrderLineDiscountId", orderline.DiscountId);
