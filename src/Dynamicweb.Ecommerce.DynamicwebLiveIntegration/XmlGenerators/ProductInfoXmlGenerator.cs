@@ -100,7 +100,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators
                     AddChildXmlNode(itemNode, "CurrencyCode", currencyCode);
                     AddChildXmlNode(itemNode, "Quantity", productWithQuantity.Quantity.ToIntegrationString(currentSettings, logger));
 
-                    if (settings.AddProductFieldsToRequest && product.ProductFieldValues.Count > 0)
+                    if (settings.AddProductFieldsToRequest)
                     {
                         AppendProductFields(currentSettings, product, itemNode, logger);
                     }

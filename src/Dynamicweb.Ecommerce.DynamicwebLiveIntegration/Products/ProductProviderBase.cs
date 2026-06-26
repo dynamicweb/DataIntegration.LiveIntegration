@@ -169,7 +169,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products
             productPrice.PriceWithVAT = price.PriceWithVAT;
 
             // Update Product Custom Fields
-            if (settings.AddProductFieldsToRequest && product.ProductFieldValues.Count > 0)
+            if (settings.AddProductFieldsToRequest)
             {
                 FillProductFieldValues(product, productInfo);
             }

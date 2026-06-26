@@ -1,7 +1,10 @@
-﻿using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
+﻿using Dynamicweb.Configuration;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Products;
 using Dynamicweb.Ecommerce.Orders;
+using Dynamicweb.Ecommerce.ProductCatalog;
 using Dynamicweb.Ecommerce.Products;
 using System;
 using System.Collections.Generic;
@@ -102,7 +105,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             var productSelection = product.GetPriceProductSelection(1, null);
             var context = new LiveContext(Services.Currencies.GetCurrency(currencyCode), Helpers.GetCurrentExtranetUser(), Services.Shops.GetShop(shopId));
             return Products.ProductManager.FetchProductInfos(
-                new List<Prices.PriceProductSelection>(){ productSelection },
+                new List<Prices.PriceProductSelection>() { productSelection },
                 context,
                 settings, new Logging.Logger(settings), false, SubmitType.Live, updateCache);
         }
@@ -122,6 +125,44 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     && (user == null || !user.IsLiveIntegrationPricesDisabled())
                     && settings.LazyLoadProductInfo;
             }
-        }        
+        }
+
+        /// <summary>
+        /// Updates the product fields in the specified product view model with live information from the ERP.
+        /// </summary>
+        /// <param name="product">The product view model.</param>
+        public static void UpdateProductInViewModel(ProductViewModel product)
+        {
+            var shopId = Global.CurrentShopId;
+            var settings = SettingsManager.GetSettingsByShop(shopId);
+            if (settings == null)
+                return;
+
+            var user = Helpers.GetCurrentExtranetUser();
+            var loadedProduct = Services.Products.GetProductById(product.Id, product.VariantId, product.LanguageId);
+            if (loadedProduct == null || !Helpers.CanCheckPrice(settings, loadedProduct, user))
+                return;
+
+            var logger = new Logging.Logger(settings);
+            bool showVariantDefault = SystemConfiguration.Instance.GetBoolean("/Globalsettings/Ecom/Product/ShowVariantDefault");
+            var productForRequest = showVariantDefault ? ProductManager.ProductProvider.GetProductFromVariantComboId(loadedProduct, logger) : loadedProduct;
+            var context = new LiveContext(Helpers.GetCurrentCurrency(), user, null);
+            string unitId = settings.UseUnitPrices ? productForRequest.DefaultUnitId : null;
+            var productSelection = productForRequest.GetPriceProductSelection(1, unitId);
+
+            var productInfo = ProductManager.GetProductInfo(productForRequest, settings, user);
+            if (productInfo == null)
+            {
+                if (!ProductManager.FetchProductInfos([productSelection], context, settings, logger, false, SubmitType.Live, true))
+                    return;
+
+                productInfo = ProductManager.GetProductInfo(productForRequest, settings, user);
+            }
+
+            if (productInfo == null)
+                return;
+
+            ProductManager.ProductProvider.FillProductValues(productInfo, loadedProduct, settings, productSelection.Quantity, context);
+        }
     }
 }
