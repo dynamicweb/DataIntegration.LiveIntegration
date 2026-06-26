@@ -6,6 +6,7 @@ using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Discounts;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Extensions;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Shipping;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.XmlGenerators;
 using Dynamicweb.Ecommerce.Orders;
 using Dynamicweb.Ecommerce.Prices;
@@ -91,6 +92,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             bool erpControlsDiscount = user.IsUserErpDiscountAllowed(settings);
 
+            if (IsAllOrderLinesDiscounts(erpControlsDiscount, order, liveIntegrationSubmitType))
+            {                
+                Diagnostics.ExecutionTable.Current.Add("DynamicwebLiveIntegration.OrderHandler.UpdateOrder END");
+                return null;
+            }
+
             // default states
             successOrderStateId ??= settings.OrderStateAfterExportSucceeded;
 
@@ -103,7 +110,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 LiveIntegrationSubmitType = liveIntegrationSubmitType,
                 ReferenceName = "OrdersPut",
                 ErpControlsDiscount = erpControlsDiscount,
-                ErpControlsShipping = settings.ErpControlsShipping,
+                ShippingControlMode = settings.ShippingControlMode,
                 ErpShippingItemKey = settings.ErpShippingItemKey,
                 ErpShippingItemType = settings.ErpShippingItemType,
                 CalculateOrderUsingProductNumber = settings.CalculateOrderUsingProductNumber,
@@ -904,7 +911,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 XmlNode orderNode = response.SelectSingleNode("//item [@table='EcomOrders']");
                 PriceInfo shippingFeeSentInRequest = null;
-                if (!createOrder && !ctx.Settings.ErpControlsShipping && !string.IsNullOrEmpty(order.ShippingMethodId))
+                if (!createOrder && ctx.Settings.ShippingControlMode == Constants.ShippingControlMode.DynamicwebControlsShipping && !string.IsNullOrEmpty(order.ShippingMethodId))
                 {
                     shippingFeeSentInRequest = order.ShippingFee;
                 }
@@ -954,8 +961,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                     else
                     {
                         SetOrderPrices(order, orderNode, ctx, logger, orderId, out updatePriceBeforeFeesFromOrderPrice);
+                    }                                        
+                    if (ctx.Settings.ShippingControlMode == Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection)
+                    {
+                        ErpShippingFeeProvider.ProcessShipping(ctx.Settings, order, orderNode, logger);
                     }
-                    LiveShippingFeeProvider.ProcessShipping(ctx.Settings, order, orderNode, logger);
+                    else if (ctx.Settings.ShippingControlMode != Constants.ShippingControlMode.DynamicwebControlsShipping)
+                    {
+                        LiveShippingFeeProvider.ProcessShipping(ctx.Settings, order, orderNode, logger);
+                    }
                 }
                 else
                 {
@@ -979,7 +993,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
                 else
                 {
-                    if (!ctx.Settings.ErpControlsShipping && shippingFeeSentInRequest != null)
+                    if (ctx.Settings.ShippingControlMode == Constants.ShippingControlMode.DynamicwebControlsShipping && shippingFeeSentInRequest != null)
                     {
                         UpdateDynamicwebShipping(order, orderNode, shippingFeeSentInRequest, ctx.Settings, logger, updatePriceBeforeFeesFromOrderPrice);
                     }
@@ -1174,7 +1188,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// <param name="orderNode">The order node.</param>
         private static void SetShippingWarning(Settings settings, Order order, XmlNode orderNode)
         {
-            if (!settings.ErpControlsShipping)
+            if (settings.ShippingControlMode == Constants.ShippingControlMode.DynamicwebControlsShipping)
             {
                 var node = orderNode.SelectSingleNode("column [@columnName='OrderShippingWarning']");
                 if (node != null)
@@ -1397,6 +1411,19 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         internal static void RemoveCurrentlyProcessingOrder(Order order)
         {
             Caching.Cache.Current.Remove(OrderCacheKey(order));
-        }        
+        }
+
+        private static bool IsAllOrderLinesDiscounts(bool erpControlsDiscountForUser, Order order, SubmitType liveIntegrationSubmitType)
+        {
+            //If no product lines and all lines are discounts remove discount lines and recalculate order
+            if (!order.Complete && erpControlsDiscountForUser && liveIntegrationSubmitType == SubmitType.LiveOrderOrCart && order.OrderLines.All(ol => ol.IsDiscount()))
+            {
+                order.OrderLines.RemoveDiscounts();
+                order.AllowOverridePrices = false;
+                Services.Orders.ForcePriceRecalculation(order);
+                return true;
+            }
+            return false;
+        }
     }
 }

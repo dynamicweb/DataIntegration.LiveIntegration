@@ -19,7 +19,7 @@
 		<IncludeSymbols>true</IncludeSymbols>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>		
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 	<ItemGroup>

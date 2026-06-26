@@ -266,9 +266,16 @@
         string ErpShippingItemKey { get; set; }
 
         /// <summary>
-        /// Gets or sets if ERP controls shipping calculations
+        /// Gets or sets the shipping control mode.
         /// </summary>
-        /// <value><c>true</c> if [ERP controls shipping calculations]; otherwise, <c>false</c>.</value>
+        string ShippingControlMode { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the ERP controls shipping. Use <see cref="ShippingControlMode"/> instead.
+        /// Setting <c>false</c> switches to <see cref="Constants.ShippingControlMode.DynamicwebControlsShipping"/>;
+        /// setting <c>true</c> restores <see cref="Constants.ShippingControlMode.ErpControlsShipping"/>.
+        /// </summary>
+        [System.Obsolete("Use ShippingControlMode instead.")]
         bool ErpControlsShipping { get; set; }
 
         /// <summary>

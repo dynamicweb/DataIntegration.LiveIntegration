@@ -40,7 +40,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
             WebServiceConnectionStatusGlobalTagName = "Global:LiveIntegration.IsWebServiceConnectionAvailable";
 
             ErpControlsDiscount = true;
-            ErpControlsShipping = true;
+            ShippingControlMode = Constants.ShippingControlMode.ErpControlsShipping;
 
             SetOrderlineFixed = false;
 
@@ -263,10 +263,33 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         public bool ErpControlsDiscount { get; set; }
 
         /// <summary>
-        /// Gets or sets if ERP controls shipping
+        /// Gets or sets the shipping control mode.
         /// </summary>
-        /// <value><c>true</c> if [ERP controls shipping]; otherwise, <c>false</c>.</value>
-        public bool ErpControlsShipping { get; set; }
+        public string ShippingControlMode
+        {
+            get => _shippingControlMode;
+            set => _shippingControlMode = NormalizeShippingControlMode(value);
+        }
+        private string _shippingControlMode;
+
+        private static string NormalizeShippingControlMode(string value)
+        {
+            if (string.Equals(value, Constants.ShippingControlMode.DynamicwebControlsShipping, StringComparison.OrdinalIgnoreCase))
+                return Constants.ShippingControlMode.DynamicwebControlsShipping;
+            if (string.Equals(value, Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection, StringComparison.OrdinalIgnoreCase))
+                return Constants.ShippingControlMode.ErpCalculatesBasedOnDwSelection;
+            return Constants.ShippingControlMode.ErpControlsShipping;
+        }
+
+        /// <inheritdoc/>
+        [Obsolete("Use ShippingControlMode instead.")]
+        public bool ErpControlsShipping
+        {
+            get => ShippingControlMode != Constants.ShippingControlMode.DynamicwebControlsShipping;
+            set => ShippingControlMode = value
+                ? Constants.ShippingControlMode.ErpControlsShipping
+                : Constants.ShippingControlMode.DynamicwebControlsShipping;
+        }
 
         /// <summary>
         /// Gets or sets the key for shipping item type.
@@ -470,7 +493,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 target.SkipLedgerOrder = source.SkipLedgerOrder;
                 target.ErpControlsDiscount = source.ErpControlsDiscount;
                 target.DisableErpDiscountsForAnonymousUsers = source.DisableErpDiscountsForAnonymousUsers;
-                target.ErpControlsShipping = source.ErpControlsShipping;
+                target.ShippingControlMode = source.ShippingControlMode;
                 target.ErpShippingItemType = source.ErpShippingItemType;
                 target.ErpShippingItemKey = source.ErpShippingItemKey;
 

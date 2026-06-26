@@ -85,7 +85,7 @@ public sealed class DownloadOrderXmlCommand : CommandBase
             //For anonymous orders, CustomerAccessUserId can be unset, GetUserById returns null, and IsUserErpDiscountAllowed falls back
             //to the current anonymous-user setting. Therefore, ErpControlsDiscount here reflects current evaluation rather than historical checkout-time configuration.
             ErpControlsDiscount = isUserErpDiscountAllowed,
-            ErpControlsShipping = settings.ErpControlsShipping,
+            ShippingControlMode = settings.ShippingControlMode,
             ErpShippingItemKey = settings.ErpShippingItemKey,
             ErpShippingItemType = settings.ErpShippingItemType,
             CalculateOrderUsingProductNumber = settings.CalculateOrderUsingProductNumber
