@@ -146,6 +146,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             var logger = new Logging.Logger(settings);
             bool showVariantDefault = SystemConfiguration.Instance.GetBoolean("/Globalsettings/Ecom/Product/ShowVariantDefault");
             var productForRequest = showVariantDefault ? ProductManager.ProductProvider.GetProductFromVariantComboId(loadedProduct, logger) : loadedProduct;
+            productForRequest = productForRequest ?? loadedProduct;
+
             var context = new LiveContext(Helpers.GetCurrentCurrency(), user, null);
             string unitId = settings.UseUnitPrices ? productForRequest.DefaultUnitId : null;
             var productSelection = productForRequest.GetPriceProductSelection(1, unitId);
