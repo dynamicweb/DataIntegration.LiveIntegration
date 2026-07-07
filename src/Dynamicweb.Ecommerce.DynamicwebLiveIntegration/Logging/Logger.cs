@@ -55,6 +55,13 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
         private bool LogDebugInfo => _settings.LogDebugInfo;
 
         /// <summary>
+        /// Set to true before an order-creation ERP call to enable per-call logging
+        /// when <see cref="Settings.LogOrderCreationRequests"/> is on but general debug
+        /// logging is off. Reset to false immediately after the call.
+        /// </summary>
+        public bool IsOrderCreationContext { get; set; }
+
+        /// <summary>
         /// Gets or sets a value that determines if general info should be logged.
         /// </summary>
         /// <value><c>true</c> if [log general errors]; otherwise, <c>false</c>.</value>
@@ -169,11 +176,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
             switch (level)
             {
                 case ErrorLevel.ConnectionError:
-                    result = LogConnectionErrors;
+                    result = LogConnectionErrors || (IsOrderCreationContext && _settings.LogOrderCreationRequests);
                     break;
 
                 case ErrorLevel.ResponseError:
-                    result = LogResponseErrors;
+                    result = LogResponseErrors || (IsOrderCreationContext && _settings.LogOrderCreationRequests);
                     break;
 
                 case ErrorLevel.Error:
@@ -181,7 +188,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging
                     break;
 
                 case ErrorLevel.DebugInfo:
-                    result = LogDebugInfo;
+                    result = LogDebugInfo || (IsOrderCreationContext && _settings.LogOrderCreationRequests);
                     break;
 
                 case ErrorLevel.EmailSend:

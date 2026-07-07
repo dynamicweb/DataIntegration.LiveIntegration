@@ -137,7 +137,9 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
 
             var ctx = new OrderResponseContext(settings, erpControlsDiscount);
 
+            logger.IsOrderCreationContext = createOrder;
             XmlDocument response = GetResponse(ctx, requestXml, order, createOrder, logger, out bool? requestCancelled, liveIntegrationSubmitType);
+            logger.IsOrderCreationContext = false;
             if (response != null && !string.IsNullOrWhiteSpace(response.InnerXml))
             {
                 bool processResponseResult = ProcessResponse(ctx, response, order, createOrder, successOrderStateId, failedOrderStateId, logger);

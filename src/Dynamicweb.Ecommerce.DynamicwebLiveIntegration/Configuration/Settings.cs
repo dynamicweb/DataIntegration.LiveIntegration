@@ -428,6 +428,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
         /// <value><c>true</c> if a copy should be saved; otherwise, <c>false</c>.</value>
         public bool SaveCopyOfOrderXml { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value that determines if order creation requests and responses should always be logged,
+        /// even when general request/response logging is disabled.
+        /// </summary>
+        public bool LogOrderCreationRequests { get; set; }
+
         #endregion Logs parameters        
 
         /// <summary>
@@ -481,6 +487,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration
                 target.LogResponseErrors = source.LogResponseErrors;
                 target.LogGeneralErrors = source.LogGeneralErrors;
                 target.LogDebugInfo = source.LogDebugInfo;
+                target.LogOrderCreationRequests = source.LogOrderCreationRequests;
                 target.LogMaxSize = source.LogMaxSize;
                 target.KeepLogFiles = source.KeepLogFiles;
 
