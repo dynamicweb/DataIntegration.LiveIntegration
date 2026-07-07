@@ -639,6 +639,15 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         [AddInParameterOrder(370)]
         public bool LogDebugInfo { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value that determines if order creation requests and responses should always be logged.
+        /// </summary>
+        [AddInParameter("Log order creation request and response")]
+        [AddInParameterEditor(typeof(YesNoParameterEditor), "")]
+        [AddInParameterGroup("Logs")]
+        [AddInParameterOrder(375)]
+        public bool LogOrderCreationRequests { get; set; }
+
         #endregion Logs parameters        
 
         #endregion Configuration parameters

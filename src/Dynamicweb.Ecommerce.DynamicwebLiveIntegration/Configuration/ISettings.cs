@@ -129,6 +129,11 @@
         bool LogResponseErrors { get; set; }
 
         /// <summary>
+        /// Gets or sets a value that determines if order creation requests and responses should always be logged.
+        /// </summary>
+        bool LogOrderCreationRequests { get; set; }
+
+        /// <summary>
         /// Gets or sets the recipient's email address for notification emails.
         /// </summary>
         /// <value>The notification email.</value>
