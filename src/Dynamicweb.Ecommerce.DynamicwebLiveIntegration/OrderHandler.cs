@@ -33,7 +33,23 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         /// </summary>
         private static readonly string OrderXmlLogFolder = "/Files/System/Log/LiveIntegration/OrderXml";
 
+        /// <summary>
+        /// Prefix used by OrderLine.Id for order lines that were created as part of a multi order line
+        /// request but have not actually been persisted yet. Lines with this placeholder Id still need
+        /// to be saved before they can be used as a ParentLineId reference.
+        /// </summary>
+        private const string NewMultiOrderLineIdPrefix = "DW_NEWMULTIORDERLINEID_";
+
         private readonly record struct OrderResponseContext(Settings Settings, bool ErpControlsDiscountForUser);
+
+        /// <summary>
+        /// Determines whether an order line has not actually been persisted yet, including lines whose
+        /// Id was pre-assigned a temporary multi order line placeholder before saving.
+        /// </summary>
+        private static bool IsUnsavedOrderLine(OrderLine orderLine)
+        {
+            return string.IsNullOrEmpty(orderLine.Id) || orderLine.Id.StartsWith(NewMultiOrderLineIdPrefix, StringComparison.OrdinalIgnoreCase);
+        }
 
         /// <summary>
         /// Gets the cache level for order information.
@@ -533,7 +549,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
 
                 parentLine = parentLineWithVariant ?? parentLine;
-                if (parentLine != null && string.IsNullOrEmpty(parentLine.Id))
+                if (parentLine != null && IsUnsavedOrderLine(parentLine))
                 {
                     Services.OrderLines.Save(parentLine);
                     orderLineIds.Add(parentLine.Id);
@@ -723,7 +739,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
                 }
 
                 parentLine = parentLineWithVariant ?? parentLine;
-                if (parentLine != null && string.IsNullOrEmpty(parentLine.Id))
+                if (parentLine != null && IsUnsavedOrderLine(parentLine))
                 {
                     Services.OrderLines.Save(parentLine);
                     orderLineIds.Add(parentLine.Id);
