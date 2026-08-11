@@ -1262,7 +1262,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             {
                 return;
             }
-            var newLines = order.OrderLines.Where(l => string.IsNullOrEmpty(l.Id)).ToList();
+            var newLines = order.OrderLines.Where(IsUnsavedOrderLine).ToList();
             if (newLines.Count == 0)
             {
                 return;
@@ -1270,7 +1270,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
             var mergedLines = new List<OrderLine>();
             foreach (var newLine in newLines)
             {
-                foreach (OrderLine theOrderLine in order.OrderLines.Where(l => !string.IsNullOrEmpty(l.Id)).ToList())
+                foreach (OrderLine theOrderLine in order.OrderLines.Where(l => !IsUnsavedOrderLine(l)).ToList())
                 {
                     if (!string.IsNullOrEmpty(theOrderLine.DiscountId) || theOrderLine.IsDiscount() || !theOrderLine.IsProduct())
                     {
