@@ -9,6 +9,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
+using System.ServiceModel;
 using System.Xml;
 using static Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Notifications.Communication;
 
@@ -308,6 +309,12 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         {
             httpStatusCode = HttpStatusCode.OK;
             bool skipError = false;
+            //Do not mark the connection as failed on SOAP faults (the service responded, but the ERP returned a business error)
+            if (IsSoapFault(ex))
+            {
+                skipError = true;
+                retry = false;
+            }
             //Do not ping Endpoints with Internal Server Error 500 (that means that the request was received but generating response failed)
             if (ex?.InnerException is not null)
             {
@@ -353,6 +360,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             {
                 connector.Error(endpoint);
             }
+        }
+
+        private static bool IsSoapFault(Exception ex)
+        {
+            for (var current = ex; current is not null; current = current.InnerException)
+            {
+                if (current is FaultException)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
