@@ -309,11 +309,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
         {
             httpStatusCode = HttpStatusCode.OK;
             bool skipError = false;
-            //Do not mark the connection as failed on SOAP faults (the service responded, but the ERP returned a business error)
-            if (IsSoapFault(ex))
+            //Do not mark the connection as failed when the ERP itself returned a fault (business error), report it as 500 like the Endpoint path does
+            if (IsErpBusinessFault(ex))
             {
+                httpStatusCode = HttpStatusCode.InternalServerError;
                 skipError = true;
-                retry = false;
             }
             //Do not ping Endpoints with Internal Server Error 500 (that means that the request was received but generating response failed)
             if (ex?.InnerException is not null)
@@ -362,11 +362,47 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Connectors
             }
         }
 
-        private static bool IsSoapFault(Exception ex)
+        /// <summary>
+        /// Determines whether the exception is a fault returned by the ERP itself (e.g. a NAV/BC business error),
+        /// as opposed to a failure of the connector service or of its connection to the ERP.
+        /// </summary>
+        private static bool IsErpBusinessFault(Exception ex)
         {
             for (var current = ex; current is not null; current = current.InnerException)
             {
-                if (current is FaultException)
+                //Connector service internal error with exception details (DebugInfo=True in the connector service config)
+                if (current is FaultException<ExceptionDetail> detailFault)
+                {
+                    return IsErpInternalServerError(detailFault.Detail);
+                }
+                //Fault passed through from the ERP, or connector service internal error without exception details
+                if (current is FaultException fault)
+                {
+                    return !IsInternalServiceFault(fault.Code);
+                }
+            }
+            return false;
+        }
+
+        private static bool IsInternalServiceFault(FaultCode code)
+        {
+            for (var current = code; current is not null; current = current.SubCode)
+            {
+                if (string.Equals(current.Name, "InternalServiceFault", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool IsErpInternalServerError(ExceptionDetail detail)
+        {
+            //The connector service received an HTTP 500 response from the ERP (e.g. a SOAP fault from the BC OAuth endpoint)
+            for (var current = detail; current is not null; current = current.InnerException)
+            {
+                if (string.Equals(current.Type, typeof(WebException).FullName, StringComparison.Ordinal) &&
+                    !string.IsNullOrEmpty(current.Message) && current.Message.Contains("(500)"))
                 {
                     return true;
                 }

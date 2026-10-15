@@ -28,6 +28,7 @@
 		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.21.5" />
 		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.21.5" />
 		<PackageReference Include="Dynamicweb.Ecommerce.UI" Version="10.21.5" />		
+		<PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
 </Project>
