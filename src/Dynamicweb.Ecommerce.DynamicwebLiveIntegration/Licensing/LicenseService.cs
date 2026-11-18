@@ -1,6 +1,7 @@
 ﻿using Dynamicweb.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Configuration;
 using Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Logging;
+using Dynamicweb.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,6 +12,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
 {
     internal class LicenseService
     {
+        internal const string BCFeatureName = "eCom_DataIntegrationERPLiveIntegration_BC";
+        private static readonly ILogger SystemLogger = LogManager.System.GetLogger(LogCategory.DataIntegration, "LiveIntegration");
         private static readonly ConcurrentDictionary<string, LicenseStatus> EndpointCollection = new ConcurrentDictionary<string, LicenseStatus>();
         private static readonly Version D365BCMinVersion = new Version(13, 0, 0, 0);
         private static readonly Version D365BCMaxVersion = new Version(101, 0, 0, 0);
@@ -19,7 +22,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
         {
             get
             {
-                return Security.Licensing.LicenseManager.LicenseHasFeature("eCom_DataIntegrationERPLiveIntegration_BC");
+                return Security.Licensing.LicenseManager.LicenseHasFeature(BCFeatureName);
             }
         }
 
@@ -34,6 +37,26 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
             {
                 return true;
             }
+        }
+
+        /// <summary>
+        /// Gets the license feature that the last validated response from any of the endpoints needed but the license does not have.
+        /// </summary>
+        internal static string GetMissingLicenseFeature(IEnumerable<string> endpoints)
+        {
+            if (IsBCFeatureEnabled)
+            {
+                return null;
+            }
+            foreach (string endpoint in endpoints.Where(e => !string.IsNullOrEmpty(e)))
+            {
+                LicenseStatus status = GetStatus(endpoint);
+                if (status != null && status.IsFeatureMissing)
+                {
+                    return BCFeatureName;
+                }
+            }
+            return null;
         }
 
         private static LicenseStatus GetStatus(string endpoint)
@@ -113,7 +136,7 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
         {
             if (versionAttribute != null)
             {
-                bool isValid = IsVersionValid(versionAttribute.Value, logger);
+                bool isValid = IsVersionValid(versionAttribute.Value, logger, out bool isFeatureMissing);
                 bool isFeatureEnabled = true;
                 if (!isValid)
                 {
@@ -121,15 +144,18 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
                 }
                 status.UpdateStatus(isValid);
                 status.SetFeatureEnabled(isFeatureEnabled);
+                status.SetFeatureMissing(isFeatureMissing);
             }
             else
             {
                 status.UpdateStatus(true);
+                status.SetFeatureMissing(false);
             }
         }
 
-        private static bool IsVersionValid(string version, Logger logger)
+        private static bool IsVersionValid(string version, Logger logger, out bool isFeatureMissing)
         {
+            isFeatureMissing = false;
             if (VersionInfo.TryParse(version, logger, out VersionInfo erpVersion))
             {
                 if (!string.IsNullOrEmpty(erpVersion.ServerVersion) && VersionInfo.TryParseServerVersion(erpVersion.ServerVersion, logger, out Version navServerVersion))
@@ -145,7 +171,10 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
                 }
                 else
                 {
-                    logger.Log(ErrorLevel.Error, $"License is not valid.");
+                    isFeatureMissing = true;
+                    string message = $"License is not valid: the license is missing the '{BCFeatureName}' module required for the ERP version '{version}'.";
+                    logger.Log(ErrorLevel.Error, message);
+                    SystemLogger.Error($"Live Integration: {message}");
                     return false;
                 }
             }

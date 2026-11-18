@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>10.21.10</Version>		
+		<Version>10.30.0</Version>		
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
 		<Title>Live Integration</Title>
 		<Description>Live Integration</Description>
@@ -14,7 +14,7 @@
 		<Copyright>Copyright © 2023 Dynamicweb Software A/S</Copyright>
 	</PropertyGroup>
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -23,12 +23,12 @@
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Dynamicweb.Core" Version="10.21.5" />
-		<PackageReference Include="Dynamicweb.CoreUI" Version="10.21.5" />
-		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.21.5" />
-		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.21.5" />
-		<PackageReference Include="Dynamicweb.Ecommerce.UI" Version="10.21.5" />		
-		<PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
+		<PackageReference Include="Dynamicweb.Core" Version="10.30.6" />
+		<PackageReference Include="Dynamicweb.CoreUI" Version="10.30.6" />
+		<PackageReference Include="Dynamicweb.DataIntegration" Version="10.30.6" />
+		<PackageReference Include="Dynamicweb.Ecommerce" Version="10.30.6" />
+		<PackageReference Include="Dynamicweb.Ecommerce.UI" Version="10.30.6" />		
+		<PackageReference Include="System.ServiceModel.Primitives" Version="10.1.0" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
 </Project>

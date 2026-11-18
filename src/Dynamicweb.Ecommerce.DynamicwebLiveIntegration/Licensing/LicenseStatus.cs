@@ -9,6 +9,8 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
 
         internal bool? IsFeatureEnabled { get; private set; }
 
+        internal bool IsFeatureMissing { get; private set; }
+
         public DateTime? LastUpdateTime { get; set; }
 
         public bool Expired
@@ -42,6 +44,11 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration.Licensing
         public void SetFeatureEnabled(bool enabled)
         {
             IsFeatureEnabled = enabled;
+        }
+
+        public void SetFeatureMissing(bool missing)
+        {
+            IsFeatureMissing = missing;
         }
     }
 }

@@ -830,6 +830,27 @@ namespace Dynamicweb.Ecommerce.DynamicwebLiveIntegration
         }
 
         /// <summary>
+        /// Gets the license feature that the ERP responses of this instance need but the license does not have.
+        /// </summary>
+        /// <returns>The missing license feature name, or <c>null</c> when nothing is missing or no response has been validated yet.</returns>
+        public override string GetMissingLicenseFeature()
+        {
+            Settings settings = GetCurrentSettings();
+            IEnumerable<string> urls;
+            if (!string.IsNullOrEmpty(settings.Endpoint))
+            {
+                var logger = new Logger(settings);
+                urls = UrlHandler.GetEndpointUrls(settings.Endpoint)
+                    .Select(endpointId => UrlHandler.Instance.GetEndpoint(endpointId, false, logger, null, SubmitType.Backend)?.Url);
+            }
+            else
+            {
+                urls = UrlHandler.GetWebServiceUrls(settings.WebServiceURI).Select(UrlHandler.GetUrl);
+            }
+            return Licensing.LicenseService.GetMissingLicenseFeature(urls);
+        }
+
+        /// <summary>
         /// Check if the web service is available for the live integration
         /// </summary>
         /// <returns><c>true</c> if [is web service connection available]; otherwise, <c>false</c>.</returns>
